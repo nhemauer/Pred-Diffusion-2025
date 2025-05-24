@@ -1,0 +1,76 @@
+---
+title: "PEHA"
+output: html_document
+---
+
+PEHA script for Hemauer, Saunders, and Desmarais.
+
+Last updated: 5/24/25
+
+```{r}
+
+### Preprocessing
+
+library(tidyverse)
+library(haven)
+library(car)
+library(eha)
+library(sandwich)
+library(lmtest)
+library(rsample)
+library(caret)
+
+set.seed(1337)
+
+boehmke_2017_full <- read_dta("boehmke_analysis/replication_data/boehmke2017.dta")
+boushey_2016_full <- read_dta("boushey_analysis/replication_data/boushey2016.dta")
+bricker_lacombe_2021_full <- read_dta("bricker_lacombe_analysis/replication_data/monadic_analysis_largen.dta")
+karch_2016_full <- read_dta("karch_analysis/replication_data/karch2016.dta")
+
+```
+
+PEHA
+
+# Need to stratify sample
+
+```{r}
+
+### Boehmke et al. 2017 
+
+# Define covariates
+covariates <- c("srcs_decay", "nbrs_lag", "rpcpinc", "totpop", "legp_squire",
+                "citi6010", "unif_rep", "unif_dem", "time", "time_sq", "time_cube")
+
+# Drop NA
+boehmke_2017 <- na.omit(boehmke_2017_full[, c("state", "year", "statepol", "adopt", covariates)])
+
+# Convert state to factor
+boehmke_2017$state <- as.factor(boehmke_2017$state)
+
+# Create train-test split indices (80% train)
+sample_size <- floor(0.8 * nrow(boehmke_2017))
+train_indices <- sample(seq_len(nrow(boehmke_2017)), size = sample_size)
+
+train_data <- boehmke_2017[train_indices, ]
+test_data <- boehmke_2017[-train_indices, ]
+
+# Model formula
+boehmke_formula <- as.formula(paste("adopt ~ state +", paste(covariates, collapse = "+")))
+
+# Fit model on training data
+peha_boehmke <- glm(boehmke_formula, data = train_data, family = binomial)
+
+# Robust clustered SEs
+coeftest(peha_boehmke, vcov = vcovHC, cluster = ~ statepol)
+
+# Predict on test set
+boehmke_predicted <- list()
+boehmke_predicted$prob <- predict(peha_boehmke, newdata = test_data, type = "response")
+
+# Classify predictions
+boehmke_predicted$int <- ifelse(boehmke_predicted$prob >= 0.5, 1, 0)
+
+# Metrics
+
+```
+

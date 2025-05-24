@@ -5,7 +5,7 @@ output:
     df_print: paged
 ---
 
-Data aggregation script for Hemauer, Saunders, and Desmarais.
+Original replications script for Hemauer, Saunders, and Desmarais.
 
 Last updated: 5/24/25
 
@@ -16,11 +16,8 @@ Last updated: 5/24/25
 library(tidyverse)
 library(haven)
 library(car)
-library(eha)
 library(sandwich)
 library(lmtest)
-library(rsample)
-library(caret)
 
 set.seed(1337)
 
@@ -89,7 +86,6 @@ coeftest(peha_boushey, vcov = vcovHC, cluster = ~ styear)
 
 Bricker and Lacombe replication estimates are close, but not identical to the original estimates. 
 
-# Maybe missing robust std. errors?
 # My data has more obs. then reported in the article model
 
 ```{r}
