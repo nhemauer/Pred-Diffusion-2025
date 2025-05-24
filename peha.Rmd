@@ -51,21 +51,21 @@ boehmke_2017$state <- as.factor(boehmke_2017$state)
 sample_size <- floor(0.8 * nrow(boehmke_2017))
 train_indices <- sample(seq_len(nrow(boehmke_2017)), size = sample_size)
 
-train_data <- boehmke_2017[train_indices, ]
-test_data <- boehmke_2017[-train_indices, ]
+boehmke_train <- boehmke_2017[train_indices, ]
+boehmke_test <- boehmke_2017[-train_indices, ]
 
 # Model formula
 boehmke_formula <- as.formula(paste("adopt ~ state +", paste(covariates, collapse = "+")))
 
 # Fit model on training data
-peha_boehmke <- glm(boehmke_formula, data = train_data, family = binomial)
+peha_boehmke <- glm(boehmke_formula, data = boehmke_train, family = binomial)
 
 # Robust clustered SEs
 coeftest(peha_boehmke, vcov = vcovHC, cluster = ~ statepol)
 
 # Predict on test set
 boehmke_predicted <- list()
-boehmke_predicted$prob <- predict(peha_boehmke, newdata = test_data, type = "response")
+boehmke_predicted$prob <- predict(peha_boehmke, newdata = boehmke_test, type = "response")
 
 # Classify predictions
 boehmke_predicted$int <- ifelse(boehmke_predicted$prob >= 0.5, 1, 0)
