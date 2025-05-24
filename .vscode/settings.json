@@ -1,16 +1,16 @@
 {
     "workbench.colorCustomizations": {
         "commandCenter.border": "#e7e7e799",
-        "sash.hoverBorder": "#3333ff",
-        "statusBar.background": "#0000ff",
+        "sash.hoverBorder": "#2cb42c",
+        "statusBar.background": "#228b22",
         "statusBar.foreground": "#e7e7e7",
-        "statusBarItem.hoverBackground": "#3333ff",
-        "statusBarItem.remoteBackground": "#0000ff",
+        "statusBarItem.hoverBackground": "#2cb42c",
+        "statusBarItem.remoteBackground": "#228b22",
         "statusBarItem.remoteForeground": "#e7e7e7",
-        "tab.activeBorder": "#3333ff",
-        "titleBar.activeBackground": "#0000ff",
+        "tab.activeBorder": "#2cb42c",
+        "titleBar.activeBackground": "#228b22",
         "titleBar.activeForeground": "#e7e7e7",
-        "titleBar.inactiveBackground": "#0000ff99",
+        "titleBar.inactiveBackground": "#228b2299",
         "titleBar.inactiveForeground": "#e7e7e799",
         "jupyter.notebookFileRoot": "${workspaceFolder}"
     }
