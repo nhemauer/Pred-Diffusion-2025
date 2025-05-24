@@ -1,11 +1,13 @@
 ---
 title: "Main"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
 
 Data aggregation script for Hemauer, Saunders, and Desmarais.
 
-Last updated: 5/22/25
+Last updated: 5/24/25
 
 TODO: Run the original models from the original papers--don't use network models for now.
   -Use PR Curve (for imbalanced data)
@@ -21,12 +23,7 @@ library(eha)
 library(sandwich)
 library(lmtest)
 library(rsample)
-library(randomForest)
 library(caret)
-library(MLeval)
-library(pROC)
-library(PRROC)
-library(xgboost)
 
 set.seed(1337)
 
@@ -88,7 +85,7 @@ boushey_formula <- as.formula(paste("dvadopt ~", paste(c(covariates), collapse =
 
 peha_boushey <- glm(boushey_formula, data = boushey_2016, family = binomial)
 
-coeftest(peha_boushey, cluster = ~ styear)
+coeftest(peha_boushey, vcov = vcovHC, cluster = ~ styear)
 
 ```
 
@@ -145,74 +142,3 @@ peha_karch <- glm(adopt ~ traditional + nborsstd + traditional*nborsstd+prevadop
 coeftest(peha_karch, vcov = vcovHC, cluster = ~ stateyear)
 
 ```
-
-RANDOM FORESTS
-
-Notes for Below:
-  # Could bootstrap rare strata
-  # What covariates to holdout from training?
-    # Do we want to train on state or year?
-      # Holding out state, year, and policy type makes prediction essentially random (51% balanced accuracy)
-      # I think this could be an interesting point to build on. State-level covariates may be useless for prediction
-  # Not sure if train/test is stratified by state, year, policy. Caret trainControl() may do this automatically
-  # Could use elastic net for feature selection; will not work on RF itself because it is non-linear
-  # Could adjust RF weights and/or thresholds
-
-```{r}
-
-### Boehmke 2017 
-## RF
-
-# Covariates
-covariates <- c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube")
-
-# Remove Data After Adoption and Omit Missing
-boehmke_2017 <- na.omit(boehmke_2017_full[, c("state", "year", "policy", "statepol", "adopt", covariates)])
-
-# Split
-train_index <- createDataPartition(boehmke_2017$adopt, p = 0.8, list = FALSE)
-boehmke_train_data <- boehmke_2017[train_index, ]
-boehmke_test_data <- boehmke_2017[-train_index, ]
-
-# Convert to factor with specified levels
-boehmke_train_data$adopt <- ifelse(boehmke_train_data$adopt == 1, "yes", "no")
-boehmke_train_data$adopt <- factor(boehmke_train_data$adopt, levels = c("no", "yes"))
-
-# Setup CV
-train_control <- trainControl(method = "cv", number = 3,
-                              sampling = "smote",
-                              classProbs = TRUE, # Cannot use TRUE with 0 and 1 class labels because RF converts to character
-                              savePredictions = "all",
-                              summaryFunction = twoClassSummary)
-
-# Define grid search
-tune_grid <- expand.grid(.mtry = c(2, 3, 4, 5))
-
-# Train
-boehmke_rf <- train(adopt ~ ., data = boehmke_train_data, method = "rf", 
-                    trControl = train_control, metric = "ROC") # tuneGrid = tune_grid
-
-# Test
-predictions <- predict(boehmke_rf, newdata = boehmke_test_data[, -c(5)])
-
-# Output
-boehmke_test_data$adopt <- ifelse(boehmke_test_data$adopt == 1, "yes", "no")
-boehmke_test_data$adopt <- factor(boehmke_test_data$adopt, levels = c("no", "yes"))
-confusionMatrix(predictions, boehmke_test_data$adopt, positive = "yes")
-
-# PR Curve
-boehmke_pr <- evalm(boehmke_rf)
-
-```
-
-CODE SNIPPETS
-
-```{r}
-
-# Elastic Net for Linear Models
-tune_grid <- expand.grid(alpha = seq(0, 1, by = 0.1),             # Alpha from 0 (Ridge) to 1 (Lasso)
-                         lambda = seq(0.001, 0.1, by = 0.005))    # Penalty parameter
-
-```
-
