@@ -1,5 +1,5 @@
 ---
-title: "Oriiginal Replications"
+title: "Original Replications"
 output:
   html_document:
     df_print: paged
