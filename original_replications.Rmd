@@ -1,5 +1,5 @@
 ---
-title: "Main"
+title: "Oriiginal Replications"
 output:
   html_document:
     df_print: paged
@@ -8,9 +8,6 @@ output:
 Data aggregation script for Hemauer, Saunders, and Desmarais.
 
 Last updated: 5/24/25
-
-TODO: Run the original models from the original papers--don't use network models for now.
-  -Use PR Curve (for imbalanced data)
 
 ```{r}
 
