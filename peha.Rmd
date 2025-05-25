@@ -59,7 +59,6 @@ train_indices <- sample(seq_len(nrow(boehmke_2017)), size = sample_size)
 boehmke_train <- boehmke_2017[train_indices, ]
 boehmke_test <- boehmke_2017[-train_indices, ]
 
-# SMOTE 
 # Convert factors to numeric dummy variables
 boehmke_train_dummy <- model.matrix(~ . - 1, data = boehmke_train[, -c(3)]) # drop statepol
 adopt_numeric <- as.numeric(boehmke_train_dummy[, 51])  # convert to 0/1
