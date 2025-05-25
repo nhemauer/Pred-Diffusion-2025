@@ -34,7 +34,7 @@ PEHA
 
 # Maybe undersample majority class? (dup_size may do something like this)
 # Try with different logit cutoffs
-# Can try different smote dup_size
+# Can try different smote dup_size and k
 # Set seed is not working, I am getting different balanced accuracy scores ranging from 64% to 69%
 
 ```{r}
