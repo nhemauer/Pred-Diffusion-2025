@@ -5,7 +5,7 @@ output: html_document
 
 PEHA script for Hemauer, Saunders, and Desmarais.
 
-Last updated: 5/24/25
+Last updated: 5/25/25
 
 ```{r}
 
@@ -19,6 +19,7 @@ library(sandwich)
 library(lmtest)
 library(rsample)
 library(caret)
+library(smotefamily)
 
 set.seed(1337)
 
@@ -31,7 +32,10 @@ karch_2016_full <- read_dta("karch_analysis/replication_data/karch2016.dta")
 
 PEHA
 
-# Need to stratify sample
+# Maybe undersample majority class? (dup_size may do something like this)
+# Try with different logit cutoffs
+# Can try different smote dup_size and k
+# Set seed is not working, I am getting different balanced accuracy scores ranging from 64% to 69%
 
 ```{r}
 
@@ -44,33 +48,60 @@ covariates <- c("srcs_decay", "nbrs_lag", "rpcpinc", "totpop", "legp_squire",
 # Drop NA
 boehmke_2017 <- na.omit(boehmke_2017_full[, c("state", "year", "statepol", "adopt", covariates)])
 
-# Convert state to factor
+# Convert to factor
 boehmke_2017$state <- as.factor(boehmke_2017$state)
+boehmke_2017$adopt <- as.factor(boehmke_2017$adopt)
 
-# Create train-test split indices (80% train)
+# Train-test split (80%)
 sample_size <- floor(0.8 * nrow(boehmke_2017))
 train_indices <- sample(seq_len(nrow(boehmke_2017)), size = sample_size)
 
 boehmke_train <- boehmke_2017[train_indices, ]
 boehmke_test <- boehmke_2017[-train_indices, ]
 
+# Convert factors to numeric dummy variables
+boehmke_train_dummy <- model.matrix(~ . - 1, data = boehmke_train[, -c(3)]) # drop statepol
+adopt_numeric <- as.numeric(boehmke_train_dummy[, 51])  # convert to 0/1
+boehmke_train_dummy <- as.data.frame(boehmke_train_dummy[, -51])
+
+# Apply SMOTE (K = 4, over-sampling to balance classes) (I tried 1-10, and 4 was the best) (dup_size 15 seems good, will want to grid search these values--figure out seed first)
+smote_output <- SMOTE(X = boehmke_train_dummy, target = adopt_numeric, K = 4, dup_size = 15)
+boehmke_train_smote <- smote_output$data
+colnames(boehmke_train_smote)[ncol(boehmke_train_smote)] <- "adopt"
+boehmke_train_smote$adopt <- factor(boehmke_train_smote$adopt)
+
+# Collapse States
+state_dummy_cols <- grep("^state", names(boehmke_train_smote), value = TRUE)
+
+# Find which column has the 1 in each row
+state_levels <- gsub("^state", "", state_dummy_cols)  # Extract level names
+state_index <- apply(boehmke_train_smote[, state_dummy_cols], 1, function(row) {
+  state_levels[which.max(row)]
+})
+
+# Add as a factor column
+boehmke_train_smote$state <- factor(state_index, levels = state_levels)
+boehmke_train_smote <- boehmke_train_smote[, !(names(boehmke_train_smote) %in% state_dummy_cols)]
+
 # Model formula
-boehmke_formula <- as.formula(paste("adopt ~ state +", paste(covariates, collapse = "+")))
+smote_formula <- as.formula(paste("adopt ~ state + year +", paste(covariates, collapse = "+")))
 
-# Fit model on training data
-peha_boehmke <- glm(boehmke_formula, data = boehmke_train, family = binomial)
+# Fit logistic regression
+peha_boehmke_smote <- glm(smote_formula, data = boehmke_train_smote, family = binomial)
 
-# Robust clustered SEs
-coeftest(peha_boehmke, vcov = vcovHC, cluster = ~ statepol)
+boehmke_test_actual <- boehmke_test[, 4]
+boehmke_test_actual <- boehmke_test_actual$adopt
+boehmke_test <- boehmke_test[, -c(3, 4)]
 
-# Predict on test set
 boehmke_predicted <- list()
-boehmke_predicted$prob <- predict(peha_boehmke, newdata = boehmke_test, type = "response")
-
-# Classify predictions
+boehmke_predicted$prob <- predict(peha_boehmke_smote, newdata = boehmke_test, type = "response")
 boehmke_predicted$int <- ifelse(boehmke_predicted$prob >= 0.5, 1, 0)
+predicted <- as.factor(boehmke_predicted$int)
 
-# Metrics
+# Evaluation
+confusion_matrix <- confusionMatrix(data = predicted, reference = boehmke_test_actual, positive = "1")
+
+print(confusion_matrix)
 
 ```
 
