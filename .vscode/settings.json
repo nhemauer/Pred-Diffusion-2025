@@ -13,5 +13,6 @@
         "titleBar.inactiveBackground": "#228b2299",
         "titleBar.inactiveForeground": "#e7e7e799",
         "jupyter.notebookFileRoot": "${workspaceFolder}"
-    }
+    },
+    "oci.defaultProfileName": "DEFAULT"
 }
