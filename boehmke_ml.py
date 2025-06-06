@@ -88,7 +88,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Boehmke et al. 2017 Logistic (Optimized)
+### Boehmke et al. 2017 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -176,7 +176,7 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Logistic)\n(Boehmke et al. 2017)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Boehmke et al. 2017)')
 plt.legend()
 plt.grid(True)
 plt.savefig('figures/boehmke2017/optimized_logistic_boehmke.png', dpi = 300, bbox_inches = 'tight')
