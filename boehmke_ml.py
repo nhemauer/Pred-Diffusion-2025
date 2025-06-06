@@ -22,6 +22,7 @@ random.seed(1337)
 # Data
 boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
+# Covariates
 covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
 boehmke_2017 = boehmke_2017_full[["state", "year", "statepol", "adopt"] + covariates].dropna()
