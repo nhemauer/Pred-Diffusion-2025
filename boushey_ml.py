@@ -31,7 +31,6 @@ boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dr
 
 # Define X and y
 X = boushey_2016[covariates].copy()
-X = sm.add_constant(X)
 y = boushey_2016['dvadopt']
 
 # Split into train and test sets
