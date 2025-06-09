@@ -30,8 +30,8 @@ covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
 boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
 
 # Define X and y
-X = boushey_2016[['state'] + covariates].copy()
-X = pd.get_dummies(X, columns = ['state'], drop_first = True)  # drop_first avoids perfect multicollinearity
+X = boushey_2016[covariates].copy()
+X = sm.add_constant(X)
 y = boushey_2016['dvadopt']
 
 # Split into train and test sets
