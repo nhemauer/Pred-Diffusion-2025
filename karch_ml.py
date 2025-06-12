@@ -23,13 +23,14 @@ random.seed(1337)
 karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 # Covariates
-covariates = []
-karch_2016 = karch_2016_full[["state", "year", "policy", "adoption"] + covariates].dropna()
+covariates = ["traditional","nborsstd","prevadoptstd","complexity","igrole",
+              "regov","unified","perdemstd","incpcadjstd","exppcadjstd",
+              "logpopstd","collegstd","perurbanstd","profstd"]
+karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
 
 # Define X and y
-X = karch_2016[['year'] + covariates].copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first avoids perfect multicollinearity
-y = karch_2016['adoption']
+X = karch_2016[covariates].copy()
+y = karch_2016['adopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
