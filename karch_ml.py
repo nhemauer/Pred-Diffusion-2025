@@ -1,4 +1,4 @@
-### Preprocessing Karch 2016
+### Preprocessing Karch et al. 2016
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -42,7 +42,7 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 Logistic (No Optimization)
+### Karch et al. 2016 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -89,7 +89,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 Regularized Logistic (Optimized)
+### Karch et al. 2016 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -186,7 +186,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 RF (No Optimization)
+### Karch et al. 2016 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -233,7 +233,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 RF (Optimized)
+### Karch et al. 2016 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -322,7 +322,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 XGBoost (No Optimization)
+### Karch et al. 2016 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -369,7 +369,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 XGBoost (Optimized)
+### Karch et al. 2016 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -449,7 +449,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 SVM (No Optimization)
+### Karch et al. 2016 SVM (No Optimization)
 
 # Fit
 svm = SVC(probability = True, random_state = 1337)
@@ -496,7 +496,7 @@ plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch 2016 SVM (Optimized)
+### Karch et al. 2016 SVM (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 
