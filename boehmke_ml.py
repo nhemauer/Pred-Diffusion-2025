@@ -65,6 +65,7 @@ with open("figures/boehmke2017/unoptimized_logistic_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = logistic.predict_proba(X_test_scaled)[:, 1]
@@ -161,6 +162,7 @@ with open("figures/boehmke2017/optimized_logistic_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
@@ -207,6 +209,7 @@ with open("figures/boehmke2017/unoptimized_rf_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = random_forest.predict_proba(X_test_scaled)[:, 1]
@@ -295,6 +298,7 @@ with open("figures/boehmke2017/optimized_rf_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
@@ -341,6 +345,7 @@ with open("figures/boehmke2017/unoptimized_xgboost_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = xgb.predict_proba(X_test_scaled)[:, 1]
@@ -420,6 +425,7 @@ with open("figures/boehmke2017/optimized_xgboost_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
@@ -448,7 +454,9 @@ plt.show()
 # Fit
 svm = SVC(probability = True, random_state = 1337)
 
+start_time = time.time()
 svm.fit(X_train_scaled, y_train)
+end_time = time.time()
 
 # Predict
 y_pred = svm.predict(X_test_scaled)
@@ -464,6 +472,7 @@ with open("figures/boehmke2017/unoptimized_svm_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = svm.predict_proba(X_test_scaled)[:, 1]
@@ -544,6 +553,7 @@ with open("figures/boehmke2017/optimized_svm_boehmke.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]

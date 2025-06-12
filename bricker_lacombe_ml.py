@@ -29,9 +29,8 @@ covariates = ["std_score","initiative","init_sigs","std_population",
 bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
 
 # Define X and y
-X = bricker_lacombe_2021[['year', "policy"] + covariates].copy()
+X = bricker_lacombe_2021[['year'] + covariates].copy()
 X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first avoids perfect multicollinearity
-X = pd.get_dummies(X, columns = ['policy'], drop_first = True)  # drop_first avoids perfect multicollinearity
 y = bricker_lacombe_2021['adoption']
 
 # Split into train and test sets
@@ -67,6 +66,7 @@ with open("figures/bricker_lacombe2021/unoptimized_logistic_bricker.txt", "w") a
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = logistic.predict_proba(X_test_scaled)[:, 1]
@@ -163,6 +163,7 @@ with open("figures/bricker_lacombe2021/optimized_logistic_bricker.txt", "w") as 
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
@@ -209,6 +210,7 @@ with open("figures/bricker_lacombe2021/unoptimized_rf_bricker.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = random_forest.predict_proba(X_test_scaled)[:, 1]
@@ -297,6 +299,7 @@ with open("figures/bricker_lacombe2021/optimized_rf_bricker.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
@@ -343,6 +346,7 @@ with open("figures/bricker_lacombe2021/unoptimized_xgboost_bricker.txt", "w") as
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = xgb.predict_proba(X_test_scaled)[:, 1]
@@ -422,6 +426,7 @@ with open("figures/bricker_lacombe2021/optimized_xgboost_bricker.txt", "w") as f
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
@@ -450,7 +455,9 @@ plt.show()
 # Fit
 svm = SVC(probability = True, random_state = 1337)
 
+start_time = time.time()
 svm.fit(X_train_scaled, y_train)
+end_time = time.time()
 
 # Predict
 y_pred = svm.predict(X_test_scaled)
@@ -466,6 +473,7 @@ with open("figures/bricker_lacombe2021/unoptimized_svm_bricker.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = svm.predict_proba(X_test_scaled)[:, 1]
@@ -546,6 +554,7 @@ with open("figures/bricker_lacombe2021/optimized_svm_bricker.txt", "w") as f:
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
 
 # Get predicted probabilities for the positive class
 y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
