@@ -1,0 +1,13 @@
+Best Parameters Found: OrderedDict([('booster', 'dart'), ('colsample_bytree', 0.5), ('eval_metric', 'aucpr'), ('gamma', 1), ('grow_policy', 'lossguide'), ('learning_rate', 0.01), ('max_bin', 64), ('max_depth', 7), ('max_leaves', 32), ('min_child_weight', 1), ('n_estimators', 500), ('objective', 'binary:logistic'), ('reg_alpha', 1), ('reg_lambda', 0), ('scale_pos_weight', 10), ('subsample', 0.8782896211980677), ('tree_method', 'approx')])
+F1 Macro Score: 0.5853063128774288
+Balanced Accuracy Score: 0.6311665003071253
+Classification Report:
+              precision    recall  f1-score   support
+
+         0.0       0.96      0.91      0.94      8448
+         1.0       0.17      0.35      0.23       444
+
+    accuracy                           0.89      8892
+   macro avg       0.57      0.63      0.59      8892
+weighted avg       0.92      0.89      0.90      8892
+Model Fit Elapsed Time: 730.39 Minutes
