@@ -6,7 +6,7 @@ Our analysis first replicates the original policy diffusion event history analys
 After obtaining a baseline, we use several models to assess the out-of-sample predictive performance of current models of policy diffusion.
 
 ## Methodology
-We apply and compare logistic regression, regularized logistic regression, random forests, XGBoost, and SVM algorithms. 
+We apply and compare logit, regularized logit, random forests, XGBoost, and SVM algorithms. 
 
 We focus on answering the following four methodological questions in our article:
 
@@ -26,7 +26,7 @@ The "_ml.py" files are our contribution. These files replicate the accuracy and 
 
 The "original_replications.ipynb" produces the original coefficient estimates found in our reference articles.
 
-The "figures" folder includes the AUC-PR Curve and a .txt file with other performance statistics for each model.
+The "figures" folder includes the AUC-PR visualization and a .txt file with other performance statistics for each model.
 
 The "data" folder includes the data provided by the original authors.
 
