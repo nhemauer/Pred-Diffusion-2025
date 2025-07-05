@@ -3,7 +3,6 @@
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from sklearn.svm import SVC
 from sklearn.model_selection import GridSearchCV, train_test_split
 from skopt import BayesSearchCV
 from sklearn.metrics import f1_score, balanced_accuracy_score, classification_report
