@@ -1,4 +1,4 @@
-### Preprocessing Kreitzer & Boehmke 2016
+### Preprocessing LaCombe and Boehmke 2021
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -19,20 +19,20 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
 
 covariates = [
-    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
-    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
+    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
+    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
 ]
 
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + covariates].dropna()
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption"] + covariates].dropna()
 
 # Define X and y
-X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
-X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
-y = kreitzer_boehmke_2016['adopt_policy']
+X = lacombe_boehmke2021.drop(columns = ['adoption']).copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
+y = lacombe_boehmke2021['adoption']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -44,7 +44,7 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 Logistic (No Optimization)
+### LaCombe and Boehmke 2021 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -62,7 +62,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/unoptimized_logistic_lacombe.txt", "w") as f:
     f.write(f"F1 Macro Score: {f1_macro}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -83,15 +83,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Kreitzer & Boehmke 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(LaCombe and Boehmke 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/unoptimized_logistic_lacombe.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 Regularized Logistic (Optimized)
+### LaCombe and Boehmke 2021 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -158,7 +158,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/optimized_logistic_lacombe.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Macro Score: {f1_macro}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -180,15 +180,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Kreitzer & Boehmke 2016)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(LaCombe and Boehmke 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/optimized_logistic_lacombe.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 RF (No Optimization)
+### LaCombe and Boehmke 2021 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -206,7 +206,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/unoptimized_rf_lacombe.txt", "w") as f:
     f.write(f"F1 Macro Score: {f1_macro}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -227,15 +227,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(LaCombe and Boehmke 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/unoptimized_rf_lacombe.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 RF (Optimized)
+### LaCombe and Boehmke 2021 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -294,7 +294,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/optimized_rf_kreitzer.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/optimized_rf_lacombe.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Macro Score: {f1_macro}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -316,15 +316,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(LaCombe and Boehmke 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/optimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/optimized_rf_lacombe.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 XGBoost (No Optimization)
+### LaCombe and Boehmke 2021 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -342,7 +342,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/unoptimized_xgboost_lacombe.txt", "w") as f:
     f.write(f"F1 Macro Score: {f1_macro}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -363,15 +363,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(LaCombe and Boehmke 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/unoptimized_xgboost_lacombe.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 XGBoost (Optimized)
+### LaCombe and Boehmke 2021 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -421,7 +421,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/optimized_xgboost_lacombe.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Macro Score: {f1_macro}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -443,8 +443,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(LaCombe and Boehmke 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/optimized_xgboost_lacombe.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
