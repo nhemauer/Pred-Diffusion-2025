@@ -6,7 +6,7 @@ Our analysis first replicates the original policy diffusion event history analys
 After obtaining a baseline, we use several models to assess the out-of-sample predictive performance of current models of policy diffusion.
 
 ## Methodology
-We apply and compare logit, regularized logit, random forests, XGBoost, and SVM algorithms. 
+We apply and compare logit, regularized logit, random forests, and XGBoost algorithms. 
 
 We focus on answering the following four methodological questions in our article:
 
