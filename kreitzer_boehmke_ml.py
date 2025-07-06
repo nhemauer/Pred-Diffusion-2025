@@ -270,7 +270,7 @@ param_grid = [
 bayes_search = BayesSearchCV(
     estimator = RandomForestClassifier(random_state = 1337),
     search_spaces = param_grid,
-    n_iter = 128,
+    n_iter = 256,
     cv = 10,
     n_jobs = -1,
     verbose = 0,
@@ -397,7 +397,7 @@ param_grid = {
 bayes_search = BayesSearchCV(
     estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
     search_spaces = param_grid,
-    n_iter = 128,
+    n_iter = 256,
     cv = 10,
     n_jobs = -1,
     verbose = 0,
