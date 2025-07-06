@@ -22,7 +22,7 @@ Notably, our article provides a benchmark reference and framework for future res
 
 ## File Structure
 
-The "_ml.py" files are our contribution. These files replicate the accuracy and classification performance of the logistic, random forest, XGBoost, and SVM models found in the article.
+The "_ml.py" files are our contribution. These files replicate the accuracy and classification performance of the logistic, random forest, and XGBoost models found in the article.
 
 The "original_replications.ipynb" produces the original coefficient estimates found in our reference articles.
 
