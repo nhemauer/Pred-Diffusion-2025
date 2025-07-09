@@ -27,10 +27,10 @@ covariates = [
     "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
 ]
 
-lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption"] + covariates].dropna()
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno"] + covariates].dropna()
 
 # Define X and y
-X = lacombe_boehmke2021.drop(columns = ['adoption']).copy()
+X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
 X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
 y = lacombe_boehmke2021['adoption']
 

@@ -23,16 +23,15 @@ parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
 covariates = [
     "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
-    "incunemp", "pctpercapinc", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
-    "deregulated", "geoneighborlag", "ideoneighborlag", "prinnovation1", "year"
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
 ]
 
-parinandi2020 = parinandi2020_full[["oneinnovation"] + covariates].dropna()
+parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
 
 # Define X and y
-X = parinandi2020.drop(columns = ['oneinnovation']).copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
-y = parinandi2020['oneinnovation']
+X = parinandi2020.drop(columns = ['oneemulation']).copy()
+y = parinandi2020['oneemulation']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
