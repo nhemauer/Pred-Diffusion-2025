@@ -22,9 +22,17 @@ random.seed(1337)
 karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 # Covariates
-covariates = ["traditional","nborsstd","prevadoptstd","complexity","igrole",
-              "regov","unified","perdemstd","incpcadjstd","exppcadjstd",
-              "logpopstd","collegstd","perurbanstd","profstd"]
+covariates = [
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
+]
+
 karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
 
 # Define X and y
