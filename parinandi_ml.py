@@ -56,13 +56,13 @@ end_time = time.time()
 y_pred = logistic.predict(X_test_scaled)
 
 # Evaluation
-f1_macro = f1_score(y_test, y_pred, average = "macro")
+f1 = f1_score(y_test, y_pred, average = "binary")
 balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
 with open("figures/parinandi2020/unoptimized_logistic_parinandi.txt", "w") as f:
-    f.write(f"F1 Macro Score: {f1_macro}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -152,14 +152,14 @@ best_model = grid_search.best_estimator_
 y_pred = best_model.predict(X_test_scaled)
 
 # Evaluation
-f1_macro = f1_score(y_test, y_pred, average = "macro")
+f1 = f1_score(y_test, y_pred, average = "binary")
 balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
 with open("figures/parinandi2020/optimized_logistic_parinandi.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
-    f.write(f"F1 Macro Score: {f1_macro}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -200,13 +200,13 @@ end_time = time.time()
 y_pred = random_forest.predict(X_test_scaled)
 
 # Evaluation
-f1_macro = f1_score(y_test, y_pred, average = "macro")
+f1 = f1_score(y_test, y_pred, average = "binary")
 balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
 with open("figures/parinandi2020/unoptimized_rf_parinandi.txt", "w") as f:
-    f.write(f"F1 Macro Score: {f1_macro}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -288,14 +288,14 @@ best_model = bayes_search.best_estimator_
 y_pred = best_model.predict(X_test_scaled)
 
 # Evaluation
-f1_macro = f1_score(y_test, y_pred, average = "macro")
+f1 = f1_score(y_test, y_pred, average = "binary")
 balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
 with open("figures/parinandi2020/optimized_rf_parinandi.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
-    f.write(f"F1 Macro Score: {f1_macro}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -336,13 +336,13 @@ end_time = time.time()
 y_pred = xgb.predict(X_test_scaled)
 
 # Evaluation
-f1_macro = f1_score(y_test, y_pred, average = "macro")
+f1 = f1_score(y_test, y_pred, average = "binary")
 balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
 with open("figures/parinandi2020/unoptimized_xgboost_parinandi.txt", "w") as f:
-    f.write(f"F1 Macro Score: {f1_macro}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -415,14 +415,14 @@ best_model = bayes_search.best_estimator_
 y_pred = best_model.predict(X_test_scaled)
 
 # Evaluation
-f1_macro = f1_score(y_test, y_pred, average = "macro")
+f1 = f1_score(y_test, y_pred, average = "binary")
 balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
 with open("figures/parinandi2020/optimized_xgboost_parinandi.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
-    f.write(f"F1 Macro Score: {f1_macro}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
