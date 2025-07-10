@@ -374,19 +374,19 @@ plt.show()
 # Define the parameter search space for BayesSearchCV
 param_grid = {
     'n_estimators': (100, 300, 500),
-    'max_depth': (3, 7, 15, 30),
+    'max_depth': (3, 6, 10, 20),
     'max_bin': (16, 32, 64, 128),
     'booster': ['gbtree', 'dart'],
     'objective': ['binary:logistic'],
     'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
     'tree_method': ['auto', 'exact', 'approx', 'hist'],
     'grow_policy': ['depthwise', 'lossguide'],
-    'learning_rate': (0.001, 0.01, 0.1),
+    'learning_rate': (0.01, 0.1, 0.3),
     'subsample': (0.5, 1.0),
     'colsample_bytree': (0.5, 1.0),
     'gamma': (0, 2),
     'reg_alpha': (0, 2),
-    'reg_lambda': (0, 2),
+    'reg_lambda': (1, 2),
     'min_child_weight': (1, 5, 10),
     'max_leaves': (0, 16, 32),
     'scale_pos_weight': (1, 5, 10)
