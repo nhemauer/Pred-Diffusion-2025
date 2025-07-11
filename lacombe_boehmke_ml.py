@@ -377,7 +377,7 @@ plt.show()
 param_grid = {
     'n_estimators': (100, 300, 500),
     'max_depth': (3, 6, 10, 20),
-    'max_bin': (16, 32, 64, 128),
+    'max_bin': (16, 32, 64, 128, 256),
     'booster': ['gbtree', 'dart'],
     'objective': ['binary:logistic'],
     'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
