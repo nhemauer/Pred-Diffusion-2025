@@ -1,4 +1,4 @@
-F1 Macro Score: 0.563878929701815
+F1 Score: 0.1671159029649596
 Balanced Accuracy Score: 0.5469613184640372
 Classification Report:
               precision    recall  f1-score   support

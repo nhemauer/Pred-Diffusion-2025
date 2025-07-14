@@ -1,13 +1,13 @@
-Best Parameters Found: {'C': 0.01, 'class_weight': 'balanced', 'fit_intercept': True, 'l1_ratio': 0.75, 'penalty': 'elasticnet', 'solver': 'saga'}
-F1 Macro Score: 0.4395143199641983
-Balanced Accuracy Score: 0.7253529466143178
+Best Parameters Found: {'C': 0.01, 'class_weight': 'balanced', 'fit_intercept': True, 'l1_ratio': 0.25, 'penalty': 'elasticnet', 'solver': 'saga'}
+F1 Score: 0.07291666666666667
+Balanced Accuracy Score: 0.722175491191519
 Classification Report:
               precision    recall  f1-score   support
 
-         0.0       0.99      0.67      0.80      8337
-         1.0       0.04      0.78      0.08       157
+         0.0       1.00      0.60      0.75      8337
+         1.0       0.04      0.85      0.07       157
 
-    accuracy                           0.67      8494
-   macro avg       0.52      0.73      0.44      8494
-weighted avg       0.98      0.67      0.79      8494
-Model Fit Elapsed Time: 69.63 Minutes
+    accuracy                           0.60      8494
+   macro avg       0.52      0.72      0.41      8494
+weighted avg       0.98      0.60      0.73      8494
+Model Fit Elapsed Time: 102.09 Minutes
