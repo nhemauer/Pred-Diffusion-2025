@@ -13,6 +13,7 @@ import pandas as pd
 import time
 import random
 import warnings
+import os
 
 warnings.filterwarnings('ignore')
 
@@ -40,6 +41,8 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
+
+os.chdir("ml_application")
 
 ### Boehmke et al. 2017 Logistic (No Optimization)
 
@@ -131,7 +134,7 @@ param_grid = [
 grid_search = GridSearchCV(
     estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
     param_grid = param_grid,
-    scoring = "f1", # F1 score good for maximizing precision and recall, but average_precision is better for balanced accuracy
+    scoring = "average_precision", 
     cv = 10,
     n_jobs = -1,
     verbose = 0,
@@ -271,7 +274,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -398,7 +401,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 

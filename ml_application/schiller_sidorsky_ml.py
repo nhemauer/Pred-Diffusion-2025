@@ -1,4 +1,4 @@
-### Preprocessing Mallinson 2019
+### Preprocessing Schiller and Sidorsky 2022
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -13,21 +13,25 @@ import pandas as pd
 import time
 import random
 import warnings
+import os
 
 warnings.filterwarnings('ignore')
 
 random.seed(1337)
 
 # Data
-mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
+schiller_sidorsky2022_full = pd.read_stata(r"data/schiller_sidorsky2022.dta")
 
-covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
-              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
-mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
+covariates = [
+    "gunhomicideslag1", "citizenideologylag1", "numregdvgunlawenactlag1", "vawa1994", "vawa1995", 
+    "lautenbergamdt1996", "Lautenbergamndt1997", "legislature_election_year", "femleg", "innovation_index"
+]
+
+schiller_sidorsky2022 = schiller_sidorsky2022_full[["dvgunlaw"] + covariates].dropna()
 
 # Define X and y
-X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
-y = mallinson_2019['adopt']
+X = schiller_sidorsky2022.drop(columns = ['dvgunlaw']).copy()
+y = schiller_sidorsky2022['dvgunlaw']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -39,7 +43,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-### Mallinson 2019 Logistic (No Optimization)
+os.chdir("ml_application")
+
+### Schiller and Sidorsky 2022 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -57,7 +63,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/mallinson2019/unoptimized_logistic_mallinson.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/unoptimized_logistic_schiller.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -78,15 +84,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Mallinson 2019)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Schiller and Sidorsky 2022)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/mallinson2019/unoptimized_logistic_mallinson.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/unoptimized_logistic_schiller.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Mallinson 2019 Regularized Logistic (Optimized)
+### Schiller and Sidorsky 2022 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -129,7 +135,7 @@ param_grid = [
 grid_search = GridSearchCV(
     estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
     param_grid = param_grid,
-    scoring = "f1", # F1 score good for maximizing precision and recall, but average_precision is better for balanced accuracy
+    scoring = "average_precision", 
     cv = 10,
     n_jobs = -1,
     verbose = 0,
@@ -153,7 +159,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/mallinson2019/optimized_logistic_mallinson.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/optimized_logistic_schiller.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -175,15 +181,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Mallinson 2019)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Schiller and Sidorsky 2022)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/mallinson2019/optimized_logistic_mallinson.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/optimized_logistic_schiller.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Mallinson 2019 RF (No Optimization)
+### Schiller and Sidorsky 2022 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -201,7 +207,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/mallinson2019/unoptimized_rf_mallinson.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/unoptimized_rf_schiller.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -222,15 +228,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Mallinson 2019)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Schiller and Sidorsky 2022)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/mallinson2019/unoptimized_rf_mallinson.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/unoptimized_rf_schiller.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Mallinson 2019 RF (Optimized)
+### Schiller and Sidorsky 2022 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -269,7 +275,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -289,7 +295,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/mallinson2019/optimized_rf_mallinson.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/optimized_rf_schiller.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -311,15 +317,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Mallinson 2019)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Schiller and Sidorsky 2022)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/mallinson2019/optimized_rf_mallinson.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/optimized_rf_schiller.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Mallinson 2019 XGBoost (No Optimization)
+### Schiller and Sidorsky 2022 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -337,7 +343,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/mallinson2019/unoptimized_xgboost_mallinson.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/unoptimized_xgboost_schiller.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -358,15 +364,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Mallinson 2019)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Schiller and Sidorsky 2022)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/mallinson2019/unoptimized_xgboost_mallinson.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/unoptimized_xgboost_schiller.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Mallinson 2019 XGBoost (Optimized)
+### Schiller and Sidorsky 2022 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -396,7 +402,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -416,7 +422,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/mallinson2019/optimized_xgboost_mallinson.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/optimized_xgboost_schiller.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -438,8 +444,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Mallinson 2019)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Schiller and Sidorsky 2022)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/mallinson2019/optimized_xgboost_mallinson.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/optimized_xgboost_schiller.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

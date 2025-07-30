@@ -1,4 +1,4 @@
-### Preprocessing Kreitzer & Boehmke 2016
+### Preprocessing Parinandi 2020
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -13,26 +13,26 @@ import pandas as pd
 import time
 import random
 import warnings
+import os
 
 warnings.filterwarnings('ignore')
 
 random.seed(1337)
 
 # Data
-kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
 covariates = [
-    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
-    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
 ]
 
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + covariates].dropna()
+parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
 
 # Define X and y
-X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
-X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
-y = kreitzer_boehmke_2016['adopt_policy']
+X = parinandi2020.drop(columns = ['oneemulation']).copy()
+y = parinandi2020['oneemulation']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -44,7 +44,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 Logistic (No Optimization)
+os.chdir("ml_application")
+
+### Parinandi 2020 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -62,7 +64,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.txt", "w") as f:
+with open("figures/parinandi2020/unoptimized_logistic_parinandi.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -83,15 +85,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Kreitzer & Boehmke 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Parinandi 2020)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/unoptimized_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 Regularized Logistic (Optimized)
+### Parinandi 2020 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -134,7 +136,7 @@ param_grid = [
 grid_search = GridSearchCV(
     estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
     param_grid = param_grid,
-    scoring = "f1", # F1 score good for maximizing precision and recall, but average_precision is better for balanced accuracy
+    scoring = "average_precision", 
     cv = 10,
     n_jobs = -1,
     verbose = 0,
@@ -158,7 +160,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.txt", "w") as f:
+with open("figures/parinandi2020/optimized_logistic_parinandi.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -180,15 +182,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Kreitzer & Boehmke 2016)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Parinandi 2020)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/optimized_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 RF (No Optimization)
+### Parinandi 2020 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -206,7 +208,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.txt", "w") as f:
+with open("figures/parinandi2020/unoptimized_rf_parinandi.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -227,15 +229,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Parinandi 2020)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/unoptimized_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 RF (Optimized)
+### Parinandi 2020 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -274,7 +276,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -294,9 +296,9 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/optimized_rf_kreitzer.txt", "w") as f:
+with open("figures/parinandi2020/optimized_rf_parinandi.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
-    f.write(f"F1 Macro Score: {f1}\n")
+    f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -316,15 +318,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Parinandi 2020)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/optimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/optimized_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 XGBoost (No Optimization)
+### Parinandi 2020 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -342,7 +344,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.txt", "w") as f:
+with open("figures/parinandi2020/unoptimized_xgboost_parinandi.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -363,15 +365,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Parinandi 2020)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/unoptimized_xgboost_parinandi.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Kreitzer & Boehmke 2016 XGBoost (Optimized)
+### Parinandi 2020 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -401,7 +403,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -421,7 +423,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.txt", "w") as f:
+with open("figures/parinandi2020/optimized_xgboost_parinandi.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -443,8 +445,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Parinandi 2020)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/optimized_xgboost_parinandi.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

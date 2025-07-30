@@ -1,4 +1,4 @@
-### Preprocessing Berry and Berry 1990
+### Preprocessing Boushey 2016
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -13,20 +13,25 @@ import pandas as pd
 import time
 import random
 import warnings
+import os
 
 warnings.filterwarnings('ignore')
 
 random.seed(1337)
 
 # Data
-berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
 
-berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
+# Covariates
+covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
+                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
+                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
+                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
+boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
 
 # Define X and y
-X = berry_berry1990.drop(columns = ['adopt', 'nbrpercn', 'state', 'year']).copy()
-y = berry_berry1990['adopt']
+X = boushey_2016[covariates].copy()
+y = boushey_2016['dvadopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -38,7 +43,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 Logistic (No Optimization)
+os.chdir("ml_application")
+
+### Boushey 2016 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -56,7 +63,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/unoptimized_logistic_berry.txt", "w") as f:
+with open("figures/boushey2016/unoptimized_logistic_boushey.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -77,15 +84,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Berry and Berry 1990)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Boushey 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/unoptimized_logistic_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/unoptimized_logistic_boushey.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 Regularized Logistic (Optimized)
+### Boushey 2016 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -128,7 +135,7 @@ param_grid = [
 grid_search = GridSearchCV(
     estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
     param_grid = param_grid,
-    scoring = "f1", # F1 score good for maximizing precision and recall, but average_precision is better for balanced accuracy
+    scoring = "average_precision",
     cv = 10,
     n_jobs = -1,
     verbose = 0,
@@ -152,7 +159,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/optimized_logistic_berry.txt", "w") as f:
+with open("figures/boushey2016/optimized_logistic_boushey.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -174,15 +181,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Berry and Berry 1990)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Boushey 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/optimized_logistic_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/optimized_logistic_boushey.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 RF (No Optimization)
+### Boushey 2016 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -200,7 +207,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/unoptimized_rf_berry.txt", "w") as f:
+with open("figures/boushey2016/unoptimized_rf_boushey.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -221,15 +228,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Berry and Berry 1990)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Boushey 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/unoptimized_rf_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/unoptimized_rf_boushey.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 RF (Optimized)
+### Boushey 2016 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -268,7 +275,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -288,7 +295,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/optimized_rf_berry.txt", "w") as f:
+with open("figures/boushey2016/optimized_rf_boushey.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -310,15 +317,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Berry and Berry 1990)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Boushey 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/optimized_rf_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/optimized_rf_boushey.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 XGBoost (No Optimization)
+### Boushey 2016 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -336,7 +343,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/unoptimized_xgboost_berry.txt", "w") as f:
+with open("figures/boushey2016/unoptimized_xgboost_boushey.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -357,15 +364,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Berry and Berry 1990)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Boushey 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/unoptimized_xgboost_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/unoptimized_xgboost_boushey.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 XGBoost (Optimized)
+### Boushey 2016 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -395,7 +402,7 @@ bayes_search = BayesSearchCV(
     cv = 10,
     n_jobs = -1,
     verbose = 0,
-    scoring = 'f1',
+    scoring = "average_precision",
     random_state = 1337
 )
 
@@ -415,7 +422,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/optimized_xgboost_berry.txt", "w") as f:
+with open("figures/boushey2016/optimized_xgboost_boushey.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -437,8 +444,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Berry and Berry 1990)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Boushey 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/optimized_xgboost_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/optimized_xgboost_boushey.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
