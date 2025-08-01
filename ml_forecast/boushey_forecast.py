@@ -25,11 +25,11 @@ covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
                 "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
 boushey_2016 = boushey_2016_full[["state", "year", "dvadopt"] + covariates].dropna()
 
-boushey_2016 = parinandi2020.sort_values(["state", "year"])
+boushey_2016 = boushey_2016.sort_values(["state", "year"])
 
 # Get year range
-min_year = parinandi2020['year'].min()
-max_year = parinandi2020['year'].max()
+min_year = boushey_2016['year'].min()
+max_year = boushey_2016['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
@@ -48,17 +48,17 @@ for train_end_year in range(mid_year, max_year):
     print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
     
     # Split data
-    train_data = parinandi2020[parinandi2020['year'] <= train_end_year]
-    test_data = parinandi2020[parinandi2020['year'] == test_year]
+    train_data = boushey_2016[boushey_2016['year'] <= train_end_year]
+    test_data = boushey_2016[boushey_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    y_train = train_data['oneemulation']
-    X_test = test_data.drop(columns = ['oneemulation', 'state'])
-    y_test = test_data['oneemulation']
+    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_train = train_data['dvadopt']
+    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_test = test_data['dvadopt']
     
     # Scale features
     scaler = StandardScaler()
@@ -139,7 +139,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/parinandi2020/t1_forecast_results.txt", "w") as f:
+with open("figures/boushey2016/t1_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -185,7 +185,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -202,7 +202,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi2020/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/boushey2016/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -222,17 +222,17 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
     
     # Split data
-    train_data = parinandi2020[parinandi2020['year'] <= train_end_year]
-    test_data = parinandi2020[parinandi2020['year'] == test_year]
+    train_data = boushey_2016[boushey_2016['year'] <= train_end_year]
+    test_data = boushey_2016[boushey_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    y_train = train_data['oneemulation']
-    X_test = test_data.drop(columns = ['oneemulation', 'state'])
-    y_test = test_data['oneemulation']
+    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_train = train_data['dvadopt']
+    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_test = test_data['dvadopt']
     
     # Scale features
     scaler = StandardScaler()
@@ -313,7 +313,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/parinandi2020/t5_forecast_results.txt", "w") as f:
+with open("figures/boushey2016/t5_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -359,7 +359,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -376,7 +376,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi2020/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/boushey2016/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -396,17 +396,17 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
     
     # Split data
-    train_data = parinandi2020[parinandi2020['year'] <= train_end_year]
-    test_data = parinandi2020[parinandi2020['year'] == test_year]
+    train_data = boushey_2016[boushey_2016['year'] <= train_end_year]
+    test_data = boushey_2016[boushey_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    y_train = train_data['oneemulation']
-    X_test = test_data.drop(columns = ['oneemulation', 'state'])
-    y_test = test_data['oneemulation']
+    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_train = train_data['dvadopt']
+    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_test = test_data['dvadopt']
     
     # Scale features
     scaler = StandardScaler()
@@ -487,7 +487,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/parinandi2020/t10_forecast_results.txt", "w") as f:
+with open("figures/boushey2016/t10_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -533,7 +533,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -550,4 +550,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi2020/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/boushey2016/t10_forecast_timeseries.csv', index = False)
