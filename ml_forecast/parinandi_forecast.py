@@ -1,4 +1,4 @@
-### Preprocessing t+1
+### Preprocessing and Rolling Window t+1
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -8,12 +8,12 @@ from sklearn.metrics import average_precision_score, precision_recall_curve
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 import random
 import warnings
 import os
 
 warnings.filterwarnings('ignore')
-
 random.seed(1337)
 
 # Data
@@ -26,603 +26,181 @@ covariates = [
 ]
 
 parinandi2020 = parinandi2020_full[["oneemulation", "state"] + covariates].dropna()
-
-# Sort by state and year
 parinandi2020 = parinandi2020.sort_values(["state", "year"])
 
-# Split by last year - use last year for testing, all prior years for training
-last_year = parinandi2020['year'].max()
-train_data = parinandi2020[parinandi2020['year'] < last_year]
-test_data = parinandi2020[parinandi2020['year'] == last_year]
+# Get year range
+min_year = parinandi2020['year'].min()
+max_year = parinandi2020['year'].max()
+mid_year = min_year + (max_year - min_year) // 2
 
-# Define X and y for train and test
-X_train = train_data.drop(columns = ['oneemulation', 'state'])
-y_train = train_data['oneemulation']
-X_test = test_data.drop(columns = ['oneemulation', 'state'])
-y_test = test_data['oneemulation']
-
-# Scale features
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-#--------------------------------------------------------------------------------------------------------
+# Initialize storage for results
+results = {
+    'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
+    'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
+    'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
+}
 
 os.chdir("ml_forecast")
 
-### Parinandi 2020 Logit Forecast t+1
+# Rolling window forecasting
+for train_end_year in range(mid_year, max_year):
+    test_year = train_end_year + 1
+    
+    print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
+    
+    # Split data
+    train_data = parinandi2020[parinandi2020['year'] <= train_end_year]
+    test_data = parinandi2020[parinandi2020['year'] == test_year]
+    
+    if len(test_data) == 0:
+        continue
+    
+    # Prepare features
+    X_train = train_data.drop(columns = ['oneemulation', 'state'])
+    y_train = train_data['oneemulation']
+    X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    y_test = test_data['oneemulation']
+    
+    # Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    
+    # Logistic Regression
+    logit_model = linear_model.LogisticRegression(
+        C = 0.1, 
+        class_weight = {0: 1, 1: 10}, 
+        fit_intercept = True,
+        penalty = 'l2', 
+        solver = 'liblinear', 
+        max_iter = 2500, 
+        random_state = 1337
+    )
 
-# Initialize regularized logistic regression with best parameters
-regularized_logit = linear_model.LogisticRegression(
-    C = 0.1,
-    class_weight = {0: 1, 1: 10},
-    fit_intercept = True,
-    penalty = 'l2',
-    solver = 'liblinear',
-    max_iter = 2500,
-    random_state = 1337
-)
+    logit_model.fit(X_train_scaled, y_train)
+    logit_pred = logit_model.predict(X_test_scaled)
+    logit_scores = logit_model.predict_proba(X_test_scaled)[:, 1]
+    
+    results['logit']['f1'].append(f1_score(y_test, logit_pred, average = "binary"))
+    results['logit']['balanced_acc'].append(balanced_accuracy_score(y_test, logit_pred))
+    results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores))
+    
+    # Random Forest
+    rf_model = RandomForestClassifier(
+        bootstrap = True, 
+        ccp_alpha = 0.0, 
+        class_weight = 'balanced', 
+        criterion = 'log_loss',
+        max_depth = None, 
+        max_features = None, 
+        max_leaf_nodes = None, 
+        max_samples = 0.5,
+        min_samples_leaf = 1,
+        min_samples_split = 4, 
+        n_estimators = 500, 
+        random_state = 1337
+    )
 
-# Fit the model
-regularized_logit.fit(X_train_scaled, y_train)
+    rf_model.fit(X_train_scaled, y_train)
+    rf_pred = rf_model.predict(X_test_scaled)
+    rf_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
+    
+    results['rf']['f1'].append(f1_score(y_test, rf_pred, average = "binary"))
+    results['rf']['balanced_acc'].append(balanced_accuracy_score(y_test, rf_pred))
+    results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
+    
+    # XGBoost
+    xgb_model = XGBClassifier(
+        booster = 'gbtree', 
+        colsample_bytree = 0.5, 
+        eval_metric = 'auc', 
+        gamma = 2,
+        grow_policy = 'lossguide', 
+        learning_rate = 0.1, 
+        max_bin = 16, 
+        max_depth = 20,
+        max_leaves = 0, 
+        min_child_weight = 1, 
+        n_estimators = 500, 
+        objective = 'binary:logistic',
+        reg_alpha = 2, 
+        reg_lambda = 1, 
+        scale_pos_weight = 5, 
+        subsample = 1.0,
+        tree_method = 'auto', 
+        random_state = 1337
+    )
 
-# Make predictions
-y_pred = regularized_logit.predict(X_test_scaled)
+    xgb_model.fit(X_train_scaled, y_train)
+    xgb_pred = xgb_model.predict(X_test_scaled)
+    xgb_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
+    
+    results['xgb']['f1'].append(f1_score(y_test, xgb_pred, average = "binary"))
+    results['xgb']['balanced_acc'].append(balanced_accuracy_score(y_test, xgb_pred))
+    results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
+# Save aggregated results
+with open("figures/parinandi2020/t1_forecast_results.txt", "w") as f:
+    for model in ['logit', 'rf', 'xgb']:
+        f.write(f"\n{model.upper()} Results:\n")
+        f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
+        f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
+        f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
-# Save metrics to file
-with open("figures/parinandi2020/forecast1_logistic_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
+# Plot time series of results from t+1 rolling window
+years = list(range(mid_year + 1, max_year + 1))
 
-# Get predicted probabilities for the positive class
-y_scores = regularized_logit.predict_proba(X_test_scaled)[:, 1]
+plt.figure(figsize = (15, 5))
 
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize = (7, 5))
-plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+1 (Regularized Logistic)\n(Parinandi 2020)')
+# F1 Score Over Time
+plt.subplot(1, 3, 1)
+plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
+plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
+plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
+plt.title('F1 Score Over Time (t+1 Forecasting)')
+plt.xlabel('Forecast Year')
+plt.ylabel('F1 Score')
 plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast1_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.grid(True, alpha = 0.3)
+
+# Balanced Accuracy Over Time
+plt.subplot(1, 3, 2)
+plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
+plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
+plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
+plt.title('Balanced Accuracy Over Time (t+1 Forecasting)')
+plt.xlabel('Forecast Year')
+plt.ylabel('Balanced Accuracy')
+plt.legend()
+plt.grid(True, alpha = 0.3)
+
+# AP Score Over Time
+plt.subplot(1, 3, 3)
+plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
+plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
+plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
+plt.title('Average Precision Score Over Time (t+1 Forecasting)')
+plt.xlabel('Forecast Year')
+plt.ylabel('AP Score')
+plt.legend()
+plt.grid(True, alpha = 0.3)
+
+plt.tight_layout()
+plt.savefig('figures/parinandi2020/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 RF Forecast t+1
-
-# Initialize Random Forest with best parameters
-rf_model = RandomForestClassifier(
-    bootstrap = True,
-    ccp_alpha = 0.0,
-    class_weight = 'balanced',
-    criterion = 'log_loss',
-    max_depth = None,
-    max_features = None,
-    max_leaf_nodes = None,
-    max_samples = 0.5,
-    min_samples_leaf = 1,
-    min_samples_split = 4,
-    n_estimators = 500,
-    random_state = 1337
-)
-
-# Fit the model
-rf_model.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = rf_model.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast1_rf_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize=(7, 5))
-plt.plot(recall, precision, label=f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+1 (Random Forest)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast1_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 XGBoost Forecast t+1
-
-# Initialize XGBoost with best parameters
-xgb_model = XGBClassifier(
-    booster = 'gbtree',
-    colsample_bytree = 0.5,
-    eval_metric = 'auc',
-    gamma = 2,
-    grow_policy = 'lossguide',
-    learning_rate = 0.1,
-    max_bin = 16,
-    max_depth = 20,
-    max_leaves = 0,
-    min_child_weight = 1,
-    n_estimators = 500,
-    objective = 'binary:logistic',
-    reg_alpha = 2,
-    reg_lambda = 1,
-    scale_pos_weight = 5,
-    subsample = 1.0,
-    tree_method = 'auto',
-    random_state = 1337
-)
-
-# Fit the model
-xgb_model.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = xgb_model.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast1_xgb_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize = (7, 5))
-plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+1 (XGBoost)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast1_xgb_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Preprocessing t+5
-
-parinandi2020 = parinandi2020_full[["oneemulation", "state"] + covariates].dropna()
-
-# Sort by state and year
-parinandi2020 = parinandi2020.sort_values(["state", "year"])
-
-# Split for t+5: use last year for testing, exclude 4 years prior
-last_year = parinandi2020['year'].max()
-cutoff_year = last_year - 5  # Remove 4 years prior, so training data ends at last_year - 5
-
-train_data = parinandi2020[parinandi2020['year'] <= cutoff_year]
-test_data = parinandi2020[parinandi2020['year'] == last_year]
-
-# Define X and y for train and test
-X_train = train_data.drop(columns = ['oneemulation', 'state'])
-y_train = train_data['oneemulation']
-X_test = test_data.drop(columns = ['oneemulation', 'state'])
-y_test = test_data['oneemulation']
-
-# Scale features
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 Logit Forecast t+5
-
-# Initialize regularized logistic regression with best parameters
-regularized_logit = linear_model.LogisticRegression(
-    C = 0.1,
-    class_weight = {0: 1, 1: 10},
-    fit_intercept = True,
-    penalty = 'l2',
-    solver = 'liblinear',
-    max_iter = 2500,
-    random_state = 1337
-)
-
-# Fit the model
-regularized_logit.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = regularized_logit.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast5_logistic_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = regularized_logit.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize = (7, 5))
-plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+5 (Regularized Logistic)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast5_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 RF Forecast t+5
-
-# Initialize Random Forest with best parameters
-rf_model = RandomForestClassifier(
-    bootstrap = True,
-    ccp_alpha = 0.0,
-    class_weight = 'balanced',
-    criterion = 'log_loss',
-    max_depth = None,
-    max_features = None,
-    max_leaf_nodes = None,
-    max_samples = 0.5,
-    min_samples_leaf = 1,
-    min_samples_split = 4,
-    n_estimators = 500,
-    random_state = 1337
-)
-
-# Fit the model
-rf_model.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = rf_model.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast5_rf_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize=(7, 5))
-plt.plot(recall, precision, label=f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+5 (Random Forest)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast5_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 XGBoost Forecast t+5
-
-# Initialize XGBoost with best parameters
-xgb_model = XGBClassifier(
-    booster = 'gbtree',
-    colsample_bytree = 0.5,
-    eval_metric = 'auc',
-    gamma = 2,
-    grow_policy = 'lossguide',
-    learning_rate = 0.1,
-    max_bin = 16,
-    max_depth = 20,
-    max_leaves = 0,
-    min_child_weight = 1,
-    n_estimators = 500,
-    objective = 'binary:logistic',
-    reg_alpha = 2,
-    reg_lambda = 1,
-    scale_pos_weight = 5,
-    subsample = 1.0,
-    tree_method = 'auto',
-    random_state = 1337
-)
-
-# Fit the model
-xgb_model.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = xgb_model.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast5_xgb_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize = (7, 5))
-plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+5 (XGBoost)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast5_xgb_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Preprocessing t+10
-
-parinandi2020 = parinandi2020_full[["oneemulation", "state"] + covariates].dropna()
-
-# Sort by state and year
-parinandi2020 = parinandi2020.sort_values(["state", "year"])
-
-# Split for t+10: use last year for testing, exclude 9 years prior
-last_year = parinandi2020['year'].max()
-cutoff_year = last_year - 10  # Remove 9 years prior, so training data ends at last_year - 10
-
-train_data = parinandi2020[parinandi2020['year'] <= cutoff_year]
-test_data = parinandi2020[parinandi2020['year'] == last_year]
-
-# Define X and y for train and test
-X_train = train_data.drop(columns = ['oneemulation', 'state'])
-y_train = train_data['oneemulation']
-X_test = test_data.drop(columns = ['oneemulation', 'state'])
-y_test = test_data['oneemulation']
-
-# Scale features
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 Logit Forecast t+10
-
-# Initialize regularized logistic regression with best parameters
-regularized_logit = linear_model.LogisticRegression(
-    C = 0.1,
-    class_weight = {0: 1, 1: 10},
-    fit_intercept = True,
-    penalty = 'l2',
-    solver = 'liblinear',
-    max_iter = 2500,
-    random_state = 1337
-)
-
-# Fit the model
-regularized_logit.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = regularized_logit.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast10_logistic_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = regularized_logit.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize = (7, 5))
-plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+10 (Regularized Logistic)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast10_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 RF Forecast t+10
-
-# Initialize Random Forest with best parameters
-rf_model = RandomForestClassifier(
-    bootstrap = True,
-    ccp_alpha = 0.0,
-    class_weight = 'balanced',
-    criterion = 'log_loss',
-    max_depth = None,
-    max_features = None,
-    max_leaf_nodes = None,
-    max_samples = 0.5,
-    min_samples_leaf = 1,
-    min_samples_split = 4,
-    n_estimators = 500,
-    random_state = 1337
-)
-
-# Fit the model
-rf_model.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = rf_model.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast10_rf_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize=(7, 5))
-plt.plot(recall, precision, label=f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+10 (Random Forest)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast10_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
-
-#--------------------------------------------------------------------------------------------------------
-
-### Parinandi 2020 XGBoost Forecast t+10
-
-# Initialize XGBoost with best parameters
-xgb_model = XGBClassifier(
-    booster = 'gbtree',
-    colsample_bytree = 0.5,
-    eval_metric = 'auc',
-    gamma = 2,
-    grow_policy = 'lossguide',
-    learning_rate = 0.1,
-    max_bin = 16,
-    max_depth = 20,
-    max_leaves = 0,
-    min_child_weight = 1,
-    n_estimators = 500,
-    objective = 'binary:logistic',
-    reg_alpha = 2,
-    reg_lambda = 1,
-    scale_pos_weight = 5,
-    subsample = 1.0,
-    tree_method = 'auto',
-    random_state = 1337
-)
-
-# Fit the model
-xgb_model.fit(X_train_scaled, y_train)
-
-# Make predictions
-y_pred = xgb_model.predict(X_test_scaled)
-
-# Evaluation
-f1 = f1_score(y_test, y_pred, average = "binary")
-balanced_acc = balanced_accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-
-# Save metrics to file
-with open("figures/parinandi2020/forecast10_xgb_parinandi.txt", "w") as f:
-    f.write(f"F1 Score: {f1}\n")
-    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-
-# Get predicted probabilities for the positive class
-y_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
-
-# Compute average precision (AUC PR)
-ap_score = average_precision_score(y_test, y_scores)
-
-# Compute precision-recall curve
-precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
-
-# Plot the PR curve
-plt.figure(figsize = (7, 5))
-plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('Forecast t+10 (XGBoost)\n(Parinandi 2020)')
-plt.legend()
-plt.grid(True)
-plt.savefig('figures/parinandi2020/forecast10_xgb_parinandi.png', dpi = 300, bbox_inches = 'tight')
-plt.show()
+# Save CSV
+time_series_results = pd.DataFrame({
+    'year': years,
+    'logit_f1': results['logit']['f1'],
+    'logit_balanced_acc': results['logit']['balanced_acc'],
+    'logit_ap_score': results['logit']['ap_score'],
+    'rf_f1': results['rf']['f1'],
+    'rf_balanced_acc': results['rf']['balanced_acc'],
+    'rf_ap_score': results['rf']['ap_score'],
+    'xgb_f1': results['xgb']['f1'],
+    'xgb_balanced_acc': results['xgb']['balanced_acc'],
+    'xgb_ap_score': results['xgb']['ap_score']
+})
+
+time_series_results.to_csv('figures/parinandi2020/t1_forecast_timeseries.csv', index = False)
