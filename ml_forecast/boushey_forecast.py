@@ -68,10 +68,11 @@ for train_end_year in range(mid_year, max_year):
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
         C = 0.1, 
-        class_weight = {0: 1, 1: 10}, 
+        class_weight = None, 
         fit_intercept = True,
-        penalty = 'l2', 
-        solver = 'liblinear', 
+        penalty = 'elasticnet', 
+        solver = 'saga',
+        l1_ratio = 0.5, 
         max_iter = 2500, 
         random_state = 1337
     )
@@ -86,16 +87,16 @@ for train_end_year in range(mid_year, max_year):
     
     # Random Forest
     rf_model = RandomForestClassifier(
-        bootstrap = True, 
-        ccp_alpha = 0.0, 
-        class_weight = 'balanced', 
-        criterion = 'log_loss',
-        max_depth = None, 
-        max_features = None, 
+        bootstrap = False, 
+        ccp_alpha = 0.00030910279803295017, 
+        class_weight = None, 
+        criterion = 'entropy',
+        max_depth = 50, 
+        max_features = 'sqrt', 
         max_leaf_nodes = None, 
-        max_samples = 0.5,
-        min_samples_leaf = 1,
-        min_samples_split = 4, 
+        max_samples = None,
+        min_samples_leaf = 4,
+        min_samples_split = 2, 
         n_estimators = 500, 
         random_state = 1337
     )
@@ -110,23 +111,23 @@ for train_end_year in range(mid_year, max_year):
     
     # XGBoost
     xgb_model = XGBClassifier(
-        booster = 'gbtree', 
-        colsample_bytree = 0.5, 
-        eval_metric = 'auc', 
+        booster = 'dart', 
+        colsample_bytree = 1.0, 
+        eval_metric = 'aucpr', 
         gamma = 2,
-        grow_policy = 'lossguide', 
-        learning_rate = 0.1, 
-        max_bin = 16, 
-        max_depth = 20,
+        grow_policy = 'depthwise', 
+        learning_rate = 0.01, 
+        max_bin = 64, 
+        max_depth = 6,
         max_leaves = 0, 
         min_child_weight = 1, 
         n_estimators = 500, 
         objective = 'binary:logistic',
-        reg_alpha = 2, 
-        reg_lambda = 1, 
-        scale_pos_weight = 5, 
-        subsample = 1.0,
-        tree_method = 'auto', 
+        reg_alpha = 0, 
+        reg_lambda = 2, 
+        scale_pos_weight = 1, 
+        subsample = 0.9045669393629667,
+        tree_method = 'exact', 
         random_state = 1337
     )
 
@@ -242,10 +243,11 @@ for train_end_year in range(mid_year, max_year - 4):
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
         C = 0.1, 
-        class_weight = {0: 1, 1: 10}, 
+        class_weight = None, 
         fit_intercept = True,
-        penalty = 'l2', 
-        solver = 'liblinear', 
+        penalty = 'elasticnet', 
+        solver = 'saga',
+        l1_ratio = 0.5, 
         max_iter = 2500, 
         random_state = 1337
     )
@@ -260,16 +262,16 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Random Forest
     rf_model = RandomForestClassifier(
-        bootstrap = True, 
-        ccp_alpha = 0.0, 
-        class_weight = 'balanced', 
-        criterion = 'log_loss',
-        max_depth = None, 
-        max_features = None, 
+        bootstrap = False, 
+        ccp_alpha = 0.00030910279803295017, 
+        class_weight = None, 
+        criterion = 'entropy',
+        max_depth = 50, 
+        max_features = 'sqrt', 
         max_leaf_nodes = None, 
-        max_samples = 0.5,
-        min_samples_leaf = 1,
-        min_samples_split = 4, 
+        max_samples = None,
+        min_samples_leaf = 4,
+        min_samples_split = 2, 
         n_estimators = 500, 
         random_state = 1337
     )
@@ -284,23 +286,23 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # XGBoost
     xgb_model = XGBClassifier(
-        booster = 'gbtree', 
-        colsample_bytree = 0.5, 
-        eval_metric = 'auc', 
+        booster = 'dart', 
+        colsample_bytree = 1.0, 
+        eval_metric = 'aucpr', 
         gamma = 2,
-        grow_policy = 'lossguide', 
-        learning_rate = 0.1, 
-        max_bin = 16, 
-        max_depth = 20,
+        grow_policy = 'depthwise', 
+        learning_rate = 0.01, 
+        max_bin = 64, 
+        max_depth = 6,
         max_leaves = 0, 
         min_child_weight = 1, 
         n_estimators = 500, 
         objective = 'binary:logistic',
-        reg_alpha = 2, 
-        reg_lambda = 1, 
-        scale_pos_weight = 5, 
-        subsample = 1.0,
-        tree_method = 'auto', 
+        reg_alpha = 0, 
+        reg_lambda = 2, 
+        scale_pos_weight = 1, 
+        subsample = 0.9045669393629667,
+        tree_method = 'exact', 
         random_state = 1337
     )
 
@@ -416,10 +418,11 @@ for train_end_year in range(mid_year, max_year - 9):
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
         C = 0.1, 
-        class_weight = {0: 1, 1: 10}, 
+        class_weight = None, 
         fit_intercept = True,
-        penalty = 'l2', 
-        solver = 'liblinear', 
+        penalty = 'elasticnet', 
+        solver = 'saga',
+        l1_ratio = 0.5, 
         max_iter = 2500, 
         random_state = 1337
     )
@@ -434,16 +437,16 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Random Forest
     rf_model = RandomForestClassifier(
-        bootstrap = True, 
-        ccp_alpha = 0.0, 
-        class_weight = 'balanced', 
-        criterion = 'log_loss',
-        max_depth = None, 
-        max_features = None, 
+        bootstrap = False, 
+        ccp_alpha = 0.00030910279803295017, 
+        class_weight = None, 
+        criterion = 'entropy',
+        max_depth = 50, 
+        max_features = 'sqrt', 
         max_leaf_nodes = None, 
-        max_samples = 0.5,
-        min_samples_leaf = 1,
-        min_samples_split = 4, 
+        max_samples = None,
+        min_samples_leaf = 4,
+        min_samples_split = 2, 
         n_estimators = 500, 
         random_state = 1337
     )
@@ -458,23 +461,23 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # XGBoost
     xgb_model = XGBClassifier(
-        booster = 'gbtree', 
-        colsample_bytree = 0.5, 
-        eval_metric = 'auc', 
+        booster = 'dart', 
+        colsample_bytree = 1.0, 
+        eval_metric = 'aucpr', 
         gamma = 2,
-        grow_policy = 'lossguide', 
-        learning_rate = 0.1, 
-        max_bin = 16, 
-        max_depth = 20,
+        grow_policy = 'depthwise', 
+        learning_rate = 0.01, 
+        max_bin = 64, 
+        max_depth = 6,
         max_leaves = 0, 
         min_child_weight = 1, 
         n_estimators = 500, 
         objective = 'binary:logistic',
-        reg_alpha = 2, 
-        reg_lambda = 1, 
-        scale_pos_weight = 5, 
-        subsample = 1.0,
-        tree_method = 'auto', 
+        reg_alpha = 0, 
+        reg_lambda = 2, 
+        scale_pos_weight = 1, 
+        subsample = 0.9045669393629667,
+        tree_method = 'exact', 
         random_state = 1337
     )
 
