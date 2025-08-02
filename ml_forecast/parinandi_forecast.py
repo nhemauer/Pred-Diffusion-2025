@@ -68,11 +68,11 @@ for train_end_year in range(mid_year, max_year):
     
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
-        C = 0.1, 
-        class_weight = {0: 1, 1: 10}, 
+        C = 0.001, 
+        class_weight = None, 
         fit_intercept = True,
-        penalty = 'l2', 
-        solver = 'liblinear', 
+        penalty = None, 
+        solver = 'lbfgs', 
         max_iter = 2500, 
         random_state = 1337
     )
@@ -89,15 +89,15 @@ for train_end_year in range(mid_year, max_year):
     rf_model = RandomForestClassifier(
         bootstrap = True, 
         ccp_alpha = 0.0, 
-        class_weight = 'balanced', 
-        criterion = 'log_loss',
-        max_depth = None, 
-        max_features = None, 
+        class_weight = None, 
+        criterion = 'gini',
+        max_depth = 10, 
+        max_features = 'log2', 
         max_leaf_nodes = None, 
-        max_samples = 0.5,
+        max_samples = None,
         min_samples_leaf = 1,
-        min_samples_split = 4, 
-        n_estimators = 500, 
+        min_samples_split = 2, 
+        n_estimators = 300, 
         random_state = 1337
     )
 
@@ -112,22 +112,22 @@ for train_end_year in range(mid_year, max_year):
     # XGBoost
     xgb_model = XGBClassifier(
         booster = 'gbtree', 
-        colsample_bytree = 0.5, 
-        eval_metric = 'auc', 
-        gamma = 2,
-        grow_policy = 'lossguide', 
-        learning_rate = 0.1, 
-        max_bin = 16, 
-        max_depth = 20,
-        max_leaves = 0, 
-        min_child_weight = 1, 
-        n_estimators = 500, 
+        colsample_bytree = 1.0, 
+        eval_metric = 'error', 
+        gamma = 0,
+        grow_policy = 'depthwise', 
+        learning_rate = 0.3, 
+        max_bin = 128, 
+        max_depth = 3,
+        max_leaves = 16, 
+        min_child_weight = 5, 
+        n_estimators = 300, 
         objective = 'binary:logistic',
-        reg_alpha = 2, 
+        reg_alpha = 0, 
         reg_lambda = 1, 
-        scale_pos_weight = 5, 
-        subsample = 1.0,
-        tree_method = 'auto', 
+        scale_pos_weight = 1, 
+        subsample = 0.7632039015158524,
+        tree_method = 'exact', 
         random_state = 1337
     )
 
@@ -140,7 +140,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/parinandi_2020/t1_forecast_results.txt", "w") as f:
+with open("figures/parinandi2020/t1_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -186,7 +186,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi_2020/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -203,7 +203,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi_2020/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/parinandi2020/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -242,11 +242,11 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
-        C = 0.1, 
-        class_weight = {0: 1, 1: 10}, 
+        C = 0.001, 
+        class_weight = None, 
         fit_intercept = True,
-        penalty = 'l2', 
-        solver = 'liblinear', 
+        penalty = None, 
+        solver = 'lbfgs', 
         max_iter = 2500, 
         random_state = 1337
     )
@@ -263,15 +263,15 @@ for train_end_year in range(mid_year, max_year - 4):
     rf_model = RandomForestClassifier(
         bootstrap = True, 
         ccp_alpha = 0.0, 
-        class_weight = 'balanced', 
-        criterion = 'log_loss',
-        max_depth = None, 
-        max_features = None, 
+        class_weight = None, 
+        criterion = 'gini',
+        max_depth = 10, 
+        max_features = 'log2', 
         max_leaf_nodes = None, 
-        max_samples = 0.5,
+        max_samples = None,
         min_samples_leaf = 1,
-        min_samples_split = 4, 
-        n_estimators = 500, 
+        min_samples_split = 2, 
+        n_estimators = 300, 
         random_state = 1337
     )
 
@@ -286,22 +286,22 @@ for train_end_year in range(mid_year, max_year - 4):
     # XGBoost
     xgb_model = XGBClassifier(
         booster = 'gbtree', 
-        colsample_bytree = 0.5, 
-        eval_metric = 'auc', 
-        gamma = 2,
-        grow_policy = 'lossguide', 
-        learning_rate = 0.1, 
-        max_bin = 16, 
-        max_depth = 20,
-        max_leaves = 0, 
-        min_child_weight = 1, 
-        n_estimators = 500, 
+        colsample_bytree = 1.0, 
+        eval_metric = 'error', 
+        gamma = 0,
+        grow_policy = 'depthwise', 
+        learning_rate = 0.3, 
+        max_bin = 128, 
+        max_depth = 3,
+        max_leaves = 16, 
+        min_child_weight = 5, 
+        n_estimators = 300, 
         objective = 'binary:logistic',
-        reg_alpha = 2, 
+        reg_alpha = 0, 
         reg_lambda = 1, 
-        scale_pos_weight = 5, 
-        subsample = 1.0,
-        tree_method = 'auto', 
+        scale_pos_weight = 1, 
+        subsample = 0.7632039015158524,
+        tree_method = 'exact', 
         random_state = 1337
     )
 
@@ -314,7 +314,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/parinandi_2020/t5_forecast_results.txt", "w") as f:
+with open("figures/parinandi2020/t5_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -360,7 +360,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi_2020/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -377,7 +377,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi_2020/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/parinandi2020/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -416,11 +416,11 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
-        C = 0.1, 
-        class_weight = {0: 1, 1: 10}, 
+        C = 0.001, 
+        class_weight = None, 
         fit_intercept = True,
-        penalty = 'l2', 
-        solver = 'liblinear', 
+        penalty = None, 
+        solver = 'lbfgs', 
         max_iter = 2500, 
         random_state = 1337
     )
@@ -437,15 +437,15 @@ for train_end_year in range(mid_year, max_year - 9):
     rf_model = RandomForestClassifier(
         bootstrap = True, 
         ccp_alpha = 0.0, 
-        class_weight = 'balanced', 
-        criterion = 'log_loss',
-        max_depth = None, 
-        max_features = None, 
+        class_weight = None, 
+        criterion = 'gini',
+        max_depth = 10, 
+        max_features = 'log2', 
         max_leaf_nodes = None, 
-        max_samples = 0.5,
+        max_samples = None,
         min_samples_leaf = 1,
-        min_samples_split = 4, 
-        n_estimators = 500, 
+        min_samples_split = 2, 
+        n_estimators = 300, 
         random_state = 1337
     )
 
@@ -460,22 +460,22 @@ for train_end_year in range(mid_year, max_year - 9):
     # XGBoost
     xgb_model = XGBClassifier(
         booster = 'gbtree', 
-        colsample_bytree = 0.5, 
-        eval_metric = 'auc', 
-        gamma = 2,
-        grow_policy = 'lossguide', 
-        learning_rate = 0.1, 
-        max_bin = 16, 
-        max_depth = 20,
-        max_leaves = 0, 
-        min_child_weight = 1, 
-        n_estimators = 500, 
+        colsample_bytree = 1.0, 
+        eval_metric = 'error', 
+        gamma = 0,
+        grow_policy = 'depthwise', 
+        learning_rate = 0.3, 
+        max_bin = 128, 
+        max_depth = 3,
+        max_leaves = 16, 
+        min_child_weight = 5, 
+        n_estimators = 300, 
         objective = 'binary:logistic',
-        reg_alpha = 2, 
+        reg_alpha = 0, 
         reg_lambda = 1, 
-        scale_pos_weight = 5, 
-        subsample = 1.0,
-        tree_method = 'auto', 
+        scale_pos_weight = 1, 
+        subsample = 0.7632039015158524,
+        tree_method = 'exact', 
         random_state = 1337
     )
 
@@ -488,7 +488,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/parinandi_2020/t10_forecast_results.txt", "w") as f:
+with open("figures/parinandi2020/t10_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -534,7 +534,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi_2020/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -551,4 +551,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi_2020/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/parinandi2020/t10_forecast_timeseries.csv', index = False)
