@@ -1,13 +1,13 @@
-Best Parameters Found: OrderedDict([('booster', 'gbtree'), ('colsample_bytree', 0.5), ('eval_metric', 'auc'), ('gamma', 2), ('grow_policy', 'depthwise'), ('learning_rate', 0.01), ('max_bin', 32), ('max_depth', 6), ('max_leaves', 0), ('min_child_weight', 10), ('n_estimators', 500), ('objective', 'binary:logistic'), ('reg_alpha', 0), ('reg_lambda', 1), ('scale_pos_weight', 10), ('subsample', 0.5592420436298493), ('tree_method', 'exact')])
-F1 Score: 0.22635408245755864
-Balanced Accuracy Score: 0.6190094569000819
+Best Parameters Found: OrderedDict([('booster', 'dart'), ('colsample_bytree', 0.5), ('eval_metric', 'logloss'), ('gamma', 0), ('grow_policy', 'lossguide'), ('learning_rate', 0.01), ('max_bin', 64), ('max_depth', 10), ('max_leaves', 0), ('min_child_weight', 1), ('n_estimators', 300), ('objective', 'binary:logistic'), ('reg_alpha', 0), ('reg_lambda', 1), ('scale_pos_weight', 1), ('subsample', 0.821214580506711), ('tree_method', 'approx')])
+F1 Score: 0.026666666666666665
+Balanced Accuracy Score: 0.5067567567567568
 Classification Report:
               precision    recall  f1-score   support
 
-         0.0       0.96      0.92      0.94      8448
-         1.0       0.18      0.32      0.23       444
+         0.0       0.95      1.00      0.97      8448
+         1.0       1.00      0.01      0.03       444
 
-    accuracy                           0.89      8892
-   macro avg       0.57      0.62      0.58      8892
-weighted avg       0.92      0.89      0.91      8892
-Model Fit Elapsed Time: 1068.88 Minutes
+    accuracy                           0.95      8892
+   macro avg       0.98      0.51      0.50      8892
+weighted avg       0.95      0.95      0.93      8892
+Model Fit Elapsed Time: 1471.32 Minutes

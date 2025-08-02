@@ -1,13 +1,13 @@
-Best Parameters Found: OrderedDict([('bootstrap', False), ('ccp_alpha', 0.0), ('class_weight', 'balanced'), ('criterion', 'log_loss'), ('max_depth', 25), ('max_features', 'log2'), ('max_leaf_nodes', None), ('max_samples', None), ('min_samples_leaf', 1), ('min_samples_split', 2), ('n_estimators', 300)])
-F1 Score: 0.2253521126760563
-Balanced Accuracy Score: 0.5745139654475597
+Best Parameters Found: OrderedDict([('bootstrap', False), ('ccp_alpha', 0.0), ('class_weight', 'balanced'), ('criterion', 'entropy'), ('max_depth', None), ('max_features', 'sqrt'), ('max_leaf_nodes', None), ('max_samples', None), ('min_samples_leaf', 1), ('min_samples_split', 3), ('n_estimators', 500)])
+F1 Score: 0.22966507177033496
+Balanced Accuracy Score: 0.5747538598940033
 Classification Report:
               precision    recall  f1-score   support
 
          0.0       0.98      1.00      0.99      8337
-         1.0       0.43      0.15      0.23       157
+         1.0       0.46      0.15      0.23       157
 
     accuracy                           0.98      8494
-   macro avg       0.71      0.57      0.61      8494
+   macro avg       0.72      0.57      0.61      8494
 weighted avg       0.97      0.98      0.98      8494
-Model Fit Elapsed Time: 399.36 Minutes
+Model Fit Elapsed Time: 412.48 Minutes

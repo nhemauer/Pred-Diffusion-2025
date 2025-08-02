@@ -9,4 +9,4 @@ Classification Report:
     accuracy                           0.98      5933
    macro avg       0.49      0.50      0.49      5933
 weighted avg       0.96      0.98      0.97      5933
-Model Fit Elapsed Time: 0.00 Minutes
+Model Fit Elapsed Time: 0.01 Minutes
