@@ -18,7 +18,7 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
+parinandi_2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
 covariates = [
     "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
@@ -26,11 +26,11 @@ covariates = [
     "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year"
 ]
 
-parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
+parinandi_2020 = parinandi_2020_full[["oneemulation"] + covariates].dropna()
 
 # Define X and y
-X = parinandi2020.drop(columns = ['oneemulation']).copy()
-y = parinandi2020['oneemulation']
+X = parinandi_2020.drop(columns = ['oneemulation']).copy()
+y = parinandi_2020['oneemulation']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
