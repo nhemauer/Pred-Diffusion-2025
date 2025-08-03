@@ -23,7 +23,7 @@ parinandi_2020_full = pd.read_stata(r"data/parinandi2020.dta")
 covariates = [
     "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
     "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
-    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1"
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
 ]
 
 parinandi_2020 = parinandi_2020_full[["oneemulation"] + covariates].dropna()
@@ -70,7 +70,7 @@ results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores
 
 # Generate classification report for logistic regression
 logit_report = classification_report(y_test, logit_pred)
-with open('figures/parinandi2020/logit_no_featureyear.txt', 'w') as f:
+with open('figures/parinandi2020/logit_counter.txt', 'w') as f:
     f.write("Logistic Regression Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(logit_report)
@@ -86,7 +86,7 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Logistic Regression')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/logit_no_featureyear_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/logit_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Random Forest
@@ -115,7 +115,7 @@ results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
 
 # Generate classification report for Random Forest
 rf_report = classification_report(y_test, rf_pred)
-with open('figures/parinandi2020/rf_no_featureyear.txt', 'w') as f:
+with open('figures/parinandi2020/rf_counter.txt', 'w') as f:
     f.write("Random Forest Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(rf_report)
@@ -131,7 +131,7 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Random Forest')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/rf_no_featureyear_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/rf_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # XGBoost
@@ -166,7 +166,7 @@ results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Generate classification report for XGBoost
 xgb_report = classification_report(y_test, xgb_pred)
-with open('figures/parinandi2020/xgb_no_featureyear.txt', 'w') as f:
+with open('figures/parinandi2020/xgb_counter.txt', 'w') as f:
     f.write("XGBoost Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(xgb_report)
@@ -182,11 +182,11 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - XGBoost')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/xgb_no_featureyear.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/xgb_counter.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Save Results
-with open('figures/parinandi2020/parinandi_no_featureyear_results.txt', 'w') as f:
+with open('figures/parinandi2020/parinandi_counter_results.txt', 'w') as f:
     f.write("Model Performance Results\n")
     f.write("=" * 40 + "\n\n")
     
