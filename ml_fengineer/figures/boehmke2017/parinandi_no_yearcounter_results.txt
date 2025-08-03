@@ -1,0 +1,18 @@
+Model Performance Results
+========================================
+
+LOGIT Model:
+  f1: 0.1596
+  balanced_acc: 0.6722
+  ap_score: 0.1542
+
+RF Model:
+  f1: 0.0000
+  balanced_acc: 0.5000
+  ap_score: 0.1695
+
+XGB Model:
+  f1: 0.0134
+  balanced_acc: 0.5033
+  ap_score: 0.1672
+

@@ -29,7 +29,7 @@ boehmke_2017 = boehmke_2017_full[["state", "year", "statepol", "adopt"] + covari
 
 # Define X and y
 X = boehmke_2017.drop(columns = ['adopt', 'year', 'statepol']).copy()
-X = pd.get_dummies(X, columns = ['state'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
+X = pd.get_dummies(X, columns = ['state'], drop_first = True)
 y = boehmke_2017['adopt']
 
 # Split into train and test sets
