@@ -1,4 +1,4 @@
-### Preprocessing Parinandi 2020
+### Preprocessing Boushey 2016
 
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -18,18 +18,17 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-parinandi_2020_full = pd.read_stata(r"data/parinandi2020.dta")
+boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
 
-covariates = [
-    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
-    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
-    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
-]
-
-parinandi_2020 = parinandi_2020_full[["oneemulation", "state", "featurenumber"] + covariates].dropna()
+# Covariates
+covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
+                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
+                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
+                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
+boushey_2016 = boushey_2016_full[["state", "year", "dvadopt", "billnum"] + covariates].dropna()
 
 # Add running count of number of states that adopted the policy up to t-1
-parinandi_2020 = parinandi_2020.sort_values(['featurenumber', 'year']).reset_index(drop = True)
+boushey_2016 = boushey_2016.sort_values(['billnum', 'year']).reset_index(drop = True)
 
 # Create a function to calculate running adoption count
 def calculate_running_adoption_count(df):
@@ -37,8 +36,8 @@ def calculate_running_adoption_count(df):
     df['running_adoption_count'] = 0
     
     # Group by featurenumber (policy type)
-    for feature_num in df['featurenumber'].unique():
-        feature_mask = df['featurenumber'] == feature_num
+    for feature_num in df['billnum'].unique():
+        feature_mask = df['billnum'] == feature_num
         feature_df = df[feature_mask].copy()
         
         # Track which states have adopted this policy by year
@@ -49,21 +48,18 @@ def calculate_running_adoption_count(df):
             
             # Add states that adopted before current year
             for prev_idx in feature_df.index:
-                if df.loc[prev_idx, 'year'] < current_year and df.loc[prev_idx, 'oneemulation'] == 1:
+                if df.loc[prev_idx, 'year'] < current_year and df.loc[prev_idx, 'dvadopt'] == 1:
                     adopted_states.add(df.loc[prev_idx, 'state'])
             
             df.loc[idx, 'running_adoption_count'] = len(adopted_states)
     
     return df
 
-parinandi_2020 = calculate_running_adoption_count(parinandi_2020)
-
-# Update covariates
-covariates = covariates + ['running_adoption_count']
+boushey_2016 = calculate_running_adoption_count(boushey_2016)
 
 # Define X and y
-X = parinandi_2020.drop(columns = ['oneemulation', 'state', 'featurenumber']).copy()
-y = parinandi_2020['oneemulation']
+X = boushey_2016[covariates].copy()
+y = boushey_2016['dvadopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -84,11 +80,12 @@ os.chdir("ml_fengineer")
 
 # Logistic Regression
 logit_model = linear_model.LogisticRegression(
-    C = 0.001, 
+    C = 0.1, 
     class_weight = None, 
     fit_intercept = True,
-    penalty = None, 
-    solver = 'lbfgs', 
+    penalty = 'elasticnet', 
+    solver = 'saga',
+    l1_ratio = 0.5, 
     max_iter = 2500, 
     random_state = 1337
 )
@@ -103,7 +100,7 @@ results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores
 
 # Generate classification report for logistic regression
 logit_report = classification_report(y_test, logit_pred)
-with open('figures/parinandi2020/logit_counter.txt', 'w') as f:
+with open('figures/boushey2016/logit_counter.txt', 'w') as f:
     f.write("Logistic Regression Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(logit_report)
@@ -119,22 +116,22 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Logistic Regression')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/logit_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/logit_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Random Forest
 rf_model = RandomForestClassifier(
-    bootstrap = True, 
-    ccp_alpha = 0.0, 
+    bootstrap = False, 
+    ccp_alpha = 0.00030910279803295017, 
     class_weight = None, 
-    criterion = 'gini',
-    max_depth = 10, 
-    max_features = 'log2', 
+    criterion = 'entropy',
+    max_depth = 50, 
+    max_features = 'sqrt', 
     max_leaf_nodes = None, 
     max_samples = None,
-    min_samples_leaf = 1,
+    min_samples_leaf = 4,
     min_samples_split = 2, 
-    n_estimators = 300, 
+    n_estimators = 500, 
     random_state = 1337
 )
 
@@ -148,7 +145,7 @@ results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
 
 # Generate classification report for Random Forest
 rf_report = classification_report(y_test, rf_pred)
-with open('figures/parinandi2020/rf_counter.txt', 'w') as f:
+with open('figures/boushey2016/rf_counter.txt', 'w') as f:
     f.write("Random Forest Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(rf_report)
@@ -164,27 +161,27 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Random Forest')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/rf_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/rf_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # XGBoost
 xgb_model = XGBClassifier(
-    booster = 'gbtree', 
+    booster = 'dart', 
     colsample_bytree = 1.0, 
-    eval_metric = 'error', 
-    gamma = 0,
+    eval_metric = 'aucpr', 
+    gamma = 2,
     grow_policy = 'depthwise', 
-    learning_rate = 0.3, 
-    max_bin = 128, 
-    max_depth = 3,
-    max_leaves = 16, 
-    min_child_weight = 5, 
-    n_estimators = 300, 
+    learning_rate = 0.01, 
+    max_bin = 64, 
+    max_depth = 6,
+    max_leaves = 0, 
+    min_child_weight = 1, 
+    n_estimators = 500, 
     objective = 'binary:logistic',
     reg_alpha = 0, 
-    reg_lambda = 1, 
+    reg_lambda = 2, 
     scale_pos_weight = 1, 
-    subsample = 0.7632039015158524,
+    subsample = 0.9045669393629667,
     tree_method = 'exact', 
     random_state = 1337
 )
@@ -199,7 +196,7 @@ results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Generate classification report for XGBoost
 xgb_report = classification_report(y_test, xgb_pred)
-with open('figures/parinandi2020/xgb_counter.txt', 'w') as f:
+with open('figures/boushey2016/xgb_counter.txt', 'w') as f:
     f.write("XGBoost Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(xgb_report)
@@ -215,11 +212,11 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - XGBoost')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/xgb_counter.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/xgb_counter.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Save Results
-with open('figures/parinandi2020/parinandi_counter_results.txt', 'w') as f:
+with open('figures/boushey2016/parinandi_counter_results.txt', 'w') as f:
     f.write("Model Performance Results\n")
     f.write("=" * 40 + "\n\n")
     
