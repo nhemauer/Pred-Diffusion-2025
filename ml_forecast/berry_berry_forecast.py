@@ -52,10 +52,10 @@ for train_end_year in range(mid_year, max_year):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_train = train_data['dvadopt']
-    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_test = test_data['dvadopt']
+    X_train = train_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
+    y_test = test_data['adopt']
     
     # Scale features
     scaler = StandardScaler()
@@ -137,7 +137,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/boushey2016/t1_forecast_results.txt", "w") as f:
+with open("figures/berry_berry1990/t1_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -183,7 +183,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/boushey2016/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -200,7 +200,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/boushey2016/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/berry_berry1990/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -227,10 +227,10 @@ for train_end_year in range(mid_year, max_year - 4):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_train = train_data['dvadopt']
-    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_test = test_data['dvadopt']
+    X_train = train_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
+    y_test = test_data['adopt']
     
     # Scale features
     scaler = StandardScaler()
@@ -312,7 +312,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/boushey2016/t5_forecast_results.txt", "w") as f:
+with open("figures/berry_berry1990/t5_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -358,7 +358,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/boushey2016/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -375,7 +375,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/boushey2016/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/berry_berry1990/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -402,10 +402,10 @@ for train_end_year in range(mid_year, max_year - 9):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_train = train_data['dvadopt']
-    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_test = test_data['dvadopt']
+    X_train = train_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
+    y_test = test_data['adopt']
     
     # Scale features
     scaler = StandardScaler()
@@ -487,7 +487,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Save aggregated results
-with open("figures/boushey2016/t10_forecast_results.txt", "w") as f:
+with open("figures/berry_berry1990/t10_forecast_results.txt", "w") as f:
     for model in ['logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
@@ -533,7 +533,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/boushey2016/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -550,4 +550,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/boushey2016/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/berry_berry1990/t10_forecast_timeseries.csv', index = False)
