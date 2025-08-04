@@ -53,12 +53,6 @@ for train_end_year in range(mid_year, max_year):
     
     if len(test_data) == 0:
         continue
-    
-    # Prepare features
-    X_train = train_data.drop(columns = ['adoption', 'state', 'year', 'policy'])
-    y_train = train_data['adoption']
-    X_test = test_data.drop(columns = ['adoption', 'state', 'year', 'policy'])
-    y_test = test_data['adoption']
 
     # Prepare features
     X_train = train_data.drop(columns = ['adoption', 'state', 'policy'])
@@ -251,10 +245,25 @@ for train_end_year in range(mid_year, max_year - 4):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_train = train_data['dvadopt']
-    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_test = test_data['dvadopt']
+    X_train = train_data.drop(columns = ['adoption', 'state', 'policy'])
+    X_test = test_data.drop(columns = ['adoption', 'state', 'policy'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(bricker_lacombe_2021['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
+    y_train = train_data['adoption']
+    y_test = test_data['adoption']
     
     # Scale features
     scaler = StandardScaler()
@@ -426,10 +435,25 @@ for train_end_year in range(mid_year, max_year - 9):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_train = train_data['dvadopt']
-    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
-    y_test = test_data['dvadopt']
+    X_train = train_data.drop(columns = ['adoption', 'state', 'policy'])
+    X_test = test_data.drop(columns = ['adoption', 'state', 'policy'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(bricker_lacombe_2021['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
+    y_train = train_data['adoption']
+    y_test = test_data['adoption']
     
     # Scale features
     scaler = StandardScaler()

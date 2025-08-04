@@ -51,13 +51,28 @@ for train_end_year in range(mid_year, max_year):
     
     if len(test_data) == 0:
         continue
-    
+
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'year', 'state'])
-    y_train = train_data['adopt']
-    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
-    y_test = test_data['adopt']
+    X_train = train_data.drop(columns = ['adopt', 'state'])
+    X_test = test_data.drop(columns = ['adopt', 'state'])
     
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(boehmke_2017['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
+    y_train = train_data['adopt']
+    y_test = test_data['adopt']
+
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -227,9 +242,24 @@ for train_end_year in range(mid_year, max_year - 4):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'year', 'state'])
+    X_train = train_data.drop(columns = ['adopt', 'state'])
+    X_test = test_data.drop(columns = ['adopt', 'state'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(boehmke_2017['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
     y_train = train_data['adopt']
-    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
     y_test = test_data['adopt']
     
     # Scale features
@@ -401,9 +431,24 @@ for train_end_year in range(mid_year, max_year - 9):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'year', 'state'])
+    X_train = train_data.drop(columns = ['adopt', 'state'])
+    X_test = test_data.drop(columns = ['adopt', 'state'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(boehmke_2017['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
     y_train = train_data['adopt']
-    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
     y_test = test_data['adopt']
     
     # Scale features

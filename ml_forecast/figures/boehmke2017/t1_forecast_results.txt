@@ -1,15 +1,15 @@
 
 LOGIT Results:
-Average F1: 0.1562 (±0.0407)
-Average Balanced Acc: 0.5709 (±0.0389)
-Average AP Score: 0.1597 (±0.0644)
+Average F1: 0.1693 (±0.0454)
+Average Balanced Acc: 0.5920 (±0.0569)
+Average AP Score: 0.1594 (±0.0642)
 
 RF Results:
-Average F1: 0.0065 (±0.0137)
-Average Balanced Acc: 0.5014 (±0.0031)
-Average AP Score: 0.1462 (±0.0535)
+Average F1: 0.0000 (±0.0000)
+Average Balanced Acc: 0.5000 (±0.0000)
+Average AP Score: 0.1530 (±0.0608)
 
 XGB Results:
-Average F1: 0.0051 (±0.0104)
-Average Balanced Acc: 0.5010 (±0.0023)
-Average AP Score: 0.1499 (±0.0631)
+Average F1: 0.0026 (±0.0063)
+Average Balanced Acc: 0.5005 (±0.0016)
+Average AP Score: 0.1523 (±0.0625)
