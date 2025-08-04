@@ -30,7 +30,7 @@ bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "ad
 
 # Define X and y
 X = bricker_lacombe_2021[['year'] + covariates].copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
 y = bricker_lacombe_2021['adoption']
 
 # Split into train and test sets

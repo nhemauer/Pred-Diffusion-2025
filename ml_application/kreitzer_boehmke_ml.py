@@ -32,7 +32,7 @@ kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + c
 
 # Define X and y
 X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
-X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
+X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)
 y = kreitzer_boehmke_2016['adopt_policy']
 
 # Split into train and test sets

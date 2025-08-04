@@ -32,7 +32,7 @@ lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno"] + covari
 
 # Define X and y
 X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)  # drop_first just to avoid issues with logit, but probably not necessary because sklearn handles it
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
 y = lacombe_boehmke2021['adoption']
 
 # Split into train and test sets
