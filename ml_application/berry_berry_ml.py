@@ -26,7 +26,7 @@ berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "
 berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
 
 # Define X and y
-X = berry_berry1990.drop(columns = ['adopt', 'nbrpercn', 'state', 'year']).copy()
+X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
 y = berry_berry1990['adopt']
 
 # Split into train and test sets
