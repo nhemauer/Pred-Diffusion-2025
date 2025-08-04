@@ -28,8 +28,8 @@ bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "ad
 bricker_lacombe_2021 = bricker_lacombe_2021.sort_values(["state", "year"])
 
 # Get year range
-min_year = bricker_lacombe_2021['year'].min()
-max_year = bricker_lacombe_2021['year'].max()
+min_year = int(bricker_lacombe_2021['year'].min())
+max_year = int(bricker_lacombe_2021['year'].max())
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
