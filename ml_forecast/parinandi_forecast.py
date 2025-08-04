@@ -57,8 +57,23 @@ for train_end_year in range(mid_year, max_year):
     
     # Prepare features
     X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    y_train = train_data['oneemulation']
     X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(parinandi_2020['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
+    y_train = train_data['oneemulation']
     y_test = test_data['oneemulation']
     
     # Scale features
@@ -231,8 +246,23 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Prepare features
     X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    y_train = train_data['oneemulation']
     X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(parinandi_2020['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
+    y_train = train_data['oneemulation']
     y_test = test_data['oneemulation']
     
     # Scale features
@@ -405,8 +435,23 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Prepare features
     X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    y_train = train_data['oneemulation']
     X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    
+    # Create dummy variables for ALL possible years in the dataset
+    all_years = sorted(parinandi_2020['year'].unique())
+    
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    
+    y_train = train_data['oneemulation']
     y_test = test_data['oneemulation']
     
     # Scale features
