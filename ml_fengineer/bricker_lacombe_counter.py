@@ -21,14 +21,42 @@ random.seed(1337)
 bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
 
 # Covariates
-covariates = ["std_score","initiative","init_sigs","std_population",
-                "std_citideology","unified","std_income","std_legp_squire"]
-bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
+covariates = ["std_score","initiative","init_sigs","std_population","std_citideology",
+              "unified","std_income","std_legp_squire", 'duration','durationsq','durationcb','year']
+bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "policy", "adoption"] + covariates].dropna()
 
 bricker_lacombe_2021 = bricker_lacombe_2021.sort_values(["state", "year"])
 
+# Create a function to calculate running adoption count
+def calculate_running_adoption_count(df):
+    df = df.copy()
+    df['running_adoption_count'] = 0
+    
+    # Group by featurenumber (policy type)
+    for feature_num in df['policy'].unique():
+        feature_mask = df['policy'] == feature_num
+        feature_df = df[feature_mask].copy()
+        
+        # Track which states have adopted this policy by year
+        adopted_states = set()
+        
+        for idx in feature_df.index:
+            current_year = df.loc[idx, 'year']
+            
+            # Add states that adopted before current year
+            for prev_idx in feature_df.index:
+                if df.loc[prev_idx, 'year'] < current_year and df.loc[prev_idx, 'adoption'] == 1:
+                    adopted_states.add(df.loc[prev_idx, 'state'])
+            
+            df.loc[idx, 'running_adoption_count'] = len(adopted_states)
+    
+    return df
+
+bricker_lacombe_2021 = calculate_running_adoption_count(bricker_lacombe_2021)
+
 # Define X and y
 X = bricker_lacombe_2021[covariates].copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
 y = bricker_lacombe_2021['adoption']
 
 # Split into train and test sets
@@ -70,7 +98,7 @@ results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores
 
 # Generate classification report for logistic regression
 logit_report = classification_report(y_test, logit_pred)
-with open('figures/bricker_lacombe2021/logit_no_year.txt', 'w') as f:
+with open('figures/bricker_lacombe2021/logit_counter.txt', 'w') as f:
     f.write("Logistic Regression Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(logit_report)
@@ -86,7 +114,7 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Logistic Regression')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/bricker_lacombe2021/logit_no_year_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/logit_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Random Forest
@@ -115,7 +143,7 @@ results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
 
 # Generate classification report for Random Forest
 rf_report = classification_report(y_test, rf_pred)
-with open('figures/bricker_lacombe2021/rf_no_year.txt', 'w') as f:
+with open('figures/bricker_lacombe2021/rf_counter.txt', 'w') as f:
     f.write("Random Forest Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(rf_report)
@@ -131,7 +159,7 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Random Forest')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/bricker_lacombe2021/rf_no_year_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/rf_counter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # XGBoost
@@ -166,7 +194,7 @@ results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Generate classification report for XGBoost
 xgb_report = classification_report(y_test, xgb_pred)
-with open('figures/bricker_lacombe2021/xgb_no_year.txt', 'w') as f:
+with open('figures/bricker_lacombe2021/xgb_counter.txt', 'w') as f:
     f.write("XGBoost Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(xgb_report)
@@ -182,11 +210,11 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - XGBoost')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/bricker_lacombe2021/xgb_no_year.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/xgb_counter.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Save Results
-with open('figures/bricker_lacombe2021/bricker_no_year_results.txt', 'w') as f:
+with open('figures/bricker_lacombe2021/bricker_counter_results.txt', 'w') as f:
     f.write("Model Performance Results\n")
     f.write("=" * 40 + "\n\n")
     
