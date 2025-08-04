@@ -68,7 +68,7 @@ results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores
 
 # Generate classification report for logistic regression
 logit_report = classification_report(y_test, logit_pred)
-with open('figures/boehmke2017/logit_no_yearcounter.txt', 'w') as f:
+with open('figures/boehmke2017/logit_no_year.txt', 'w') as f:
     f.write("Logistic Regression Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(logit_report)
@@ -84,7 +84,7 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Logistic Regression')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boehmke2017/logit_no_yearcounter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/logit_no_year_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Random Forest
@@ -113,7 +113,7 @@ results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
 
 # Generate classification report for Random Forest
 rf_report = classification_report(y_test, rf_pred)
-with open('figures/boehmke2017/rf_no_yearcounter.txt', 'w') as f:
+with open('figures/boehmke2017/rf_no_year.txt', 'w') as f:
     f.write("Random Forest Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(rf_report)
@@ -129,7 +129,7 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - Random Forest')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boehmke2017/rf_no_yearcounter_pr_curve.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/rf_no_year_pr_curve.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # XGBoost
@@ -164,7 +164,7 @@ results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
 
 # Generate classification report for XGBoost
 xgb_report = classification_report(y_test, xgb_pred)
-with open('figures/boehmke2017/xgb_no_yearcounter.txt', 'w') as f:
+with open('figures/boehmke2017/xgb_no_year.txt', 'w') as f:
     f.write("XGBoost Classification Report\n")
     f.write("=" * 50 + "\n")
     f.write(xgb_report)
@@ -180,11 +180,11 @@ plt.ylabel('Precision')
 plt.title('Precision-Recall Curve - XGBoost')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boehmke2017/xgb_no_yearcounter.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/xgb_no_year.png', dpi = 300, bbox_inches = 'tight')
 plt.close()
 
 # Save Results
-with open('figures/boehmke2017/parinandi_no_yearcounter_results.txt', 'w') as f:
+with open('figures/boehmke2017/boehmke_no_year_results.txt', 'w') as f:
     f.write("Model Performance Results\n")
     f.write("=" * 40 + "\n\n")
     

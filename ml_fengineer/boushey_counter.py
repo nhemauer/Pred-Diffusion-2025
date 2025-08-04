@@ -216,7 +216,7 @@ plt.savefig('figures/boushey2016/xgb_counter.png', dpi = 300, bbox_inches = 'tig
 plt.close()
 
 # Save Results
-with open('figures/boushey2016/parinandi_counter_results.txt', 'w') as f:
+with open('figures/boushey2016/boushey_counter_results.txt', 'w') as f:
     f.write("Model Performance Results\n")
     f.write("=" * 40 + "\n\n")
     
