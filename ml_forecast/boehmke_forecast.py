@@ -165,7 +165,7 @@ for train_end_year in range(mid_year, max_year):
 
 # Save aggregated results
 with open("figures/boehmke2017/t1_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
@@ -216,6 +216,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
@@ -366,7 +369,7 @@ for train_end_year in range(mid_year, max_year - 4):
 
 # Save aggregated results
 with open("figures/boehmke2017/t5_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
@@ -417,6 +420,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
