@@ -149,7 +149,7 @@ for train_end_year in range(mid_year, max_year):
 
 # Save aggregated results
 with open("figures/berry_berry1990/t1_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
@@ -335,7 +335,7 @@ for train_end_year in range(mid_year, max_year - 4):
 
 # Save aggregated results
 with open("figures/berry_berry1990/t5_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
