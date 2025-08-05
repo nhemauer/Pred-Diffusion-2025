@@ -162,6 +162,7 @@ plt.figure(figsize = (15, 5))
 
 # F1 Score Over Time
 plt.subplot(1, 3, 1)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
 plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
@@ -173,6 +174,7 @@ plt.grid(True, alpha = 0.3)
 
 # Balanced Accuracy Over Time
 plt.subplot(1, 3, 2)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
@@ -184,6 +186,7 @@ plt.grid(True, alpha = 0.3)
 
 # AP Score Over Time
 plt.subplot(1, 3, 3)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
@@ -200,6 +203,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
@@ -348,6 +354,7 @@ plt.figure(figsize = (15, 5))
 
 # F1 Score Over Time
 plt.subplot(1, 3, 1)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
 plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
@@ -359,6 +366,7 @@ plt.grid(True, alpha = 0.3)
 
 # Balanced Accuracy Over Time
 plt.subplot(1, 3, 2)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
@@ -370,6 +378,7 @@ plt.grid(True, alpha = 0.3)
 
 # AP Score Over Time
 plt.subplot(1, 3, 3)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
@@ -386,6 +395,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
