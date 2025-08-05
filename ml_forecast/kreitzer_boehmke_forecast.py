@@ -35,6 +35,7 @@ mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
 results = {
+    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
@@ -80,6 +81,17 @@ for train_end_year in range(mid_year, max_year):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+
+    # Original Logit
+    original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
+
+    original_model.fit(X_train_scaled, y_train)
+    original_pred = original_model.predict(X_test_scaled)
+    original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
+    
+    results['original']['f1'].append(f1_score(y_test, original_pred, average = "binary"))
+    results['original']['balanced_acc'].append(balanced_accuracy_score(y_test, original_pred))
+    results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
     
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
@@ -157,7 +169,7 @@ for train_end_year in range(mid_year, max_year):
 
 # Save aggregated results
 with open("figures/kreitzer_boehmke2016/t1_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
@@ -170,6 +182,7 @@ plt.figure(figsize = (15, 5))
 
 # F1 Score Over Time
 plt.subplot(1, 3, 1)
+plt.plot(years, results['original']['f1'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
 plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
@@ -181,6 +194,7 @@ plt.grid(True, alpha = 0.3)
 
 # Balanced Accuracy Over Time
 plt.subplot(1, 3, 2)
+plt.plot(years, results['original']['balanced_acc'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
@@ -192,6 +206,7 @@ plt.grid(True, alpha = 0.3)
 
 # AP Score Over Time
 plt.subplot(1, 3, 3)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
@@ -208,6 +223,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
@@ -227,6 +245,7 @@ time_series_results.to_csv('figures/kreitzer_boehmke2016/t1_forecast_timeseries.
 
 # Initialize storage for results
 results = {
+    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
@@ -270,6 +289,17 @@ for train_end_year in range(mid_year, max_year - 4):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+
+    # Original Logit
+    original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
+
+    original_model.fit(X_train_scaled, y_train)
+    original_pred = original_model.predict(X_test_scaled)
+    original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
+    
+    results['original']['f1'].append(f1_score(y_test, original_pred, average = "binary"))
+    results['original']['balanced_acc'].append(balanced_accuracy_score(y_test, original_pred))
+    results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
     
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
@@ -347,7 +377,7 @@ for train_end_year in range(mid_year, max_year - 4):
 
 # Save aggregated results
 with open("figures/kreitzer_boehmke2016/t5_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
@@ -360,6 +390,7 @@ plt.figure(figsize = (15, 5))
 
 # F1 Score Over Time
 plt.subplot(1, 3, 1)
+plt.plot(years, results['original']['f1'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
 plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
@@ -371,6 +402,7 @@ plt.grid(True, alpha = 0.3)
 
 # Balanced Accuracy Over Time
 plt.subplot(1, 3, 2)
+plt.plot(years, results['original']['balanced_acc'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
@@ -382,6 +414,7 @@ plt.grid(True, alpha = 0.3)
 
 # AP Score Over Time
 plt.subplot(1, 3, 3)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
@@ -398,6 +431,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
@@ -417,6 +453,7 @@ time_series_results.to_csv('figures/kreitzer_boehmke2016/t5_forecast_timeseries.
 
 # Initialize storage for results
 results = {
+    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
     'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
@@ -460,6 +497,17 @@ for train_end_year in range(mid_year, max_year - 9):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
+
+    # Original Logit
+    original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
+
+    original_model.fit(X_train_scaled, y_train)
+    original_pred = original_model.predict(X_test_scaled)
+    original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
+    
+    results['original']['f1'].append(f1_score(y_test, original_pred, average = "binary"))
+    results['original']['balanced_acc'].append(balanced_accuracy_score(y_test, original_pred))
+    results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
     
     # Logistic Regression
     logit_model = linear_model.LogisticRegression(
@@ -537,7 +585,7 @@ for train_end_year in range(mid_year, max_year - 9):
 
 # Save aggregated results
 with open("figures/kreitzer_boehmke2016/t10_forecast_results.txt", "w") as f:
-    for model in ['logit', 'rf', 'xgb']:
+    for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
         f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
@@ -550,6 +598,7 @@ plt.figure(figsize = (15, 5))
 
 # F1 Score Over Time
 plt.subplot(1, 3, 1)
+plt.plot(years, results['original']['f1'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
 plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
@@ -561,6 +610,7 @@ plt.grid(True, alpha = 0.3)
 
 # Balanced Accuracy Over Time
 plt.subplot(1, 3, 2)
+plt.plot(years, results['original']['balanced_acc'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
@@ -572,6 +622,7 @@ plt.grid(True, alpha = 0.3)
 
 # AP Score Over Time
 plt.subplot(1, 3, 3)
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
 plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
@@ -588,6 +639,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
+    'original_f1': results['original']['f1'],
+    'original_balanced_acc': results['original']['balanced_acc'],
+    'original_ap_score': results['original']['ap_score'],
     'logit_f1': results['logit']['f1'],
     'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
