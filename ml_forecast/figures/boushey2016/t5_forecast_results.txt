@@ -1,4 +1,9 @@
 
+ORIGINAL Results:
+Average F1: 0.0119 (±0.0361)
+Average Balanced Acc: 0.5029 (±0.0098)
+Average AP Score: 0.3029 (±0.0912)
+
 LOGIT Results:
 Average F1: 0.0000 (±0.0000)
 Average Balanced Acc: 0.5000 (±0.0000)
