@@ -3,8 +3,9 @@
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
-from sklearn.metrics import f1_score, balanced_accuracy_score
 from sklearn.metrics import average_precision_score
+from skopt import BayesSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -35,22 +36,24 @@ mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
 results = {
-    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
+    'original': {'ap_score': []},
+    'logit': {'ap_score': []},
+    'rf': {'ap_score': []},
+    'xgb': {'ap_score': []}
 }
 
 os.chdir("ml_forecast")
 
 # Rolling window forecasting
 for train_end_year in range(mid_year, max_year):
-    test_year = train_end_year + 1
+    val_year = train_end_year + 1
+    test_year = train_end_year + 2
     
-    print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
+    print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
     train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
+    val_data = parinandi_2020[parinandi_2020['year'] == val_year]
     test_data = parinandi_2020[parinandi_2020['year'] == test_year]
     
     if len(test_data) == 0:
@@ -58,6 +61,7 @@ for train_end_year in range(mid_year, max_year):
     
     # Prepare features
     X_train = train_data.drop(columns = ['oneemulation', 'state'])
+    X_val = val_data.drop(columns = ['oneemulation', 'state'])
     X_test = test_data.drop(columns = ['oneemulation', 'state'])
     
     # Create dummy variables for ALL possible years in the dataset
@@ -65,22 +69,38 @@ for train_end_year in range(mid_year, max_year):
     
     # Create dummies for train set
     X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+
+    # Create dmmies for validation set
+    X_val = pd.get_dummies(X_val, columns = ['year'], drop_first = True)
     
     # Create dummies for test set
     X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
     
     # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
+    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
     X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
     X_test = X_test.reindex(columns = all_columns, fill_value = 0)
     
     y_train = train_data['oneemulation']
+    y_val = val_data['oneemulation']
     y_test = test_data['oneemulation']
+
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
     
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.fit_transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -89,122 +109,174 @@ for train_end_year in range(mid_year, max_year):
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['original']['f1'].append(f1_score(y_test, original_pred, average = "binary"))
-    results['original']['balanced_acc'].append(balanced_accuracy_score(y_test, original_pred))
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
     
     # Logistic Regression
-    logit_model = linear_model.LogisticRegression(
-        C = 0.001, 
-        class_weight = None, 
-        fit_intercept = True,
-        penalty = None, 
-        solver = 'lbfgs', 
-        max_iter = 2500, 
-        random_state = 1337
+    common_params = {
+        'C': [0.001, 0.01, 0.1, 1, 2],
+        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
+        'fit_intercept': [True, False]
+    }
+
+    param_grid = [
+        # lbfgs supports only l2 or none
+        {
+            **common_params,
+            'solver': ['lbfgs'],
+            'penalty': ['l2', None]
+        },
+        # newton-cholesky supports only l2 or none
+        {
+            **common_params,
+            'solver': ['newton-cholesky'],
+            'penalty': ['l2', None]
+        },
+        # liblinear supports l1 and l2 only (no elasticnet or none)
+        {
+            **common_params,
+            'solver': ['liblinear'],
+            'penalty': ['l1', 'l2']
+        },
+        # saga supports l1, l2, elasticnet
+        {
+            **common_params,
+            'solver': ['saga'],
+            'penalty': ['l1', 'l2', 'elasticnet', None],
+            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+        }
+    ]
+
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        param_grid = param_grid,
+        cv = cv_split,
+        scoring = 'average_precision',
+        n_jobs = -1,
+        verbose = 0,
+        refit = True
     )
 
-    logit_model.fit(X_train_scaled, y_train)
-    logit_pred = logit_model.predict(X_test_scaled)
-    logit_scores = logit_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Logistic Regression AP Score: {ap_score}")
     
-    results['logit']['f1'].append(f1_score(y_test, logit_pred, average = "binary"))
-    results['logit']['balanced_acc'].append(balanced_accuracy_score(y_test, logit_pred))
-    results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores))
+    results['logit']['ap_score'].append(ap_score)
     
     # Random Forest
-    rf_model = RandomForestClassifier(
-        bootstrap = True, 
-        ccp_alpha = 0.0, 
-        class_weight = None, 
-        criterion = 'gini',
-        max_depth = 10, 
-        max_features = 'log2', 
-        max_leaf_nodes = None, 
-        max_samples = None,
-        min_samples_leaf = 1,
-        min_samples_split = 2, 
-        n_estimators = 300, 
+    param_grid = [
+        {
+            'n_estimators': (100, 300, 500),
+            'criterion': ['gini', 'entropy', 'log_loss'],
+            'max_depth': (None, 10, 25, 50),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 4),
+            'max_features': ['sqrt', 'log2', None],
+            'max_leaf_nodes': (None, 10, 25, 50),
+            'bootstrap': [True],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1, 'uniform'),
+            'max_samples': (None, 0.5, 0.75)
+        },
+        {
+            'n_estimators': (100, 300, 500),
+            'criterion': ['gini', 'entropy', 'log_loss'],
+            'max_depth': (None, 10, 25, 50),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 4),
+            'max_features': ['sqrt', 'log2', None],
+            'max_leaf_nodes': (None, 10, 25, 50),
+            'bootstrap': [False],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1, 'uniform'),
+            'max_samples': [None]
+        }
+    ]
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
         random_state = 1337
     )
 
-    rf_model.fit(X_train_scaled, y_train)
-    rf_pred = rf_model.predict(X_test_scaled)
-    rf_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Random Forest AP Score: {ap_score}")
     
-    results['rf']['f1'].append(f1_score(y_test, rf_pred, average = "binary"))
-    results['rf']['balanced_acc'].append(balanced_accuracy_score(y_test, rf_pred))
-    results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
+    results['rf']['ap_score'].append(ap_score)
     
     # XGBoost
-    xgb_model = XGBClassifier(
-        booster = 'gbtree', 
-        colsample_bytree = 1.0, 
-        eval_metric = 'error', 
-        gamma = 0,
-        grow_policy = 'depthwise', 
-        learning_rate = 0.3, 
-        max_bin = 128, 
-        max_depth = 3,
-        max_leaves = 16, 
-        min_child_weight = 5, 
-        n_estimators = 300, 
-        objective = 'binary:logistic',
-        reg_alpha = 0, 
-        reg_lambda = 1, 
-        scale_pos_weight = 1, 
-        subsample = 0.7632039015158524,
-        tree_method = 'exact', 
+    param_grid = {
+        'n_estimators': (100, 300, 500),
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 64, 128, 256),
+        'booster': ['gbtree', 'dart'],
+        'objective': ['binary:logistic'],
+        'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
+        'tree_method': ['auto', 'exact', 'approx', 'hist'],
+        'grow_policy': ['depthwise', 'lossguide'],
+        'learning_rate': (0.01, 0.1, 0.3),
+        'subsample': (0.5, 1.0),
+        'colsample_bytree': (0.5, 1.0),
+        'gamma': (0, 2),
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
+        'min_child_weight': (1, 5, 10),
+        'max_leaves': (0, 16, 32),
+        'scale_pos_weight': (1, 5, 10)
+    }
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
         random_state = 1337
     )
 
-    xgb_model.fit(X_train_scaled, y_train)
-    xgb_pred = xgb_model.predict(X_test_scaled)
-    xgb_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"XGBoost AP Score: {ap_score}")
     
-    results['xgb']['f1'].append(f1_score(y_test, xgb_pred, average = "binary"))
-    results['xgb']['balanced_acc'].append(balanced_accuracy_score(y_test, xgb_pred))
-    results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
+    results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
 with open("figures/parinandi2020/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
-        f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
-        f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+1 rolling window
 years = list(range(mid_year + 1, max_year + 1))
 
-plt.figure(figsize = (15, 5))
-
-# F1 Score Over Time
-plt.subplot(1, 3, 1)
-plt.plot(years, results['original']['f1'], marker = 'o', label = 'Original Logit')
-plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
-plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
-plt.title('F1 Score Over Time (t+1 Forecasting)')
-plt.xlabel('Forecast Year')
-plt.ylabel('F1 Score')
-plt.legend()
-plt.grid(True, alpha = 0.3)
-
-# Balanced Accuracy Over Time
-plt.subplot(1, 3, 2)
-plt.plot(years, results['original']['balanced_acc'], marker = 'o', label = 'Original Logit')
-plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
-plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
-plt.title('Balanced Accuracy Over Time (t+1 Forecasting)')
-plt.xlabel('Forecast Year')
-plt.ylabel('Balanced Accuracy')
-plt.legend()
-plt.grid(True, alpha = 0.3)
+plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
-plt.subplot(1, 3, 3)
 plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
@@ -222,17 +294,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
-    'original_f1': results['original']['f1'],
-    'original_balanced_acc': results['original']['balanced_acc'],
     'original_ap_score': results['original']['ap_score'],
-    'logit_f1': results['logit']['f1'],
-    'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
-    'rf_f1': results['rf']['f1'],
-    'rf_balanced_acc': results['rf']['balanced_acc'],
     'rf_ap_score': results['rf']['ap_score'],
-    'xgb_f1': results['xgb']['f1'],
-    'xgb_balanced_acc': results['xgb']['balanced_acc'],
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
@@ -244,27 +308,22 @@ time_series_results.to_csv('figures/parinandi2020/t1_forecast_timeseries.csv', i
 
 # Initialize storage for results
 results = {
-    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
+    'original': {'ap_score': []},
+    'logit': {'ap_score': []},
+    'rf': {'ap_score': []},
+    'xgb': {'ap_score': []}
 }
 
 # Rolling window forecasting
 for train_end_year in range(mid_year, max_year - 4):
-    test_year = train_end_year + 5
-    
-    print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
-    
-    # Split data
-    train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
-    test_data = parinandi_2020[parinandi_2020['year'] == test_year]
-    
-    if len(test_data) == 0:
-        continue
-    
+    val_year = train_end_year + 5
+    test_year = train_end_year + 6
+
+    print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
+
     # Prepare features
     X_train = train_data.drop(columns = ['oneemulation', 'state'])
+    X_val = val_data.drop(columns = ['oneemulation', 'state'])
     X_test = test_data.drop(columns = ['oneemulation', 'state'])
     
     # Create dummy variables for ALL possible years in the dataset
@@ -272,22 +331,38 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Create dummies for train set
     X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+
+    # Create dmmies for validation set
+    X_val = pd.get_dummies(X_val, columns = ['year'], drop_first = True)
     
     # Create dummies for test set
     X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
     
     # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
+    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
     X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
     X_test = X_test.reindex(columns = all_columns, fill_value = 0)
     
     y_train = train_data['oneemulation']
+    y_val = val_data['oneemulation']
     y_test = test_data['oneemulation']
+
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
     
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.fit_transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -296,122 +371,174 @@ for train_end_year in range(mid_year, max_year - 4):
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['original']['f1'].append(f1_score(y_test, original_pred, average = "binary"))
-    results['original']['balanced_acc'].append(balanced_accuracy_score(y_test, original_pred))
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
     
     # Logistic Regression
-    logit_model = linear_model.LogisticRegression(
-        C = 0.001, 
-        class_weight = None, 
-        fit_intercept = True,
-        penalty = None, 
-        solver = 'lbfgs', 
-        max_iter = 2500, 
-        random_state = 1337
+    common_params = {
+        'C': [0.001, 0.01, 0.1, 1, 2],
+        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
+        'fit_intercept': [True, False]
+    }
+
+    param_grid = [
+        # lbfgs supports only l2 or none
+        {
+            **common_params,
+            'solver': ['lbfgs'],
+            'penalty': ['l2', None]
+        },
+        # newton-cholesky supports only l2 or none
+        {
+            **common_params,
+            'solver': ['newton-cholesky'],
+            'penalty': ['l2', None]
+        },
+        # liblinear supports l1 and l2 only (no elasticnet or none)
+        {
+            **common_params,
+            'solver': ['liblinear'],
+            'penalty': ['l1', 'l2']
+        },
+        # saga supports l1, l2, elasticnet
+        {
+            **common_params,
+            'solver': ['saga'],
+            'penalty': ['l1', 'l2', 'elasticnet', None],
+            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+        }
+    ]
+
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        param_grid = param_grid,
+        cv = cv_split,
+        scoring = 'average_precision',
+        n_jobs = -1,
+        verbose = 0,
+        refit = True
     )
 
-    logit_model.fit(X_train_scaled, y_train)
-    logit_pred = logit_model.predict(X_test_scaled)
-    logit_scores = logit_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Logistic Regression AP Score: {ap_score}")
     
-    results['logit']['f1'].append(f1_score(y_test, logit_pred, average = "binary"))
-    results['logit']['balanced_acc'].append(balanced_accuracy_score(y_test, logit_pred))
-    results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores))
+    results['logit']['ap_score'].append(ap_score)
     
     # Random Forest
-    rf_model = RandomForestClassifier(
-        bootstrap = True, 
-        ccp_alpha = 0.0, 
-        class_weight = None, 
-        criterion = 'gini',
-        max_depth = 10, 
-        max_features = 'log2', 
-        max_leaf_nodes = None, 
-        max_samples = None,
-        min_samples_leaf = 1,
-        min_samples_split = 2, 
-        n_estimators = 300, 
+    param_grid = [
+        {
+            'n_estimators': (100, 300, 500),
+            'criterion': ['gini', 'entropy', 'log_loss'],
+            'max_depth': (None, 10, 25, 50),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 4),
+            'max_features': ['sqrt', 'log2', None],
+            'max_leaf_nodes': (None, 10, 25, 50),
+            'bootstrap': [True],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1, 'uniform'),
+            'max_samples': (None, 0.5, 0.75)
+        },
+        {
+            'n_estimators': (100, 300, 500),
+            'criterion': ['gini', 'entropy', 'log_loss'],
+            'max_depth': (None, 10, 25, 50),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 4),
+            'max_features': ['sqrt', 'log2', None],
+            'max_leaf_nodes': (None, 10, 25, 50),
+            'bootstrap': [False],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1, 'uniform'),
+            'max_samples': [None]
+        }
+    ]
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
         random_state = 1337
     )
 
-    rf_model.fit(X_train_scaled, y_train)
-    rf_pred = rf_model.predict(X_test_scaled)
-    rf_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Random Forest AP Score: {ap_score}")
     
-    results['rf']['f1'].append(f1_score(y_test, rf_pred, average = "binary"))
-    results['rf']['balanced_acc'].append(balanced_accuracy_score(y_test, rf_pred))
-    results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
+    results['rf']['ap_score'].append(ap_score)
     
     # XGBoost
-    xgb_model = XGBClassifier(
-        booster = 'gbtree', 
-        colsample_bytree = 1.0, 
-        eval_metric = 'error', 
-        gamma = 0,
-        grow_policy = 'depthwise', 
-        learning_rate = 0.3, 
-        max_bin = 128, 
-        max_depth = 3,
-        max_leaves = 16, 
-        min_child_weight = 5, 
-        n_estimators = 300, 
-        objective = 'binary:logistic',
-        reg_alpha = 0, 
-        reg_lambda = 1, 
-        scale_pos_weight = 1, 
-        subsample = 0.7632039015158524,
-        tree_method = 'exact', 
+    param_grid = {
+        'n_estimators': (100, 300, 500),
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 64, 128, 256),
+        'booster': ['gbtree', 'dart'],
+        'objective': ['binary:logistic'],
+        'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
+        'tree_method': ['auto', 'exact', 'approx', 'hist'],
+        'grow_policy': ['depthwise', 'lossguide'],
+        'learning_rate': (0.01, 0.1, 0.3),
+        'subsample': (0.5, 1.0),
+        'colsample_bytree': (0.5, 1.0),
+        'gamma': (0, 2),
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
+        'min_child_weight': (1, 5, 10),
+        'max_leaves': (0, 16, 32),
+        'scale_pos_weight': (1, 5, 10)
+    }
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
         random_state = 1337
     )
 
-    xgb_model.fit(X_train_scaled, y_train)
-    xgb_pred = xgb_model.predict(X_test_scaled)
-    xgb_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"XGBoost AP Score: {ap_score}")
     
-    results['xgb']['f1'].append(f1_score(y_test, xgb_pred, average = "binary"))
-    results['xgb']['balanced_acc'].append(balanced_accuracy_score(y_test, xgb_pred))
-    results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
+    results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
 with open("figures/parinandi2020/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
-        f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
-        f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+5 rolling window
 years = list(range(mid_year + 5, max_year + 1))
 
-plt.figure(figsize = (15, 5))
-
-# F1 Score Over Time
-plt.subplot(1, 3, 1)
-plt.plot(years, results['original']['f1'], marker = 'o', label = 'Original Logit')
-plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
-plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
-plt.title('F1 Score Over Time (t+5 Forecasting)')
-plt.xlabel('Forecast Year')
-plt.ylabel('F1 Score')
-plt.legend()
-plt.grid(True, alpha = 0.3)
-
-# Balanced Accuracy Over Time
-plt.subplot(1, 3, 2)
-plt.plot(years, results['original']['balanced_acc'], marker = 'o', label = 'Original Logit')
-plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
-plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
-plt.title('Balanced Accuracy Over Time (t+5 Forecasting)')
-plt.xlabel('Forecast Year')
-plt.ylabel('Balanced Accuracy')
-plt.legend()
-plt.grid(True, alpha = 0.3)
+plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
-plt.subplot(1, 3, 3)
 plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
@@ -429,17 +556,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
-    'original_f1': results['original']['f1'],
-    'original_balanced_acc': results['original']['balanced_acc'],
     'original_ap_score': results['original']['ap_score'],
-    'logit_f1': results['logit']['f1'],
-    'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
-    'rf_f1': results['rf']['f1'],
-    'rf_balanced_acc': results['rf']['balanced_acc'],
     'rf_ap_score': results['rf']['ap_score'],
-    'xgb_f1': results['xgb']['f1'],
-    'xgb_balanced_acc': results['xgb']['balanced_acc'],
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
@@ -451,27 +570,22 @@ time_series_results.to_csv('figures/parinandi2020/t5_forecast_timeseries.csv', i
 
 # Initialize storage for results
 results = {
-    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
+    'original': {'ap_score': []},
+    'logit': {'ap_score': []},
+    'rf': {'ap_score': []},
+    'xgb': {'ap_score': []}
 }
 
 # Rolling window forecasting
 for train_end_year in range(mid_year, max_year - 9):
-    test_year = train_end_year + 10
+    val_year = train_end_year + 10
+    test_year = train_end_year + 11
     
-    print(f"Training on years {min_year}-{train_end_year}, predicting year {test_year}")
-    
-    # Split data
-    train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
-    test_data = parinandi_2020[parinandi_2020['year'] == test_year]
-    
-    if len(test_data) == 0:
-        continue
-    
+    print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
+
     # Prepare features
     X_train = train_data.drop(columns = ['oneemulation', 'state'])
+    X_val = val_data.drop(columns = ['oneemulation', 'state'])
     X_test = test_data.drop(columns = ['oneemulation', 'state'])
     
     # Create dummy variables for ALL possible years in the dataset
@@ -479,22 +593,38 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Create dummies for train set
     X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+
+    # Create dmmies for validation set
+    X_val = pd.get_dummies(X_val, columns = ['year'], drop_first = True)
     
     # Create dummies for test set
     X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
     
     # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
+    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
     X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
     X_test = X_test.reindex(columns = all_columns, fill_value = 0)
     
     y_train = train_data['oneemulation']
+    y_val = val_data['oneemulation']
     y_test = test_data['oneemulation']
+
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
     
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.fit_transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -503,119 +633,172 @@ for train_end_year in range(mid_year, max_year - 9):
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['original']['f1'].append(f1_score(y_test, original_pred, average = "binary"))
-    results['original']['balanced_acc'].append(balanced_accuracy_score(y_test, original_pred))
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
     
     # Logistic Regression
-    logit_model = linear_model.LogisticRegression(
-        C = 0.001, 
-        class_weight = None, 
-        fit_intercept = True,
-        penalty = None, 
-        solver = 'lbfgs', 
-        max_iter = 2500, 
-        random_state = 1337
+    common_params = {
+        'C': [0.001, 0.01, 0.1, 1, 2],
+        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
+        'fit_intercept': [True, False]
+    }
+
+    param_grid = [
+        # lbfgs supports only l2 or none
+        {
+            **common_params,
+            'solver': ['lbfgs'],
+            'penalty': ['l2', None]
+        },
+        # newton-cholesky supports only l2 or none
+        {
+            **common_params,
+            'solver': ['newton-cholesky'],
+            'penalty': ['l2', None]
+        },
+        # liblinear supports l1 and l2 only (no elasticnet or none)
+        {
+            **common_params,
+            'solver': ['liblinear'],
+            'penalty': ['l1', 'l2']
+        },
+        # saga supports l1, l2, elasticnet
+        {
+            **common_params,
+            'solver': ['saga'],
+            'penalty': ['l1', 'l2', 'elasticnet', None],
+            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+        }
+    ]
+
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        param_grid = param_grid,
+        cv = cv_split,
+        scoring = 'average_precision',
+        n_jobs = -1,
+        verbose = 0,
+        refit = True
     )
 
-    logit_model.fit(X_train_scaled, y_train)
-    logit_pred = logit_model.predict(X_test_scaled)
-    logit_scores = logit_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Logistic Regression AP Score: {ap_score}")
     
-    results['logit']['f1'].append(f1_score(y_test, logit_pred, average = "binary"))
-    results['logit']['balanced_acc'].append(balanced_accuracy_score(y_test, logit_pred))
-    results['logit']['ap_score'].append(average_precision_score(y_test, logit_scores))
+    results['logit']['ap_score'].append(ap_score)
     
     # Random Forest
-    rf_model = RandomForestClassifier(
-        bootstrap = True, 
-        ccp_alpha = 0.0, 
-        class_weight = None, 
-        criterion = 'gini',
-        max_depth = 10, 
-        max_features = 'log2', 
-        max_leaf_nodes = None, 
-        max_samples = None,
-        min_samples_leaf = 1,
-        min_samples_split = 2, 
-        n_estimators = 300, 
+    param_grid = [
+        {
+            'n_estimators': (100, 300, 500),
+            'criterion': ['gini', 'entropy', 'log_loss'],
+            'max_depth': (None, 10, 25, 50),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 4),
+            'max_features': ['sqrt', 'log2', None],
+            'max_leaf_nodes': (None, 10, 25, 50),
+            'bootstrap': [True],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1, 'uniform'),
+            'max_samples': (None, 0.5, 0.75)
+        },
+        {
+            'n_estimators': (100, 300, 500),
+            'criterion': ['gini', 'entropy', 'log_loss'],
+            'max_depth': (None, 10, 25, 50),
+            'min_samples_split': (2, 10),
+            'min_samples_leaf': (1, 4),
+            'max_features': ['sqrt', 'log2', None],
+            'max_leaf_nodes': (None, 10, 25, 50),
+            'bootstrap': [False],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1, 'uniform'),
+            'max_samples': [None]
+        }
+    ]
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
         random_state = 1337
     )
 
-    rf_model.fit(X_train_scaled, y_train)
-    rf_pred = rf_model.predict(X_test_scaled)
-    rf_scores = rf_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Random Forest AP Score: {ap_score}")
     
-    results['rf']['f1'].append(f1_score(y_test, rf_pred, average = "binary"))
-    results['rf']['balanced_acc'].append(balanced_accuracy_score(y_test, rf_pred))
-    results['rf']['ap_score'].append(average_precision_score(y_test, rf_scores))
+    results['rf']['ap_score'].append(ap_score)
     
     # XGBoost
-    xgb_model = XGBClassifier(
-        booster = 'gbtree', 
-        colsample_bytree = 1.0, 
-        eval_metric = 'error', 
-        gamma = 0,
-        grow_policy = 'depthwise', 
-        learning_rate = 0.3, 
-        max_bin = 128, 
-        max_depth = 3,
-        max_leaves = 16, 
-        min_child_weight = 5, 
-        n_estimators = 300, 
-        objective = 'binary:logistic',
-        reg_alpha = 0, 
-        reg_lambda = 1, 
-        scale_pos_weight = 1, 
-        subsample = 0.7632039015158524,
-        tree_method = 'exact', 
+    param_grid = {
+        'n_estimators': (100, 300, 500),
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 64, 128, 256),
+        'booster': ['gbtree', 'dart'],
+        'objective': ['binary:logistic'],
+        'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
+        'tree_method': ['auto', 'exact', 'approx', 'hist'],
+        'grow_policy': ['depthwise', 'lossguide'],
+        'learning_rate': (0.01, 0.1, 0.3),
+        'subsample': (0.5, 1.0),
+        'colsample_bytree': (0.5, 1.0),
+        'gamma': (0, 2),
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
+        'min_child_weight': (1, 5, 10),
+        'max_leaves': (0, 16, 32),
+        'scale_pos_weight': (1, 5, 10)
+    }
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
         random_state = 1337
     )
 
-    xgb_model.fit(X_train_scaled, y_train)
-    xgb_pred = xgb_model.predict(X_test_scaled)
-    xgb_scores = xgb_model.predict_proba(X_test_scaled)[:, 1]
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"XGBoost AP Score: {ap_score}")
     
-    results['xgb']['f1'].append(f1_score(y_test, xgb_pred, average = "binary"))
-    results['xgb']['balanced_acc'].append(balanced_accuracy_score(y_test, xgb_pred))
-    results['xgb']['ap_score'].append(average_precision_score(y_test, xgb_scores))
+    results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
 with open("figures/parinandi2020/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
-        f.write(f"Average F1: {np.mean(results[model]['f1']):.4f} (±{np.std(results[model]['f1']):.4f})\n")
-        f.write(f"Average Balanced Acc: {np.mean(results[model]['balanced_acc']):.4f} (±{np.std(results[model]['balanced_acc']):.4f})\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+10 rolling window
 years = list(range(mid_year + 10, max_year + 1))
 
-plt.figure(figsize = (15, 5))
-
-# F1 Score Over Time
-plt.subplot(1, 3, 1)
-plt.plot(years, results['original']['f1'], marker = 'o', label = 'Original Logit')
-plt.plot(years, results['logit']['f1'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['f1'], marker = 's', label = 'Random Forest') 
-plt.plot(years, results['xgb']['f1'], marker = '^', label = 'XGBoost')
-plt.title('F1 Score Over Time (t+10 Forecasting)')
-plt.xlabel('Forecast Year')
-plt.ylabel('F1 Score')
-plt.legend()
-plt.grid(True, alpha = 0.3)
-
-# Balanced Accuracy Over Time
-plt.subplot(1, 3, 2)
-plt.plot(years, results['original']['balanced_acc'], marker = 'o', label = 'Original Logit')
-plt.plot(years, results['logit']['balanced_acc'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['balanced_acc'], marker = 's', label = 'Random Forest')
-plt.plot(years, results['xgb']['balanced_acc'], marker = '^', label = 'XGBoost')
-plt.title('Balanced Accuracy Over Time (t+10 Forecasting)')
-plt.xlabel('Forecast Year')
-plt.ylabel('Balanced Accuracy')
-plt.legend()
-plt.grid(True, alpha = 0.3)
+plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
 plt.subplot(1, 3, 3)
@@ -636,17 +819,9 @@ plt.show()
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
-    'original_f1': results['original']['f1'],
-    'original_balanced_acc': results['original']['balanced_acc'],
     'original_ap_score': results['original']['ap_score'],
-    'logit_f1': results['logit']['f1'],
-    'logit_balanced_acc': results['logit']['balanced_acc'],
     'logit_ap_score': results['logit']['ap_score'],
-    'rf_f1': results['rf']['f1'],
-    'rf_balanced_acc': results['rf']['balanced_acc'],
     'rf_ap_score': results['rf']['ap_score'],
-    'xgb_f1': results['xgb']['f1'],
-    'xgb_balanced_acc': results['xgb']['balanced_acc'],
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
