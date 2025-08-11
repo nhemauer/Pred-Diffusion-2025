@@ -4,7 +4,8 @@ from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import average_precision_score
-from hypopt import GridSearch
+from skopt import BayesSearchCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -65,11 +66,21 @@ for train_end_year in range(mid_year, max_year):
     X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
     y_test = test_data['dvgunlaw']
     
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
+    
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.fit_transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -87,7 +98,6 @@ for train_end_year in range(mid_year, max_year):
         'fit_intercept': [True, False]
     }
 
-    # Build full param grid
     param_grid = [
         # lbfgs supports only l2 or none
         {
@@ -116,16 +126,25 @@ for train_end_year in range(mid_year, max_year):
         }
     ]
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        param_grid = param_grid,
+        cv = cv_split,
+        scoring = 'average_precision',
+        n_jobs = -1,
+        verbose = 0,
+        refit = True
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
     
@@ -159,16 +178,26 @@ for train_end_year in range(mid_year, max_year):
         }
     ]
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = RandomForestClassifier(random_state = 1337), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Random Forest AP Score: {ap_score}")
     
     results['rf']['ap_score'].append(ap_score)
     
@@ -193,16 +222,26 @@ for train_end_year in range(mid_year, max_year):
         'scale_pos_weight': (1, 5, 10)
     }
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = XGBClassifier(random_state = 1337, use_label_encoder = False), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
 
@@ -278,11 +317,21 @@ for train_end_year in range(mid_year, max_year - 4):
     X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
     y_test = test_data['dvgunlaw']
     
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
+    
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.fit_transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -300,7 +349,6 @@ for train_end_year in range(mid_year, max_year - 4):
         'fit_intercept': [True, False]
     }
 
-    # Build full param grid
     param_grid = [
         # lbfgs supports only l2 or none
         {
@@ -329,16 +377,24 @@ for train_end_year in range(mid_year, max_year - 4):
         }
     ]
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        param_grid = param_grid,
+        cv = cv_split,
+        scoring = 'average_precision',
+        n_jobs = -1,
+        verbose = 0,
+        refit = True
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
     
     results['logit']['ap_score'].append(ap_score)
     
@@ -372,16 +428,25 @@ for train_end_year in range(mid_year, max_year - 4):
         }
     ]
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = RandomForestClassifier(random_state = 1337), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
     
     results['rf']['ap_score'].append(ap_score)
     
@@ -406,16 +471,25 @@ for train_end_year in range(mid_year, max_year - 4):
         'scale_pos_weight': (1, 5, 10)
     }
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = XGBClassifier(random_state = 1337, use_label_encoder = False), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
     
     results['xgb']['ap_score'].append(ap_score)
 
@@ -491,11 +565,21 @@ for train_end_year in range(mid_year, max_year - 9):
     X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
     y_test = test_data['dvgunlaw']
     
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
+    
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.fit_transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -513,7 +597,6 @@ for train_end_year in range(mid_year, max_year - 9):
         'fit_intercept': [True, False]
     }
 
-    # Build full param grid
     param_grid = [
         # lbfgs supports only l2 or none
         {
@@ -542,16 +625,24 @@ for train_end_year in range(mid_year, max_year - 9):
         }
     ]
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        param_grid = param_grid,
+        cv = cv_split,
+        scoring = 'average_precision',
+        n_jobs = -1,
+        verbose = 0,
+        refit = True
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
     
     results['logit']['ap_score'].append(ap_score)
     
@@ -585,16 +676,25 @@ for train_end_year in range(mid_year, max_year - 9):
         }
     ]
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = RandomForestClassifier(random_state = 1337), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
     
     results['rf']['ap_score'].append(ap_score)
     
@@ -619,16 +719,25 @@ for train_end_year in range(mid_year, max_year - 9):
         'scale_pos_weight': (1, 5, 10)
     }
 
-    # Set up GridSearch
-    grid_search = GridSearch(model = XGBClassifier(random_state = 1337, use_label_encoder = False), 
-                             param_grid = param_grid,
-                             parallelize = True)
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+        search_spaces = param_grid,
+        n_iter = 256,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, X_val_scaled, y_val, scoring = "average_precision")
+    grid_search.fit(X_train_val_scaled, y_train_val)
 
-    # Get the best model
-    ap_score = grid_search.score(X_test_scaled, y_test)
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
     
     results['xgb']['ap_score'].append(ap_score)
 
