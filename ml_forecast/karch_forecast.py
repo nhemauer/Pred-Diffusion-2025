@@ -31,7 +31,7 @@ covariates = [
     "traditional_profstd"
 ]
 
-karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
+karch_2016 = karch_2016_full[["adopt", "state", "year"] + covariates].dropna()
 
 karch_2016 = karch_2016.sort_values(["state", "year"])
 
