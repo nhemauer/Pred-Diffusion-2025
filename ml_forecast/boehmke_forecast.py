@@ -269,7 +269,7 @@ with open("figures/boehmke2017/t1_forecast_results.txt", "w") as f:
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+1 rolling window
-years = list(range(mid_year + 1, max_year + 1))
+years = list(range(mid_year + 2, mid_year + 2 + len(results['original']['ap_score'])))
 
 plt.figure(figsize = (8, 6))
 
@@ -539,7 +539,7 @@ with open("figures/boehmke2017/t5_forecast_results.txt", "w") as f:
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+5 rolling window
-years = list(range(mid_year + 5, max_year + 1))
+years = list(range(mid_year + 6, mid_year + 6 + len(results['original']['ap_score'])))
 
 plt.figure(figsize = (8, 6))
 
@@ -809,7 +809,7 @@ with open("figures/boehmke2017/t10_forecast_results.txt", "w") as f:
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+10 rolling window
-years = list(range(mid_year + 10, max_year + 1))
+years = list(range(mid_year + 11, mid_year + 11 + len(results['original']['ap_score'])))
 
 plt.figure(figsize = (8, 6))
 

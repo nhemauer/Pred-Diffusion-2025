@@ -18,20 +18,17 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-parinandi_2020_full = pd.read_stata(r"data/parinandi2020.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-covariates = [
-    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
-    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
-    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
-]
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
 
-parinandi_2020 = parinandi_2020_full[["oneemulation", "state"] + covariates].dropna()
-parinandi_2020 = parinandi_2020.sort_values(["state", "year"])
+schiller_sidorsky2022 = schiller_sidorsky2022.sort_values(["state", "year"])
 
 # Get year range
-min_year = parinandi_2020['year'].min()
-max_year = parinandi_2020['year'].max()
+min_year = schiller_sidorsky2022['year'].min()
+max_year = schiller_sidorsky2022['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
@@ -52,40 +49,21 @@ for train_end_year in range(mid_year, max_year):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
-    val_data = parinandi_2020[parinandi_2020['year'] == val_year]
-    test_data = parinandi_2020[parinandi_2020['year'] == test_year]
+    train_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] <= train_end_year]
+    val_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == val_year]
+    test_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    X_val = val_data.drop(columns = ['oneemulation', 'state'])
-    X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    X_train = train_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_train = train_data['dvgunlaw']
+    X_val = val_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_val = val_data['dvgunlaw']
+    X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_test = test_data['dvgunlaw']
     
-    # Create dummy variables for ALL possible years in the dataset
-    all_years = sorted(parinandi_2020['year'].unique())
-    
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
-
-    # Create dmmies for validation set
-    X_val = pd.get_dummies(X_val, columns = ['year'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-    
-    y_train = train_data['oneemulation']
-    y_val = val_data['oneemulation']
-    y_test = test_data['oneemulation']
-
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -266,13 +244,13 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/parinandi2020/t1_forecast_results.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+1 rolling window
-years = list(range(mid_year + 2, mid_year + 2 + len(results['original']['ap_score'])))
+years = list(range(mid_year + 1, max_year + 1))
 
 plt.figure(figsize = (8, 6))
 
@@ -288,7 +266,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -300,7 +278,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi2020/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/schiller_sidorsky2022/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -320,34 +298,23 @@ for train_end_year in range(mid_year, max_year - 4):
     test_year = train_end_year + 6
 
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
-
+    
+    # Split data
+    train_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] <= train_end_year]
+    val_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == val_year]
+    test_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == test_year]
+    
+    if len(test_data) == 0:
+        continue
+    
     # Prepare features
-    X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    X_val = val_data.drop(columns = ['oneemulation', 'state'])
-    X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    X_train = train_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_train = train_data['dvgunlaw']
+    X_val = val_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_val = val_data['dvgunlaw']
+    X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_test = test_data['dvgunlaw']
     
-    # Create dummy variables for ALL possible years in the dataset
-    all_years = sorted(parinandi_2020['year'].unique())
-    
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
-
-    # Create dmmies for validation set
-    X_val = pd.get_dummies(X_val, columns = ['year'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-    
-    y_train = train_data['oneemulation']
-    y_val = val_data['oneemulation']
-    y_test = test_data['oneemulation']
-
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -426,7 +393,6 @@ for train_end_year in range(mid_year, max_year - 4):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
     
@@ -479,7 +445,6 @@ for train_end_year in range(mid_year, max_year - 4):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"Random Forest AP Score: {ap_score}")
     
     results['rf']['ap_score'].append(ap_score)
     
@@ -523,18 +488,17 @@ for train_end_year in range(mid_year, max_year - 4):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/parinandi2020/t5_forecast_results.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+5 rolling window
-years = list(range(mid_year + 6, mid_year + 6 + len(results['original']['ap_score'])))
+years = list(range(mid_year + 5, max_year + 1))
 
 plt.figure(figsize = (8, 6))
 
@@ -550,7 +514,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -562,7 +526,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi2020/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/schiller_sidorsky2022/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -582,34 +546,23 @@ for train_end_year in range(mid_year, max_year - 9):
     test_year = train_end_year + 11
     
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
-
+    
+    # Split data
+    train_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] <= train_end_year]
+    val_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == val_year]
+    test_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == test_year]
+    
+    if len(test_data) == 0:
+        continue
+    
     # Prepare features
-    X_train = train_data.drop(columns = ['oneemulation', 'state'])
-    X_val = val_data.drop(columns = ['oneemulation', 'state'])
-    X_test = test_data.drop(columns = ['oneemulation', 'state'])
+    X_train = train_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_train = train_data['dvgunlaw']
+    X_val = val_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_val = val_data['dvgunlaw']
+    X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
+    y_test = test_data['dvgunlaw']
     
-    # Create dummy variables for ALL possible years in the dataset
-    all_years = sorted(parinandi_2020['year'].unique())
-    
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
-
-    # Create dmmies for validation set
-    X_val = pd.get_dummies(X_val, columns = ['year'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-    
-    y_train = train_data['oneemulation']
-    y_val = val_data['oneemulation']
-    y_test = test_data['oneemulation']
-
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -688,7 +641,6 @@ for train_end_year in range(mid_year, max_year - 9):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
     
@@ -741,7 +693,6 @@ for train_end_year in range(mid_year, max_year - 9):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"Random Forest AP Score: {ap_score}")
     
     results['rf']['ap_score'].append(ap_score)
     
@@ -785,23 +736,21 @@ for train_end_year in range(mid_year, max_year - 9):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/parinandi2020/t10_forecast_results.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+10 rolling window
-years = list(range(mid_year + 11, mid_year + 11 + len(results['original']['ap_score'])))
+years = list(range(mid_year + 10, max_year + 1))
 
 plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
-plt.subplot(1, 3, 3)
 plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
@@ -813,7 +762,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/schiller_sidorsky2022/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -825,4 +774,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/parinandi2020/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/schiller_sidorsky2022/t10_forecast_timeseries.csv', index = False)
