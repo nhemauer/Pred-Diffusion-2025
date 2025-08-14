@@ -22,13 +22,13 @@ mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
 covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
               "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
-mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
+mallinson_2019 = mallinson_2019_full[["adopt", "policy", "state", "year"] + covariates].dropna()
 
-schiller_sidorsky2022 = schiller_sidorsky2022.sort_values(["state", "year"])
+mallinson_2019 = mallinson_2019.sort_values(["state", "year"])
 
 # Get year range
-min_year = schiller_sidorsky2022['year'].min()
-max_year = schiller_sidorsky2022['year'].max()
+min_year = mallinson_2019['year'].min()
+max_year = mallinson_2019['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
@@ -49,20 +49,20 @@ for train_end_year in range(mid_year, max_year):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] <= train_end_year]
-    val_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == val_year]
-    test_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == test_year]
+    train_data = mallinson_2019[mallinson_2019['year'] <= train_end_year]
+    val_data = mallinson_2019[mallinson_2019['year'] == val_year]
+    test_data = mallinson_2019[mallinson_2019['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_train = train_data['dvgunlaw']
-    X_val = val_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_val = val_data['dvgunlaw']
-    X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_test = test_data['dvgunlaw']
+    X_train = train_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_test = test_data['adopt']
     
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
@@ -244,7 +244,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/schiller_sidorsky2022/t1_forecast_results.txt", "w") as f:
+with open("figures/mallinson2019/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -266,7 +266,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/schiller_sidorsky2022/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -278,7 +278,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/schiller_sidorsky2022/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/mallinson2019/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -300,20 +300,20 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] <= train_end_year]
-    val_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == val_year]
-    test_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == test_year]
+    train_data = mallinson_2019[mallinson_2019['year'] <= train_end_year]
+    val_data = mallinson_2019[mallinson_2019['year'] == val_year]
+    test_data = mallinson_2019[mallinson_2019['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_train = train_data['dvgunlaw']
-    X_val = val_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_val = val_data['dvgunlaw']
-    X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_test = test_data['dvgunlaw']
+    X_train = train_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_test = test_data['adopt']
     
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
@@ -492,7 +492,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/schiller_sidorsky2022/t5_forecast_results.txt", "w") as f:
+with open("figures/mallinson2019/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -514,7 +514,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/schiller_sidorsky2022/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -526,7 +526,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/schiller_sidorsky2022/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/mallinson2019/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -548,20 +548,20 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] <= train_end_year]
-    val_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == val_year]
-    test_data = schiller_sidorsky2022[schiller_sidorsky2022['year'] == test_year]
+    train_data = mallinson_2019[mallinson_2019['year'] <= train_end_year]
+    val_data = mallinson_2019[mallinson_2019['year'] == val_year]
+    test_data = mallinson_2019[mallinson_2019['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_train = train_data['dvgunlaw']
-    X_val = val_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_val = val_data['dvgunlaw']
-    X_test = test_data.drop(columns = ['dvgunlaw', 'state', 'year'])
-    y_test = test_data['dvgunlaw']
+    X_train = train_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_test = test_data['adopt']
     
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
@@ -740,7 +740,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/schiller_sidorsky2022/t10_forecast_results.txt", "w") as f:
+with open("figures/mallinson2019/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -762,7 +762,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/schiller_sidorsky2022/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -774,4 +774,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/schiller_sidorsky2022/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/mallinson2019/t10_forecast_timeseries.csv', index = False)
