@@ -27,12 +27,8 @@ boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dr
 X = boushey_2016[covariates].copy()
 y = boushey_2016['dvadopt']
 
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size = 0.2, random_state = 1337, stratify = y)
-
 scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
-X_test_scaled = scaler.transform(X_test)
+X_scaled = scaler.fit_transform(X)
 
 ### Original Parameter Grid
 
@@ -71,7 +67,7 @@ sampled_params = sample_grid(param_grid, n_samples = 40)
 results = []
 for params in sampled_params:
     model = XGBClassifier(**params, random_state = 1337, use_label_encoder = False)
-    scores = cross_val_score(model, X_train_scaled, y_train, cv = 3, scoring = "average_precision", n_jobs = -1)
+    scores = cross_val_score(model, X_scaled, y, cv = 3, scoring = "average_precision", n_jobs = -1)
     results.append({**params, "metric": np.mean(scores)})
 
 df_results = pd.DataFrame(results)
