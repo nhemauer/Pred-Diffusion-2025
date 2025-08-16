@@ -2,8 +2,9 @@ import pandas as pd
 import numpy as np
 import random
 import warnings
+import os
 from scipy.stats import f_oneway
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 
@@ -12,21 +13,22 @@ random.seed(1337)
 
 ### Load Data
 
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+# Data
+parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
 covariates = [
-    "policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-    "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-    "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-    "violentthousand", "pctwhite", "stateincpercap", "logpop",
-    "counter", "counter2", "counter3"
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
 ]
 
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
+parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
 
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+# Define X and y
+X = parinandi2020.drop(columns = ['oneemulation']).copy()
+y = parinandi2020['oneemulation']
 
+# Scale features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
@@ -86,9 +88,16 @@ for param in param_grid.keys():
     ftest_df.append({"param": param, "F-stat": f_stat, "p-value": p_val})
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
-print("\nF-test results:\n", ftest_df)
 
-print("\nTop values for each parameter:")
-for param in param_grid.keys():
-    top_values = df_results.groupby(param)["metric"].mean().sort_values(ascending = False)
-    print(f"{param}: {top_values}")
+os.chdir("ml_forecast\ml_hyperparameter\figures")
+
+### Save Outputs
+with open("figures/parinandi2019/hyperparameter_results.txt", "w") as f:
+    f.write("F-test results:\n")
+    f.write(str(ftest_df))
+    f.write("\n\n")
+    
+    f.write("Top values for each parameter:\n")
+    for param in param_grid.keys():
+        top_values = df_results.groupby(param)["metric"].mean().sort_values(ascending = False)
+        f.write(f"{param}: {top_values}\n")
