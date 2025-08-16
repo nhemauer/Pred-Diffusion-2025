@@ -89,7 +89,7 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast\ml_hyperparameter\figures")
+os.chdir("ml_forecast\ml_hyperparameter")
 
 ### Save Outputs
 with open("figures/parinandi2019/hyperparameter_results.txt", "w") as f:
