@@ -14,20 +14,20 @@ random.seed(1337)
 
 ### Load Data
 
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
 
 covariates = [
-    "policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-    "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-    "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-    "violentthousand", "pctwhite", "stateincpercap", "logpop",
-    "counter", "counter2", "counter3"
+    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
+    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
 ]
 
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno"] + covariates].dropna()
 
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+# Define X and y
+X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
+y = lacombe_boehmke2021['adoption']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -93,7 +93,7 @@ os.chdir("ml_forecast\ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/boushey2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -153,7 +153,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/boushey2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

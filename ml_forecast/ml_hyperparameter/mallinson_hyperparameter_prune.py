@@ -14,20 +14,15 @@ random.seed(1337)
 
 ### Load Data
 
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-covariates = [
-    "policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-    "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-    "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-    "violentthousand", "pctwhite", "stateincpercap", "logpop",
-    "counter", "counter2", "counter3"
-]
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
 
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
-
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+# Define X and y
+X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
+y = mallinson_2019['adopt']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)

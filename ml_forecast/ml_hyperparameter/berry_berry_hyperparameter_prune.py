@@ -14,20 +14,14 @@ random.seed(1337)
 
 ### Load Data
 
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
+berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
 
-covariates = [
-    "policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-    "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-    "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-    "violentthousand", "pctwhite", "stateincpercap", "logpop",
-    "counter", "counter2", "counter3"
-]
+berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
 
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
-
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+# Define X and y
+X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
+y = berry_berry1990['adopt']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -93,7 +87,7 @@ os.chdir("ml_forecast\ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/boushey2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/berry_berry1990/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -153,7 +147,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/boushey2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/berry_berry1990/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

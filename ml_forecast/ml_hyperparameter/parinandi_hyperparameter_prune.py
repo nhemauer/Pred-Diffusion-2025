@@ -7,6 +7,7 @@ from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 warnings.filterwarnings('ignore')
 random.seed(1337)
@@ -92,12 +93,73 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 os.chdir("ml_forecast\ml_hyperparameter")
 
 ### Save Outputs
-with open("figures/parinandi2019/hyperparameter_results.txt", "w") as f:
+
+with open("figures/parinandi2020/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
     
     f.write("Top values for each parameter:\n")
     for param in param_grid.keys():
+        top_values = df_results.groupby(param)["metric"].mean().sort_values(ascending = False)
+        f.write(f"{param}: {top_values}\n")
+
+### Repeat for RF
+
+param_grid_rf = {
+    'n_estimators': [100, 300, 500],
+    'criterion': ['gini', 'entropy', 'log_loss'],
+    'max_depth': [None, 10, 25, 50],
+    'min_samples_split': [2, 10],
+    'min_samples_leaf': [1, 4],
+    'max_features': ['sqrt', 'log2', None],
+    'max_leaf_nodes': [None, 10, 25, 50],
+    'bootstrap': [True, False],
+    'class_weight': [None, 'balanced'],
+    'ccp_alpha': [0.0, 0.1],
+    'max_samples': [None, 0.5, 0.75]
+}
+
+def sample_rf_grid(param_grid, n_samples = 40):
+    samples = []
+    for _ in range(n_samples):
+        combo = {}
+        for k, v in param_grid.items():
+            combo[k] = random.choice(v)
+        
+        if not combo['bootstrap']:
+            combo['max_samples'] = None
+            
+        samples.append(combo)
+    return samples
+
+sampled_params = sample_rf_grid(param_grid_rf, n_samples = 40)
+
+results = []
+for params in sampled_params:
+    model = RandomForestClassifier(**params, random_state = 1337)
+    scores = cross_val_score(model, X_scaled, y, cv = 3, scoring = "average_precision", n_jobs = -1)
+    results.append({**params, "metric": np.mean(scores)})
+
+df_results = pd.DataFrame(results)
+
+### F-Test for Hyperparameter Significance
+
+ftest_df = []
+for param in param_grid_rf.keys():
+    f_stat, p_val = ftest_for_param(df_results, param)
+    ftest_df.append({"param": param, "F-stat": f_stat, "p-value": p_val})
+
+ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
+
+### Save Outputs
+
+with open("figures/parinandi2020/rf_hyperparameter_results.txt", "w") as f:
+    f.write("F-test results:\n")
+    f.write(str(ftest_df))
+    f.write("\n\n")
+    
+    f.write("Top values for each parameter:\n")
+    for param in param_grid_rf.keys():
         top_values = df_results.groupby(param)["metric"].mean().sort_values(ascending = False)
         f.write(f"{param}: {top_values}\n")

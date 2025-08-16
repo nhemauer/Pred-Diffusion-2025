@@ -14,20 +14,25 @@ random.seed(1337)
 
 ### Load Data
 
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
+# Covariates
 covariates = [
-    "policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-    "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-    "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-    "violentthousand", "pctwhite", "stateincpercap", "logpop",
-    "counter", "counter2", "counter3"
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
 ]
 
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
+karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
 
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+# Define X and y
+X = karch_2016[covariates].copy()
+y = karch_2016['adopt']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -93,7 +98,7 @@ os.chdir("ml_forecast\ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/boushey2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/karch2016/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -153,7 +158,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/boushey2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/karch2016/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

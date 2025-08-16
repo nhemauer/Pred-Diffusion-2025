@@ -14,20 +14,16 @@ random.seed(1337)
 
 ### Load Data
 
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+schiller_sidorsky2022_full = pd.read_stata(r"data/schiller_sidorsky2022.dta")
 
 covariates = [
-    "policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-    "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-    "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-    "violentthousand", "pctwhite", "stateincpercap", "logpop",
-    "counter", "counter2", "counter3"
+    "gunhomicideslag1", "citizenideologylag1", "numregdvgunlawenactlag1", "vawa1994", "vawa1995", 
+    "lautenbergamdt1996", "Lautenbergamndt1997", "legislature_election_year", "femleg", "innovation_index"
 ]
+schiller_sidorsky2022 = schiller_sidorsky2022_full[["dvgunlaw", "state", "year"] + covariates].dropna()
 
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
-
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+X = schiller_sidorsky2022[covariates].copy()
+y = schiller_sidorsky2022['dvgunlaw']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -93,7 +89,7 @@ os.chdir("ml_forecast\ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/boushey2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -153,7 +149,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/boushey2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/schiller_sidorsky2022/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
