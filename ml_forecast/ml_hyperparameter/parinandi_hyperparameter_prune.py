@@ -90,7 +90,7 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast\ml_hyperparameter")
+os.chdir("ml_forecast/ml_hyperparameter")
 
 ### Save Outputs
 
