@@ -1,0 +1,62 @@
+F-test results:
+                param      F-stat       p-value
+9           ccp_alpha  107.985287  1.161275e-12
+2           max_depth    2.958837  6.667672e-02
+0        n_estimators    2.126646  1.335819e-01
+3   min_samples_split    2.234242  1.432416e-01
+4    min_samples_leaf    2.031343  1.622470e-01
+1           criterion    1.102898  3.425721e-01
+5        max_features    0.752382  3.950861e-01
+7           bootstrap    0.393224  5.343593e-01
+10        max_samples    0.317078  5.871207e-01
+6      max_leaf_nodes    0.045621  9.554719e-01
+8        class_weight         NaN           NaN
+
+Top values for each parameter:
+n_estimators: n_estimators
+500    0.034734
+100    0.030973
+300    0.027532
+Name: metric, dtype: float64
+criterion: criterion
+entropy     0.032610
+gini        0.032297
+log_loss    0.028094
+Name: metric, dtype: float64
+max_depth: max_depth
+25.0    0.033364
+10.0    0.031551
+50.0    0.025208
+Name: metric, dtype: float64
+min_samples_split: min_samples_split
+10    0.033034
+2     0.028948
+Name: metric, dtype: float64
+min_samples_leaf: min_samples_leaf
+4    0.032840
+1    0.028938
+Name: metric, dtype: float64
+max_features: max_features
+sqrt    0.032195
+log2    0.029208
+Name: metric, dtype: float64
+max_leaf_nodes: max_leaf_nodes
+50.0    0.032465
+10.0    0.032148
+25.0    0.031319
+Name: metric, dtype: float64
+bootstrap: bootstrap
+True     0.031810
+False    0.030055
+Name: metric, dtype: float64
+class_weight: class_weight
+balanced    0.031988
+Name: metric, dtype: float64
+ccp_alpha: ccp_alpha
+0.0    0.037626
+0.1    0.022654
+Name: metric, dtype: float64
+max_samples: max_samples
+0.75    0.033771
+0.50    0.029723
+Name: metric, dtype: float64

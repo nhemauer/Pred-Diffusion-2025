@@ -1,0 +1,102 @@
+F-test results:
+               param     F-stat   p-value
+9          subsample  15.157997  0.000387
+16  scale_pos_weight   5.519732  0.007983
+6        tree_method   4.457864  0.009204
+14  min_child_weight   2.512757  0.094785
+13        reg_lambda   2.276532  0.139616
+11             gamma   1.470074  0.232819
+12         reg_alpha   1.310941  0.259385
+8      learning_rate   1.302009  0.284155
+1          max_depth   1.221883  0.315824
+2            max_bin   1.117295  0.364014
+10  colsample_bytree   0.239237  0.627569
+3            booster   0.209721  0.649594
+5        eval_metric   0.283684  0.836831
+0       n_estimators   0.162134  0.850928
+15        max_leaves   0.060125  0.941739
+7        grow_policy   0.004604  0.946261
+4          objective        NaN       NaN
+
+Top values for each parameter:
+n_estimators: n_estimators
+500    0.029733
+100    0.028217
+300    0.027694
+Name: metric, dtype: float64
+max_depth: max_depth
+10    0.032248
+20    0.030811
+3     0.027735
+6     0.024887
+Name: metric, dtype: float64
+max_bin: max_bin
+256    0.033783
+64     0.029639
+32     0.028731
+128    0.026241
+16     0.023978
+Name: metric, dtype: float64
+booster: booster
+gbtree    0.029603
+dart      0.028158
+Name: metric, dtype: float64
+objective: objective
+binary:logistic    0.028844
+Name: metric, dtype: float64
+eval_metric: eval_metric
+auc        0.030111
+logloss    0.029516
+error      0.028137
+aucpr      0.026126
+Name: metric, dtype: float64
+tree_method: tree_method
+exact     0.036209
+approx    0.029184
+auto      0.024332
+hist      0.023400
+Name: metric, dtype: float64
+grow_policy: grow_policy
+depthwise    0.028963
+lossguide    0.028747
+Name: metric, dtype: float64
+learning_rate: learning_rate
+0.10    0.031015
+0.01    0.030135
+0.30    0.025283
+Name: metric, dtype: float64
+subsample: subsample
+0.5    0.034045
+1.0    0.023644
+Name: metric, dtype: float64
+colsample_bytree: colsample_bytree
+0.5    0.029740
+1.0    0.028182
+Name: metric, dtype: float64
+gamma: gamma
+0    0.030922
+2    0.027144
+Name: metric, dtype: float64
+reg_alpha: reg_alpha
+0    0.030913
+2    0.027315
+Name: metric, dtype: float64
+reg_lambda: reg_lambda
+2    0.031047
+1    0.026410
+Name: metric, dtype: float64
+min_child_weight: min_child_weight
+10    0.031331
+1     0.030205
+5     0.023072
+Name: metric, dtype: float64
+max_leaves: max_leaves
+0     0.029541
+16    0.028827
+32    0.028166
+Name: metric, dtype: float64
+scale_pos_weight: scale_pos_weight
+10    0.034286
+5     0.027067
+1     0.023366
+Name: metric, dtype: float64

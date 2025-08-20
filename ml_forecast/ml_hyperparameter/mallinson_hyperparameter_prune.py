@@ -88,7 +88,7 @@ os.chdir("ml_forecast/ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/boushey2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/mallinson2019/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -148,7 +148,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/boushey2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/mallinson2019/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
