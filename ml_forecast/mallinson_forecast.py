@@ -147,34 +147,15 @@ for train_end_year in range(mid_year, max_year):
     results['logit']['ap_score'].append(ap_score)
     
     # Random Forest
-    param_grid = [
-        {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy', 'log_loss'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
+    param_grid = {
+            'n_estimators': (100, 500),
+            'criterion': ['gini', 'entropy'],
+            'max_depth': (10, 25),
             'min_samples_leaf': (1, 4),
-            'max_features': ['sqrt', 'log2', None],
-            'max_leaf_nodes': (None, 10, 25, 50),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1, 'uniform'),
-            'max_samples': (None, 0.5, 0.75)
-        },
-        {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy', 'log_loss'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
-            'min_samples_leaf': (1, 4),
-            'max_features': ['sqrt', 'log2', None],
-            'max_leaf_nodes': (None, 10, 25, 50),
-            'bootstrap': [False],
-            'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1, 'uniform'),
-            'max_samples': [None]
-        }
-    ]
+            'ccp_alpha': (0.0, 0.1),
+    }
 
     # Set up GridSearchCV
     grid_search = BayesSearchCV(
@@ -201,23 +182,20 @@ for train_end_year in range(mid_year, max_year):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 10, 20),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree', 'dart'],
+        'n_estimators': (100, 300),
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 64, 256),
+        'booster': ['gbtree'],
         'objective': ['binary:logistic'],
-        'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
-        'tree_method': ['auto', 'exact', 'approx', 'hist'],
-        'grow_policy': ['depthwise', 'lossguide'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'eval_metric': ['aucpr'],
+        'tree_method': ['auto'],
+        'grow_policy': ['depthwise'],
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'reg_alpha': (0, 2),
         'reg_lambda': (1, 2),
         'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
-        'scale_pos_weight': (1, 5, 10)
+        'max_leaves': (16, 32),
     }
 
     # Set up GridSearchCV
@@ -397,34 +375,15 @@ for train_end_year in range(mid_year, max_year - 4):
     results['logit']['ap_score'].append(ap_score)
     
     # Random Forest
-    param_grid = [
-        {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy', 'log_loss'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
+    param_grid = {
+            'n_estimators': (100, 500),
+            'criterion': ['gini', 'entropy'],
+            'max_depth': (10, 25),
             'min_samples_leaf': (1, 4),
-            'max_features': ['sqrt', 'log2', None],
-            'max_leaf_nodes': (None, 10, 25, 50),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1, 'uniform'),
-            'max_samples': (None, 0.5, 0.75)
-        },
-        {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy', 'log_loss'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
-            'min_samples_leaf': (1, 4),
-            'max_features': ['sqrt', 'log2', None],
-            'max_leaf_nodes': (None, 10, 25, 50),
-            'bootstrap': [False],
-            'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1, 'uniform'),
-            'max_samples': [None]
-        }
-    ]
+            'ccp_alpha': (0.0, 0.1),
+    }
 
     # Set up GridSearchCV
     grid_search = BayesSearchCV(
@@ -450,23 +409,20 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 10, 20),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree', 'dart'],
+        'n_estimators': (100, 300),
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 64, 256),
+        'booster': ['gbtree'],
         'objective': ['binary:logistic'],
-        'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
-        'tree_method': ['auto', 'exact', 'approx', 'hist'],
-        'grow_policy': ['depthwise', 'lossguide'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'eval_metric': ['aucpr'],
+        'tree_method': ['auto'],
+        'grow_policy': ['depthwise'],
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'reg_alpha': (0, 2),
         'reg_lambda': (1, 2),
         'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
-        'scale_pos_weight': (1, 5, 10)
+        'max_leaves': (16, 32),
     }
 
     # Set up GridSearchCV
@@ -645,34 +601,15 @@ for train_end_year in range(mid_year, max_year - 9):
     results['logit']['ap_score'].append(ap_score)
     
     # Random Forest
-    param_grid = [
-        {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy', 'log_loss'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
+    param_grid = {
+            'n_estimators': (100, 500),
+            'criterion': ['gini', 'entropy'],
+            'max_depth': (10, 25),
             'min_samples_leaf': (1, 4),
-            'max_features': ['sqrt', 'log2', None],
-            'max_leaf_nodes': (None, 10, 25, 50),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1, 'uniform'),
-            'max_samples': (None, 0.5, 0.75)
-        },
-        {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy', 'log_loss'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
-            'min_samples_leaf': (1, 4),
-            'max_features': ['sqrt', 'log2', None],
-            'max_leaf_nodes': (None, 10, 25, 50),
-            'bootstrap': [False],
-            'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1, 'uniform'),
-            'max_samples': [None]
-        }
-    ]
+            'ccp_alpha': (0.0, 0.1),
+    }
 
     # Set up GridSearchCV
     grid_search = BayesSearchCV(
@@ -698,23 +635,20 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 10, 20),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree', 'dart'],
+        'n_estimators': (100, 300),
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 64, 256),
+        'booster': ['gbtree'],
         'objective': ['binary:logistic'],
-        'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
-        'tree_method': ['auto', 'exact', 'approx', 'hist'],
-        'grow_policy': ['depthwise', 'lossguide'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'eval_metric': ['aucpr'],
+        'tree_method': ['auto'],
+        'grow_policy': ['depthwise'],
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'reg_alpha': (0, 2),
         'reg_lambda': (1, 2),
         'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
-        'scale_pos_weight': (1, 5, 10)
+        'max_leaves': (16, 32),
     }
 
     # Set up GridSearchCV
