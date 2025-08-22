@@ -171,7 +171,7 @@ for train_end_year in range(mid_year, max_year):
     grid_search = BayesSearchCV(
         estimator = RandomForestClassifier(random_state = 1337),
         search_spaces = param_grid,
-        n_iter = 256,
+        n_iter = 150,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
@@ -212,7 +212,7 @@ for train_end_year in range(mid_year, max_year):
     grid_search = BayesSearchCV(
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
-        n_iter = 256,
+        n_iter = 150,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
@@ -401,7 +401,7 @@ for train_end_year in range(mid_year, max_year - 4):
     grid_search = BayesSearchCV(
         estimator = RandomForestClassifier(random_state = 1337),
         search_spaces = param_grid,
-        n_iter = 256,
+        n_iter = 150,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
@@ -442,7 +442,7 @@ for train_end_year in range(mid_year, max_year - 4):
     grid_search = BayesSearchCV(
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
-        n_iter = 256,
+        n_iter = 150,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
@@ -631,7 +631,7 @@ for train_end_year in range(mid_year, max_year - 9):
     grid_search = BayesSearchCV(
         estimator = RandomForestClassifier(random_state = 1337),
         search_spaces = param_grid,
-        n_iter = 256,
+        n_iter = 150,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
@@ -672,7 +672,7 @@ for train_end_year in range(mid_year, max_year - 9):
     grid_search = BayesSearchCV(
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
-        n_iter = 256,
+        n_iter = 150,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
