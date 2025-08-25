@@ -5,9 +5,7 @@ from sklearn.metrics import average_precision_score
 from skopt import BayesSearchCV
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
-import matplotlib.pyplot as plt
 import pandas as pd
-import numpy as np
 import random
 import warnings
 import os
@@ -32,6 +30,8 @@ results = {
     'rf': {'ap_score': []},
     'xgb': {'ap_score': []}
 }
+
+os.chdir("ml_policy")
 
 for bill in boushey_2016['billname'].unique():
     # Create datasets
