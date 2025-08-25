@@ -14,11 +14,20 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
-covariates = ["year","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "policy", "adopt"] + covariates].dropna()
+covariates = [
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
+]
+
+karch_2016 = karch_2016_full[["adopt", "state", "year", "compnum"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -31,27 +40,16 @@ results = {
 
 os.chdir("ml_policy")
 
-for bill in boehmke_2017['policy'].unique():
+for bill in karch_2016['compnum'].unique():
     # Create datasets
-    train_data = boehmke_2017[boehmke_2017['policy'] != bill]
-    test_data = boehmke_2017[boehmke_2017['policy'] == bill]
+    train_data = karch_2016[karch_2016['compnum'] != bill]
+    test_data = karch_2016[karch_2016['compnum'] == bill]
     
     # Define X and y for the current bill
     X_train = train_data[covariates].copy()
     y_train = train_data['adopt']
     X_test = test_data[covariates].copy()
     y_test = test_data['adopt']
-
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
 
     # Scale features
     scaler = StandardScaler()
@@ -129,10 +127,9 @@ for bill in boehmke_2017['policy'].unique():
 
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
+            'n_estimators': (100, 500),
             'criterion': ['gini', 'entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -165,20 +162,17 @@ for bill in boehmke_2017['policy'].unique():
     # XGBoost
     param_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree'],
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 128, 256),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
-        'min_child_weight': (5, 10),
+        'reg_lambda': (1, 2),
         'max_leaves': (16, 32),
-        'scale_pos_weight': (1, 5)
     }
 
     # Set up GridSearchCV
@@ -214,4 +208,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boehmke2017/boehmke_policy_results.csv', index = False)
+results_df.to_csv('figures/karch2016/karch_policy_results.csv', index = False)

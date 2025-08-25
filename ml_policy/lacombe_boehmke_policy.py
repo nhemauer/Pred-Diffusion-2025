@@ -14,11 +14,15 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
 
-covariates = ["year","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "policy", "adopt"] + covariates].dropna()
+covariates = [
+    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
+    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
+]
+
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", 'state'] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -31,16 +35,16 @@ results = {
 
 os.chdir("ml_policy")
 
-for bill in boehmke_2017['policy'].unique():
+for bill in lacombe_boehmke2021['policyno'].unique():
     # Create datasets
-    train_data = boehmke_2017[boehmke_2017['policy'] != bill]
-    test_data = boehmke_2017[boehmke_2017['policy'] == bill]
+    train_data = lacombe_boehmke2021[lacombe_boehmke2021['policyno'] != bill]
+    test_data = lacombe_boehmke2021[lacombe_boehmke2021['policyno'] == bill]
     
     # Define X and y for the current bill
     X_train = train_data[covariates].copy()
-    y_train = train_data['adopt']
+    y_train = train_data['adoption']
     X_test = test_data[covariates].copy()
-    y_test = test_data['adopt']
+    y_test = test_data['adoption']
 
     # Create dummies for train set
     X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
@@ -214,4 +218,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boehmke2017/boehmke_policy_results.csv', index = False)
+results_df.to_csv('figures/lacombe_boehmke2021/lacombe_policy_results.csv', index = False)

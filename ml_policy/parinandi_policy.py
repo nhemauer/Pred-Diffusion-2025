@@ -14,11 +14,15 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+parinandi_2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
-covariates = ["year","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "policy", "adopt"] + covariates].dropna()
+covariates = [
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+]
+
+parinandi_2020 = parinandi_2020_full[["oneemulation", "state", "featurenumber"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -31,27 +35,16 @@ results = {
 
 os.chdir("ml_policy")
 
-for bill in boehmke_2017['policy'].unique():
+for bill in parinandi_2020['featurenumber'].unique():
     # Create datasets
-    train_data = boehmke_2017[boehmke_2017['policy'] != bill]
-    test_data = boehmke_2017[boehmke_2017['policy'] == bill]
+    train_data = parinandi_2020[parinandi_2020['featurenumber'] != bill]
+    test_data = parinandi_2020[parinandi_2020['featurenumber'] == bill]
     
     # Define X and y for the current bill
     X_train = train_data[covariates].copy()
-    y_train = train_data['adopt']
+    y_train = train_data['oneemulation']
     X_test = test_data[covariates].copy()
-    y_test = test_data['adopt']
-
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    y_test = test_data['oneemulation']
 
     # Scale features
     scaler = StandardScaler()
@@ -129,14 +122,14 @@ for bill in boehmke_2017['policy'].unique():
 
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy'],
+            'n_estimators': (100, 500),
+            'criterion': ['entropy', 'log_loss'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -164,9 +157,9 @@ for bill in boehmke_2017['policy'].unique():
 
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
+        'n_estimators': (100, 500),
+        'max_depth': (3, 10, 20),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -174,11 +167,11 @@ for bill in boehmke_2017['policy'].unique():
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
         'gamma': (0, 2),
-        'min_child_weight': (5, 10),
-        'max_leaves': (16, 32),
-        'scale_pos_weight': (1, 5)
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
+        'min_child_weight': (1, 5, 10),
+        'scale_pos_weight': (1, 5, 10)
     }
 
     # Set up GridSearchCV
@@ -214,4 +207,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boehmke2017/boehmke_policy_results.csv', index = False)
+results_df.to_csv('figures/parinandi2020/parinandi_policy_results.csv', index = False)
