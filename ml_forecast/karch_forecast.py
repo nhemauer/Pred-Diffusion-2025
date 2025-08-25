@@ -66,7 +66,7 @@ for train_end_year in range(mid_year, max_year):
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'year', 'state']) # CHANGE; CANT FORECAST WITH DATA. THERE IS ONLY STATEYEAR VARIABLE.
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state'])
     y_train = train_data['adopt']
     X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
     y_val = val_data['adopt']
@@ -87,7 +87,7 @@ for train_end_year in range(mid_year, max_year):
     X_train_scaled = scaler.fit_transform(X_train)
     X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
-    X_train_val_scaled = scaler.fit_transform(X_train_val)
+    X_train_val_scaled = scaler.transform(X_train_val)
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
