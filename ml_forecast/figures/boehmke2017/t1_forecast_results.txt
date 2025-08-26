@@ -1,0 +1,12 @@
+
+ORIGINAL Results:
+Average AP Score: 0.1649 (±0.0576)
+
+LOGIT Results:
+Average AP Score: 0.1602 (±0.0596)
+
+RF Results:
+Average AP Score: 0.1510 (±0.0540)
+
+XGB Results:
+Average AP Score: 0.1559 (±0.0594)
