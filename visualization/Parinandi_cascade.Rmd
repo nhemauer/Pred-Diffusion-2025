@@ -1,0 +1,33 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This script creates the Parinandi (2020) cascade plot.
+
+```{r}
+
+library(tidyverse)
+library(NetworkInference)
+library(haven)
+
+set.seed(1333)
+
+parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/parinandi2020.dta")
+
+# Group by state, year, policy
+# Get year policy was adopted for each state/policy
+cascade_long <- group_by(parinandi, state, featurenumber) %>%
+  filter(oneemulation == 1) %>%
+  summarise(oneemulation = min(year)) %>%
+  ungroup()
+
+# Create cascades 
+cascades <- as_cascade_long(cascade_long, cascade_node_name = 'state', event_time = 'oneemulation', cascade_id = 'featurenumber')
+
+# Sample colnames
+names <- unique(cascade_long$featurenumber)
+selection <- sample(names, 10)
+plot(cascades, label_nodes = FALSE, selection = selection)
+
+```
