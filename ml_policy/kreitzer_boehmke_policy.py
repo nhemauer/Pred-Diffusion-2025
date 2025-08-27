@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import average_precision_score
 from skopt import BayesSearchCV
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, LeaveOneOut
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import random
@@ -112,7 +112,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     grid_search = GridSearchCV(
         estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
         param_grid = param_grid,
-        cv = 5,
+        cv = LeaveOneOut(),
         scoring = 'average_precision',
         n_jobs = -1,
         verbose = 0,
@@ -147,7 +147,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
         estimator = RandomForestClassifier(random_state = 1337),
         search_spaces = param_grid,
         n_iter = 150,
-        cv = 5,
+        cv = LeaveOneOut(),
         n_jobs = -1,
         verbose = 0,
         scoring = "average_precision",
@@ -187,7 +187,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
         n_iter = 150,
-        cv = 5,
+        cv = LeaveOneOut(),
         n_jobs = -1,
         verbose = 0,
         scoring = "average_precision",
