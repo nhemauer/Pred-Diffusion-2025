@@ -27,11 +27,17 @@ covariates = ["std_score","initiative","init_sigs","std_population",
                 "duration","durationsq","durationcb"]
 bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
 
+# Ensure year column is an integer
+bricker_lacombe_2021['year'] = bricker_lacombe_2021['year'].astype(int)
+
 bricker_lacombe_2021 = bricker_lacombe_2021.sort_values(["state", "year"])
 
+# Create count variable (0 for first year, 1 for second year, etc.)
+bricker_lacombe_2021['count'] = bricker_lacombe_2021['year'] - bricker_lacombe_2021['year'].min()
+
 # Get year range
-min_year = int(bricker_lacombe_2021['year'].min())
-max_year = int(bricker_lacombe_2021['year'].max())
+min_year = bricker_lacombe_2021['year'].min()
+max_year = bricker_lacombe_2021['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results

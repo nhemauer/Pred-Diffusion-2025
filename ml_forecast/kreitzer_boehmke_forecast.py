@@ -27,7 +27,13 @@ covariates = [
 ]
 kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
 
+# Ensure year column is an integer
+kreitzer_boehmke_2016['year'] = kreitzer_boehmke_2016['year'].astype(int)
+
 kreitzer_boehmke_2016 = kreitzer_boehmke_2016.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+kreitzer_boehmke_2016['count'] = kreitzer_boehmke_2016['year'] - kreitzer_boehmke_2016['year'].min()
 
 # Get year range
 min_year = kreitzer_boehmke_2016['year'].min()

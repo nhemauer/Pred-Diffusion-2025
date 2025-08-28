@@ -29,6 +29,12 @@ covariates = [
 lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", 'state'] + covariates].dropna()
 lacombe_boehmke2021 = lacombe_boehmke2021.sort_values(["state", "year"])
 
+# Ensure year column is an integer
+lacombe_boehmke2021['year'] = lacombe_boehmke2021['year'].astype(int)
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+lacombe_boehmke2021['count'] = lacombe_boehmke2021['year'] - lacombe_boehmke2021['year'].min()
+
 # Get year range
 min_year = lacombe_boehmke2021['year'].min()
 max_year = lacombe_boehmke2021['year'].max()

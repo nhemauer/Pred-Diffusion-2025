@@ -24,7 +24,13 @@ covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
 boehmke_2017 = boehmke_2017_full[["state", "year", "adopt"] + covariates].dropna()
 
+# Ensure year column is an integer
+boehmke_2017['year'] = boehmke_2017['year'].astype(int)
+
 boehmke_2017 = boehmke_2017.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+boehmke_2017['count'] = boehmke_2017['year'] - boehmke_2017['year'].min()
 
 # Get year range
 min_year = boehmke_2017['year'].min()

@@ -26,11 +26,16 @@ covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
                 "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
 boushey_2016 = boushey_2016_full[["state", "year", "dvadopt"] + covariates].dropna()
 
+# Ensure year column is an integer
+boushey_2016['year'] = boushey_2016['year'].astype(int)
+
 boushey_2016 = boushey_2016.sort_values(["state", "year"])
 
+# Not adding count here because the data already has "counter", "counter2", and "counter3" variables
+
 # Get year range
-min_year = boushey_2016['year'].min()
-max_year = boushey_2016['year'].max()
+min_year = int(boushey_2016['year'].min())
+max_year = int(boushey_2016['year'].max())
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
