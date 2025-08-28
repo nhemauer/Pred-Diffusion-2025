@@ -21,7 +21,7 @@ covariates = [
     "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
     "time2", "webster"
 ]
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year", "policy_num"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
