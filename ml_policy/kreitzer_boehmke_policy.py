@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import average_precision_score
 from skopt import BayesSearchCV
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
+from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import random
@@ -19,7 +19,7 @@ kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
 covariates = [
     "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
     "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
+    "time2", "webster"
 ]
 kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
 
@@ -45,16 +45,8 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     X_test = test_data[covariates].copy()
     y_test = test_data['adopt_policy']
 
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
+    # Create groups for LeaveOneGroupOut
+    groups = train_data['policy_num']
 
     # Scale features
     scaler = StandardScaler()
@@ -112,7 +104,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     grid_search = GridSearchCV(
         estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
         param_grid = param_grid,
-        cv = LeaveOneOut(),
+        cv = LeaveOneGroupOut(),
         scoring = 'average_precision',
         n_jobs = -1,
         verbose = 0,
@@ -120,7 +112,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(X_train_scaled, y_train, groups = groups)
 
     # Get the best model and score on test set
     best_model = grid_search.best_estimator_
@@ -147,7 +139,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
         estimator = RandomForestClassifier(random_state = 1337),
         search_spaces = param_grid,
         n_iter = 150,
-        cv = LeaveOneOut(),
+        cv = LeaveOneGroupOut(),
         n_jobs = -1,
         verbose = 0,
         scoring = "average_precision",
@@ -155,7 +147,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(X_train_scaled, y_train, groups = groups)
 
     # Get the best model and score on test set
     best_model = grid_search.best_estimator_
@@ -187,7 +179,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
         n_iter = 150,
-        cv = LeaveOneOut(),
+        cv = LeaveOneGroupOut(),
         n_jobs = -1,
         verbose = 0,
         scoring = "average_precision",
@@ -195,7 +187,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(X_train_scaled, y_train, groups = groups)
 
     # Get the best model and score on test set
     best_model = grid_search.best_estimator_

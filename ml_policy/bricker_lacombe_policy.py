@@ -3,7 +3,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import average_precision_score
 from skopt import BayesSearchCV
-from sklearn.model_selection import GridSearchCV, LeaveOneOut
+from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import random
@@ -43,6 +43,9 @@ for bill in bricker_lacombe_2021['policy'].unique():
     y_train = train_data['adoption']
     X_test = test_data[covariates].copy()
     y_test = test_data['adoption']
+
+    # Create groups for LeaveOneGroupOut
+    groups = train_data['policy']
 
     # Create dummies for train set
     X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
@@ -111,7 +114,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
     grid_search = GridSearchCV(
         estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
         param_grid = param_grid,
-        cv = LeaveOneOut(),
+        cv = LeaveOneGroupOut(),
         scoring = 'average_precision',
         n_jobs = -1,
         verbose = 0,
@@ -119,7 +122,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
     )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(X_train_scaled, y_train, groups = groups)
 
     # Get the best model and score on test set
     best_model = grid_search.best_estimator_
@@ -146,7 +149,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
         estimator = RandomForestClassifier(random_state = 1337),
         search_spaces = param_grid,
         n_iter = 150,
-        cv = LeaveOneOut(),
+        cv = LeaveOneGroupOut(),
         n_jobs = -1,
         verbose = 0,
         scoring = "average_precision",
@@ -154,7 +157,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
     )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(X_train_scaled, y_train, groups = groups)
 
     # Get the best model and score on test set
     best_model = grid_search.best_estimator_
@@ -186,7 +189,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
         n_iter = 150,
-        cv = LeaveOneOut(),
+        cv = LeaveOneGroupOut(),
         n_jobs = -1,
         verbose = 0,
         scoring = "average_precision",
@@ -194,7 +197,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
     )
 
     # Fit grid search
-    grid_search.fit(X_train_scaled, y_train)
+    grid_search.fit(X_train_scaled, y_train, groups = groups)
 
     # Get the best model and score on test set
     best_model = grid_search.best_estimator_
