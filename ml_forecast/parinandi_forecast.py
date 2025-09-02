@@ -27,7 +27,14 @@ covariates = [
 ]
 
 parinandi_2020 = parinandi_2020_full[["oneemulation", "state"] + covariates].dropna()
+
+# Ensure year column is an integer
+parinandi_2020['year'] = parinandi_2020['year'].astype(int)
+
 parinandi_2020 = parinandi_2020.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+parinandi_2020['count'] = parinandi_2020['year'] - parinandi_2020['year'].min()
 
 # Get year range
 min_year = parinandi_2020['year'].min()

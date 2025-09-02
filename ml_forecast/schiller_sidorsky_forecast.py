@@ -26,7 +26,13 @@ covariates = [
 ]
 schiller_sidorsky2022 = schiller_sidorsky2022_full[["dvgunlaw", "state", "year"] + covariates].dropna()
 
+# Ensure year column is an integer
+schiller_sidorsky2022['year'] = schiller_sidorsky2022['year'].astype(int)
+
 schiller_sidorsky2022 = schiller_sidorsky2022.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+schiller_sidorsky2022['count'] = schiller_sidorsky2022['year'] - schiller_sidorsky2022['year'].min()
 
 # Get year range
 min_year = schiller_sidorsky2022['year'].min()

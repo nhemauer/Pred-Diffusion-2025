@@ -24,7 +24,13 @@ covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "i
               "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
 mallinson_2019 = mallinson_2019_full[["adopt", "policy", "state", "year"] + covariates].dropna()
 
+# Ensure year column is an integer
+mallinson_2019['year'] = mallinson_2019['year'].astype(int)
+
 mallinson_2019 = mallinson_2019.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+mallinson_2019['count'] = mallinson_2019['year'] - mallinson_2019['year'].min()
 
 # Get year range
 min_year = mallinson_2019['year'].min()
@@ -184,7 +190,7 @@ for train_end_year in range(mid_year, max_year):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 256),
+        'max_bin': (32, 64),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -193,8 +199,7 @@ for train_end_year in range(mid_year, max_year):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'reg_alpha': (0, 2),
-        'reg_lambda': (1, 2),
-        'min_child_weight': (1, 5, 10),
+        'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
 
@@ -411,7 +416,7 @@ for train_end_year in range(mid_year, max_year - 4):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 256),
+        'max_bin': (32, 64),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -420,8 +425,7 @@ for train_end_year in range(mid_year, max_year - 4):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'reg_alpha': (0, 2),
-        'reg_lambda': (1, 2),
-        'min_child_weight': (1, 5, 10),
+        'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
 
@@ -637,7 +641,7 @@ for train_end_year in range(mid_year, max_year - 9):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 256),
+        'max_bin': (32, 64),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -646,8 +650,7 @@ for train_end_year in range(mid_year, max_year - 9):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'reg_alpha': (0, 2),
-        'reg_lambda': (1, 2),
-        'min_child_weight': (1, 5, 10),
+        'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
 

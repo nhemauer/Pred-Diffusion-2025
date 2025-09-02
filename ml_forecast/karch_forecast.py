@@ -33,7 +33,13 @@ covariates = [
 
 karch_2016 = karch_2016_full[["adopt", "state", "year"] + covariates].dropna()
 
+# Ensure year column is an integer
+karch_2016['year'] = karch_2016['year'].astype(int)
+
 karch_2016 = karch_2016.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+karch_2016['count'] = karch_2016['year'] - karch_2016['year'].min()
 
 # Get year range
 min_year = karch_2016['year'].min()

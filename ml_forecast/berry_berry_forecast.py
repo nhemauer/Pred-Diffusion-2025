@@ -23,7 +23,13 @@ berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "
 
 berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
 
+# Ensure year column is an integer
+berry_berry1990['year'] = berry_berry1990['year'].astype(int)
+
 berry_berry1990 = berry_berry1990.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+berry_berry1990['count'] = berry_berry1990['year'] - berry_berry1990['year'].min()
 
 # Get year range
 min_year = berry_berry1990['year'].min()
