@@ -158,10 +158,9 @@ for train_end_year in range(mid_year, max_year):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
+            'n_estimators': (100, 300, 500),
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -201,7 +200,7 @@ for train_end_year in range(mid_year, max_year):
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
         'min_child_weight': (5, 10),
@@ -380,10 +379,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
+            'n_estimators': (100, 300, 500),
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -423,7 +421,7 @@ for train_end_year in range(mid_year, max_year - 4):
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
         'min_child_weight': (5, 10),
@@ -602,10 +600,9 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
+            'n_estimators': (100, 300, 500),
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -645,7 +642,7 @@ for train_end_year in range(mid_year, max_year - 9):
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
         'min_child_weight': (5, 10),

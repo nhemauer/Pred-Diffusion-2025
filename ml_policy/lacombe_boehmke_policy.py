@@ -137,9 +137,8 @@ for bill in lacombe_boehmke2021['policyno'].unique():
     # Random Forest
     param_grid = {
             'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy'],
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -172,9 +171,9 @@ for bill in lacombe_boehmke2021['policyno'].unique():
     # XGBoost
     param_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree'],
+        'max_depth': (3, 6, 20),
+        'max_bin': (16, 32, 64),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
@@ -182,10 +181,8 @@ for bill in lacombe_boehmke2021['policyno'].unique():
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
-        'scale_pos_weight': (1, 5)
     }
 
     # Set up GridSearchCV

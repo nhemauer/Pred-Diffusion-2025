@@ -155,8 +155,8 @@ for train_end_year in range(mid_year, max_year):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (10, 25),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -190,7 +190,7 @@ for train_end_year in range(mid_year, max_year):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -198,7 +198,6 @@ for train_end_year in range(mid_year, max_year):
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
@@ -382,8 +381,8 @@ for train_end_year in range(mid_year, max_year - 4):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (10, 25),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -416,7 +415,7 @@ for train_end_year in range(mid_year, max_year - 4):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -424,7 +423,6 @@ for train_end_year in range(mid_year, max_year - 4):
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
@@ -607,8 +605,8 @@ for train_end_year in range(mid_year, max_year - 9):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (10, 25),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -641,7 +639,7 @@ for train_end_year in range(mid_year, max_year - 9):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -649,7 +647,6 @@ for train_end_year in range(mid_year, max_year - 9):
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }

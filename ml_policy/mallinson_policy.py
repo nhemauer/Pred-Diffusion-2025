@@ -122,8 +122,8 @@ for bill in mallinson_2019['policy'].unique():
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (10, 25),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -157,7 +157,7 @@ for bill in mallinson_2019['policy'].unique():
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (32, 64),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -165,7 +165,6 @@ for bill in mallinson_2019['policy'].unique():
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
