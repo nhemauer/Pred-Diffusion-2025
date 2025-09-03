@@ -164,13 +164,12 @@ for train_end_year in range(mid_year, max_year):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['entropy', 'log_loss'],
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
-            'max_samples': (None, 0.5, 0.75)
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -209,7 +208,6 @@ for train_end_year in range(mid_year, max_year):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32)
     }
@@ -394,13 +392,12 @@ for train_end_year in range(mid_year, max_year - 4):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['entropy', 'log_loss'],
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
-            'max_samples': (None, 0.5, 0.75)
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -439,7 +436,6 @@ for train_end_year in range(mid_year, max_year - 4):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32)
     }
@@ -624,13 +620,12 @@ for train_end_year in range(mid_year, max_year - 9):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['entropy', 'log_loss'],
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
-            'max_samples': (None, 0.5, 0.75)
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -669,7 +664,6 @@ for train_end_year in range(mid_year, max_year - 9):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32)
     }

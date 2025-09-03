@@ -131,12 +131,12 @@ for bill in karch_2016['compnum'].unique():
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
+            'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -164,18 +164,19 @@ for bill in karch_2016['compnum'].unique():
 
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 128, 256),
-        'booster': ['dart'],
+        'n_estimators': (100, 500),
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 128),
+        'booster': ['gbtree', 'dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_lambda': (1, 2),
-        'max_leaves': (16, 32),
+        'colsample_bytree': (0.5, 1.0),
+        'min_child_weight': (5, 10),
+        'max_leaves': (16, 32)
     }
 
     # Set up GridSearchCV
