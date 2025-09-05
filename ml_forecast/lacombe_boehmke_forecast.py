@@ -286,6 +286,14 @@ for train_end_year in range(mid_year, max_year - 4):
 
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
 
+    # Split data
+    train_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] <= train_end_year]
+    val_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == val_year]
+    test_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == test_year]
+    
+    if len(test_data) == 0:
+        continue
+
     # Prepare features
     X_train = train_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
     X_val = val_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
@@ -506,6 +514,14 @@ for train_end_year in range(mid_year, max_year - 9):
     test_year = train_end_year + 11
     
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
+
+    # Split data
+    train_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] <= train_end_year]
+    val_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == val_year]
+    test_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == test_year]
+    
+    if len(test_data) == 0:
+        continue
 
     # Prepare features
     X_train = train_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
