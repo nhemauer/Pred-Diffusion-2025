@@ -1,0 +1,12 @@
+F1 Score: 0.0
+Balanced Accuracy Score: 0.5
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.96      1.00      0.98     57719
+           1       0.00      0.00      0.00      2201
+
+    accuracy                           0.96     59920
+   macro avg       0.48      0.50      0.49     59920
+weighted avg       0.93      0.96      0.95     59920
+Model Fit Elapsed Time: 0.01 Minutes

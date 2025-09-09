@@ -6,7 +6,7 @@ LOGIT Results:
 Average AP Score: 0.0249 (±0.0290)
 
 RF Results:
-Average AP Score: 0.0294 (±0.0300)
+Average AP Score: 0.0293 (±0.0300)
 
 XGB Results:
 Average AP Score: 0.0305 (±0.0309)
