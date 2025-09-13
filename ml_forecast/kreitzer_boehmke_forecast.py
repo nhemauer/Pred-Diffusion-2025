@@ -13,8 +13,10 @@ import numpy as np
 import random
 import warnings
 import os
+from sklearn.exceptions import ConvergenceWarning
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", category = ConvergenceWarning)
+
 random.seed(1337)
 
 # Data
@@ -129,6 +131,12 @@ for train_end_year in range(mid_year, max_year):
         {
             **common_params,
             'solver': ['lbfgs'],
+            'penalty': ['l2', None]
+        },
+        # newton-cholesky supports only l2 or none
+        {
+            **common_params,
+            'solver': ['newton-cholesky'],
             'penalty': ['l2', None]
         },
         # liblinear supports l1 and l2 only (no elasticnet or none)

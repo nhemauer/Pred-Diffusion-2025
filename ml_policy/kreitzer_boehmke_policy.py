@@ -9,8 +9,10 @@ import pandas as pd
 import random
 import warnings
 import os
+from sklearn.exceptions import ConvergenceWarning
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", category = ConvergenceWarning)
+
 random.seed(1337)
 
 # Data
@@ -67,8 +69,8 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
 
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
         'fit_intercept': [True, False]
     }
 
@@ -96,7 +98,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 

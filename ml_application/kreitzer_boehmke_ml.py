@@ -14,8 +14,9 @@ import time
 import random
 import warnings
 import os
+from sklearn.exceptions import ConvergenceWarning
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore", category = ConvergenceWarning)
 
 random.seed(1337)
 
