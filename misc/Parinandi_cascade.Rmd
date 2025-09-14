@@ -13,7 +13,10 @@ library(haven)
 
 set.seed(1333)
 
-parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/parinandi2020.dta")
+# PC
+# parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/parinandi2020.dta")
+# Laptop
+parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred-Diffusion-2025/data/parinandi2020.dta")
 
 # Group by state, year, policy
 # Get year policy was adopted for each state/policy
@@ -31,3 +34,80 @@ selection <- sample(names, 10)
 plot(cascades, label_nodes = FALSE, selection = selection)
 
 ```
+
+```{r}
+
+if (!requireNamespace("neha", quietly = TRUE)){
+  if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+  }
+  devtools::install_github("desmarais-lab/neha")
+  library(neha)
+}
+
+library(neha)
+
+betas <- c(
+  adagovideology   =  0.011231,
+  citizenideology  =  0.024820,
+  medianivoteshare = -0.021950,
+  partydecline     =  0.306356,
+  squirescore      =  0.128485,
+  incunemp         =  0.036945,
+  pctpercapincome  = -0.019971,
+  percenturban     =  0.033201,
+  ugovd            = -0.034244,
+  percentfossilprod=  0.002523,
+  renergyprice11   =  0.011837,
+  deregulated      =  0.723416,
+  geoneighborlag   =  1.121361,
+  ideoneighborlag  = -1.634820,
+  premulation1     = -57.633130,
+  year             = -0.003629,
+  featureyear      =  0.162005
+)
+
+parinandi <- as.data.frame(parinandi)
+
+# sim_data <- simulate_neha_discrete(parinandi, node = "state", time = "year", beta = betas, gamma = 0)
+
+simulate_neha_discrete_nonet <- function(x, node, time, beta) {
+  times <- sort(unique(x[[time]]))
+  nodes <- sort(unique(x[[node]]))
+  
+  # covariate linear predictor
+  x_linear_predictor <- as.matrix(x[, row.names(beta), drop = FALSE]) %*% beta
+  
+  event_times <- rep(NA, length(nodes))
+  event <- rep(NA, nrow(x))
+  
+  for (t in times) {
+    nodes_at_risk <- nodes[is.na(event_times)]
+    
+    for (n in nodes_at_risk) {
+      idx <- which(x[[time]] == t & x[[node]] == n)
+      xlp_nt <- x_linear_predictor[idx]
+      
+      # no network effects
+      linear_predictor <- xlp_nt
+      
+      pr_nt <- 1 / (1 + exp(-linear_predictor))
+      event_nt <- as.integer(pr_nt > runif(1))
+      
+      event[idx] <- 0
+      if (event_nt == 1) {
+        event_times[which(nodes == n)] <- t
+        event[idx] <- 1
+      }
+    }
+  }
+  
+  x <- data.frame(x, event, stringsAsFactors = FALSE)
+  data.frame(na.omit(x), stringsAsFactors = FALSE)
+}
+
+simulate_neha_discrete_nonet(parinandi, node = "state", time = "year", beta = betas)
+
+
+```
+
