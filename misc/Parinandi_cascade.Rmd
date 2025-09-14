@@ -67,47 +67,70 @@ betas <- c(
   featureyear      =  0.162005
 )
 
+covariates = c("adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear", "featurenumber")
+
+parinandi <- parinandi %>% select(all_of(covariates))
+
 parinandi <- as.data.frame(parinandi)
 
 # sim_data <- simulate_neha_discrete(parinandi, node = "state", time = "year", beta = betas, gamma = 0)
 
-simulate_neha_discrete_nonet <- function(x, node, time, beta) {
+simulate_neha_discrete_nonet <- function(x, node, time, feature, beta) {
   times <- sort(unique(x[[time]]))
   nodes <- sort(unique(x[[node]]))
+  feats <- as.character(sort(unique(x[[feature]])))   # <-- make them character
   
   # covariate linear predictor
   x_linear_predictor <- as.matrix(x[, row.names(beta), drop = FALSE]) %*% beta
   
-  event_times <- rep(NA, length(nodes))
+  # matrix of first–event times for each (state, feature)
+  event_times <- matrix(
+    NA,
+    nrow = length(nodes),
+    ncol = length(feats),
+    dimnames = list(nodes, feats)
+  )
+  
   event <- rep(NA, nrow(x))
   
   for (t in times) {
-    nodes_at_risk <- nodes[is.na(event_times)]
-    
-    for (n in nodes_at_risk) {
-      idx <- which(x[[time]] == t & x[[node]] == n)
-      xlp_nt <- x_linear_predictor[idx]
+    for (f in feats) {
+      nodes_at_risk <- nodes[is.na(event_times[, f])]
       
-      # no network effects
-      linear_predictor <- xlp_nt
-      
-      pr_nt <- 1 / (1 + exp(-linear_predictor))
-      event_nt <- as.integer(pr_nt > runif(1))
-      
-      event[idx] <- 0
-      if (event_nt == 1) {
-        event_times[which(nodes == n)] <- t
-        event[idx] <- 1
+      for (n in nodes_at_risk) {
+        idx <- which(
+          x[[time]]    == t &
+          x[[node]]    == n &
+          x[[feature]] == f
+        )
+        if (length(idx) == 0) next
+        
+        xlp <- x_linear_predictor[idx]
+        pr  <- 1 / (1 + exp(-xlp))
+        ev  <- as.integer(pr > runif(1))
+        
+        event[idx] <- 0
+        if (ev == 1) {
+          event_times[n, f] <- t
+          event[idx] <- 1
+        }
       }
     }
   }
   
   x <- data.frame(x, event, stringsAsFactors = FALSE)
-  data.frame(na.omit(x), stringsAsFactors = FALSE)
+  na.omit(x)
 }
 
-simulate_neha_discrete_nonet(parinandi, node = "state", time = "year", beta = betas)
-
+sim_data <- simulate_neha_discrete_nonet(
+  x      = parinandi,
+  node   = "state",
+  time   = "year",
+  feature = "featurenumber",
+  beta   = betas
+)
 
 ```
 
