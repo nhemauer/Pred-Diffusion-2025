@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings("ignore")
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
@@ -7,11 +9,7 @@ from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import random
-import warnings
 import os
-from sklearn.exceptions import ConvergenceWarning
-
-warnings.filterwarnings("ignore", category = ConvergenceWarning)
 
 random.seed(1337)
 

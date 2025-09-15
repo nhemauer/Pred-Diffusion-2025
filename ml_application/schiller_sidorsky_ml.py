@@ -1,5 +1,6 @@
 ### Preprocessing Schiller and Sidorsky 2022
-
+import warnings
+warnings.filterwarnings("ignore")
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
@@ -12,11 +13,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import time
 import random
-import warnings
 import os
-from sklearn.exceptions import ConvergenceWarning
-
-warnings.filterwarnings("ignore", category = ConvergenceWarning)
 
 random.seed(1337)
 
