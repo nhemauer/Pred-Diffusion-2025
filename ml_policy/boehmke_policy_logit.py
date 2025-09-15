@@ -75,7 +75,7 @@ for bill in boehmke_2017['policy'].unique():
     common_params = {
         'C': [0.001, 0.01, 0.1],
         'class_weight': [None, 'balanced'],
-        'fit_intercept': [True, False]
+        'fit_intercept': [True]
     }
 
     param_grid = [

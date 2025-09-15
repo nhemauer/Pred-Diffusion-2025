@@ -97,12 +97,11 @@ plt.show()
 # Define parameter grid for Logistic Regression
 # Base params common to all
 common_params = {
-    'C': [0.001, 0.01, 0.1, 1, 2],
-    'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-    'fit_intercept': [True, False]
+    'C': [0.001, 0.01, 0.1],
+    'class_weight': [None, 'balanced'],
+    'fit_intercept': [True]
 }
 
-# Build full param grid
 param_grid = [
     # lbfgs supports only l2 or none
     {
@@ -127,16 +126,16 @@ param_grid = [
         **common_params,
         'solver': ['saga'],
         'penalty': ['l1', 'l2', 'elasticnet', None],
-        'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+        'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
     }
 ]
 
 # Set up GridSearchCV
 grid_search = GridSearchCV(
-    estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+    estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
     param_grid = param_grid,
     scoring = "average_precision", 
-    cv = 10,
+    cv = 5,
     n_jobs = -1,
     verbose = 0,
     refit = True 
@@ -252,8 +251,8 @@ param_grid = {
 bayes_search = BayesSearchCV(
     estimator = RandomForestClassifier(random_state = 1337),
     search_spaces = param_grid,
-    n_iter = 256,
-    cv = 10,
+    n_iter = 150,
+    cv = 5,
     n_jobs = -1,
     verbose = 0,
     scoring = "average_precision",
@@ -375,8 +374,8 @@ param_grid = {
 bayes_search = BayesSearchCV(
     estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
     search_spaces = param_grid,
-    n_iter = 256,
-    cv = 10,
+    n_iter = 150,
+    cv = 5,
     n_jobs = -1,
     verbose = 0,
     scoring = "average_precision",
