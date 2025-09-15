@@ -13,7 +13,10 @@ library(haven)
 
 set.seed(1333)
 
-parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/parinandi2020.dta")
+# PC
+# parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/parinandi2020.dta")
+# Laptop
+parinandi <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred-Diffusion-2025/data/parinandi2020.dta")
 
 # Group by state, year, policy
 # Get year policy was adopted for each state/policy
@@ -31,3 +34,103 @@ selection <- sample(names, 10)
 plot(cascades, label_nodes = FALSE, selection = selection)
 
 ```
+
+```{r}
+
+if (!requireNamespace("neha", quietly = TRUE)){
+  if (!requireNamespace("devtools", quietly = TRUE)){
+    install.packages("devtools")
+  }
+  devtools::install_github("desmarais-lab/neha")
+  library(neha)
+}
+
+library(neha)
+
+betas <- c(
+  adagovideology   =  0.011231,
+  citizenideology  =  0.024820,
+  medianivoteshare = -0.021950,
+  partydecline     =  0.306356,
+  squirescore      =  0.128485,
+  incunemp         =  0.036945,
+  pctpercapincome  = -0.019971,
+  percenturban     =  0.033201,
+  ugovd            = -0.034244,
+  percentfossilprod=  0.002523,
+  renergyprice11   =  0.011837,
+  deregulated      =  0.723416,
+  geoneighborlag   =  1.121361,
+  ideoneighborlag  = -1.634820,
+  premulation1     = -57.633130,
+  year             = -0.003629,
+  featureyear      =  0.162005
+)
+
+covariates = c("adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear", "featurenumber")
+
+parinandi <- parinandi %>% select(all_of(covariates))
+
+parinandi <- as.data.frame(parinandi)
+
+# sim_data <- simulate_neha_discrete(parinandi, node = "state", time = "year", beta = betas, gamma = 0)
+
+simulate_neha_discrete_nonet <- function(x, node, time, feature, beta) {
+  times <- sort(unique(x[[time]]))
+  nodes <- sort(unique(x[[node]]))
+  feats <- as.character(sort(unique(x[[feature]])))   # <-- make them character
+  
+  # covariate linear predictor
+  x_linear_predictor <- as.matrix(x[, row.names(beta), drop = FALSE]) %*% beta
+  
+  # matrix of first–event times for each (state, feature)
+  event_times <- matrix(
+    NA,
+    nrow = length(nodes),
+    ncol = length(feats),
+    dimnames = list(nodes, feats)
+  )
+  
+  event <- rep(NA, nrow(x))
+  
+  for (t in times) {
+    for (f in feats) {
+      nodes_at_risk <- nodes[is.na(event_times[, f])]
+      
+      for (n in nodes_at_risk) {
+        idx <- which(
+          x[[time]]    == t &
+          x[[node]]    == n &
+          x[[feature]] == f
+        )
+        if (length(idx) == 0) next
+        
+        xlp <- x_linear_predictor[idx]
+        pr  <- 1 / (1 + exp(-xlp))
+        ev  <- as.integer(pr > runif(1))
+        
+        event[idx] <- 0
+        if (ev == 1) {
+          event_times[n, f] <- t
+          event[idx] <- 1
+        }
+      }
+    }
+  }
+  
+  x <- data.frame(x, event, stringsAsFactors = FALSE)
+  na.omit(x)
+}
+
+sim_data <- simulate_neha_discrete_nonet(
+  x      = parinandi,
+  node   = "state",
+  time   = "year",
+  feature = "featurenumber",
+  beta   = betas
+)
+
+```
+
