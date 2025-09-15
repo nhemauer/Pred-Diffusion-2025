@@ -17,26 +17,32 @@ import os
 random.seed(1337)
 
 # Data
-lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 covariates = [
-    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
-    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
-    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
 ]
 
-lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", 'state'] + covariates].dropna()
-lacombe_boehmke2021 = lacombe_boehmke2021.sort_values(["state", "year"])
+karch_2016 = karch_2016_full[["adopt", "state", "year"] + covariates].dropna()
 
 # Ensure year column is an integer
-lacombe_boehmke2021['year'] = lacombe_boehmke2021['year'].astype(int)
+karch_2016['year'] = karch_2016['year'].astype(int)
+
+karch_2016 = karch_2016.sort_values(["state", "year"])
 
 # Create count variable (0 for first year, 1 for second year, etc.)
-lacombe_boehmke2021['count'] = lacombe_boehmke2021['year'] - lacombe_boehmke2021['year'].min()
+karch_2016['count'] = karch_2016['year'] - karch_2016['year'].min()
 
 # Get year range
-min_year = lacombe_boehmke2021['year'].min()
-max_year = lacombe_boehmke2021['year'].max()
+min_year = karch_2016['year'].min()
+max_year = karch_2016['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 os.chdir("ml_forecast")
@@ -56,24 +62,23 @@ for train_end_year in range(mid_year, max_year - 4):
     test_year = train_end_year + 6
 
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
-
+    
     # Split data
-    train_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] <= train_end_year]
-    val_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == val_year]
-    test_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == test_year]
+    train_data = karch_2016[karch_2016['year'] <= train_end_year]
+    val_data = karch_2016[karch_2016['year'] == val_year]
+    test_data = karch_2016[karch_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
-    # Prepare features
-    X_train = train_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
     
-    y_train = train_data['adoption']
-    y_val = val_data['adoption']
-    y_test = test_data['adoption']
-
+    # Prepare features
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state']) 
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
+    y_test = test_data['adopt']
+    
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -92,10 +97,10 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300),
-        'max_depth': (3, 6, 20),
-        'max_bin': (16, 32, 64),
-        'booster': ['dart'],
+        'n_estimators': (100, 500),
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 128),
+        'booster': ['gbtree', 'dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
@@ -104,7 +109,7 @@ for train_end_year in range(mid_year, max_year - 4):
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
         'min_child_weight': (5, 10),
-        'max_leaves': (16, 32),
+        'max_leaves': (16, 32)
     }
 
     # Set up GridSearchCV
@@ -131,7 +136,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/lacombe_boehmke2021/t5_forecast_results_xgb.txt", "w") as f:
+with open("figures/karch2016/t5_forecast_results_xgb.txt", "w") as f:
     for model in ['xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -150,7 +155,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/lacombe_boehmke2021/t5_forecast_timeseries_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/t5_forecast_timeseries_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -159,4 +164,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/lacombe_boehmke2021/t5_forecast_timeseries_xgb.csv', index = False)
+time_series_results.to_csv('figures/karch2016/t5_forecast_timeseries_xgb.csv', index = False)

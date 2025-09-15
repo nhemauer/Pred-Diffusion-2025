@@ -17,26 +17,32 @@ import os
 random.seed(1337)
 
 # Data
-kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 covariates = [
-    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
-    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
 ]
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
+
+karch_2016 = karch_2016_full[["adopt", "state", "year"] + covariates].dropna()
 
 # Ensure year column is an integer
-kreitzer_boehmke_2016['year'] = kreitzer_boehmke_2016['year'].astype(int)
+karch_2016['year'] = karch_2016['year'].astype(int)
 
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016.sort_values(["state", "year"])
+karch_2016 = karch_2016.sort_values(["state", "year"])
 
 # Create count variable (0 for first year, 1 for second year, etc.)
-kreitzer_boehmke_2016['count'] = kreitzer_boehmke_2016['year'] - kreitzer_boehmke_2016['year'].min()
+karch_2016['count'] = karch_2016['year'] - karch_2016['year'].min()
 
 # Get year range
-min_year = kreitzer_boehmke_2016['year'].min()
-max_year = kreitzer_boehmke_2016['year'].max()
+min_year = karch_2016['year'].min()
+max_year = karch_2016['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
@@ -57,40 +63,21 @@ for train_end_year in range(mid_year, max_year):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] <= train_end_year]
-    val_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] == val_year]
-    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] == test_year]
+    train_data = karch_2016[karch_2016['year'] <= train_end_year]
+    val_data = karch_2016[karch_2016['year'] == val_year]
+    test_data = karch_2016[karch_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
+    
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt_policy', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adopt_policy', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adopt_policy', 'state', 'year'])
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state'])
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
+    y_test = test_data['adopt']
     
-    # Create dummy variables for ALL policies in the dataset
-    all_years = sorted(kreitzer_boehmke_2016['policy_num'].unique())
-    
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
-
-    # Create dummies for validation set
-    X_val = pd.get_dummies(X_val, columns = ['policy_num'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-    
-    y_train = train_data['adopt_policy']
-    y_val = val_data['adopt_policy']
-    y_test = test_data['adopt_policy']
-
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -118,9 +105,9 @@ for train_end_year in range(mid_year, max_year):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -147,13 +134,13 @@ for train_end_year in range(mid_year, max_year):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -176,13 +163,12 @@ for train_end_year in range(mid_year, max_year):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
-            'min_samples_leaf': (1, 4),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -211,18 +197,18 @@ for train_end_year in range(mid_year, max_year):
     # XGBoost
     param_grid = {
         'n_estimators': (100, 500),
-        'max_depth': (6, 10, 20),
-        'max_bin': (16, 64, 256),
-        'booster': ['dart'],
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 128),
+        'booster': ['gbtree', 'dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
-        'min_child_weight': (1, 10),
-        'scale_pos_weight': (1, 5)
+        'colsample_bytree': (0.5, 1.0),
+        'min_child_weight': (5, 10),
+        'max_leaves': (16, 32)
     }
 
     # Set up GridSearchCV
@@ -249,7 +235,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/kreitzer_boehmke2016/t1_forecast_results.txt", "w") as f:
+with open("figures/karch2016/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -271,7 +257,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/kreitzer_boehmke2016/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -283,7 +269,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/kreitzer_boehmke2016/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/karch2016/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -301,44 +287,25 @@ results = {
 for train_end_year in range(mid_year, max_year - 4):
     val_year = train_end_year + 5
     test_year = train_end_year + 6
-    
+
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] <= train_end_year]
-    val_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] == val_year]
-    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] == test_year]
+    train_data = karch_2016[karch_2016['year'] <= train_end_year]
+    val_data = karch_2016[karch_2016['year'] == val_year]
+    test_data = karch_2016[karch_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt_policy', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adopt_policy', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adopt_policy', 'state', 'year'])
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state']) 
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
+    y_test = test_data['adopt']
     
-    # Create dummy variables for ALL policies in the dataset
-    all_years = sorted(kreitzer_boehmke_2016['policy_num'].unique())
-    
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
-
-    # Create dummies for validation set
-    X_val = pd.get_dummies(X_val, columns = ['policy_num'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-    
-    y_train = train_data['adopt_policy']
-    y_val = val_data['adopt_policy']
-    y_test = test_data['adopt_policy']
-
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -366,9 +333,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -395,13 +362,13 @@ for train_end_year in range(mid_year, max_year - 4):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -424,13 +391,12 @@ for train_end_year in range(mid_year, max_year - 4):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
-            'min_samples_leaf': (1, 4),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -459,18 +425,18 @@ for train_end_year in range(mid_year, max_year - 4):
     # XGBoost
     param_grid = {
         'n_estimators': (100, 500),
-        'max_depth': (6, 10, 20),
-        'max_bin': (16, 64, 256),
-        'booster': ['dart'],
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 128),
+        'booster': ['gbtree', 'dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
-        'min_child_weight': (1, 10),
-        'scale_pos_weight': (1, 5)
+        'colsample_bytree': (0.5, 1.0),
+        'min_child_weight': (5, 10),
+        'max_leaves': (16, 32)
     }
 
     # Set up GridSearchCV
@@ -497,7 +463,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/kreitzer_boehmke2016/t5_forecast_results.txt", "w") as f:
+with open("figures/karch2016/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -519,7 +485,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/kreitzer_boehmke2016/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -531,7 +497,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/kreitzer_boehmke2016/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/karch2016/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -539,10 +505,10 @@ time_series_results.to_csv('figures/kreitzer_boehmke2016/t5_forecast_timeseries.
 
 # Initialize storage for results
 results = {
-    'original': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'logit': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'rf': {'f1': [], 'balanced_acc': [], 'ap_score': []},
-    'xgb': {'f1': [], 'balanced_acc': [], 'ap_score': []}
+    'original': {'ap_score': []},
+    'logit': {'ap_score': []},
+    'rf': {'ap_score': []},
+    'xgb': {'ap_score': []}
 }
 
 # Rolling window forecasting
@@ -553,40 +519,21 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] <= train_end_year]
-    val_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] == val_year]
-    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['year'] == test_year]
+    train_data = karch_2016[karch_2016['year'] <= train_end_year]
+    val_data = karch_2016[karch_2016['year'] == val_year]
+    test_data = karch_2016[karch_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt_policy', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adopt_policy', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adopt_policy', 'state', 'year'])
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state']) # CHANGE; CANT FORECAST WITH DATA. THERE IS ONLY STATEYEAR VARIABLE.
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
+    y_test = test_data['adopt']
     
-    # Create dummy variables for ALL policies in the dataset
-    all_years = sorted(kreitzer_boehmke_2016['policy_num'].unique())
-    
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
-
-    # Create dummies for validation set
-    X_val = pd.get_dummies(X_val, columns = ['policy_num'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-    
-    y_train = train_data['adopt_policy']
-    y_val = val_data['adopt_policy']
-    y_test = test_data['adopt_policy']
-
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -614,9 +561,9 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -643,13 +590,13 @@ for train_end_year in range(mid_year, max_year - 9):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -672,13 +619,12 @@ for train_end_year in range(mid_year, max_year - 9):
     # Random Forest
     param_grid = {
             'n_estimators': (100, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (None, 10, 25, 50),
-            'min_samples_split': (2, 10),
-            'min_samples_leaf': (1, 4),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
+            'max_samples': (0.5, 0.75)
     }
 
     # Set up GridSearchCV
@@ -707,20 +653,20 @@ for train_end_year in range(mid_year, max_year - 9):
     # XGBoost
     param_grid = {
         'n_estimators': (100, 500),
-        'max_depth': (6, 10, 20),
-        'max_bin': (16, 64, 256),
-        'booster': ['dart'],
+        'max_depth': (3, 6, 10, 20),
+        'max_bin': (16, 32, 128),
+        'booster': ['gbtree', 'dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
-        'min_child_weight': (1, 10),
-        'scale_pos_weight': (1, 5)
+        'colsample_bytree': (0.5, 1.0),
+        'min_child_weight': (5, 10),
+        'max_leaves': (16, 32)
     }
-
+    
     # Set up GridSearchCV
     grid_search = BayesSearchCV(
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
@@ -745,7 +691,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/kreitzer_boehmke2016/t10_forecast_results.txt", "w") as f:
+with open("figures/karch2016/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -767,7 +713,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/kreitzer_boehmke2016/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -779,4 +725,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/kreitzer_boehmke2016/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/karch2016/t10_forecast_timeseries.csv', index = False)

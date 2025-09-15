@@ -100,9 +100,9 @@ for train_end_year in range(mid_year, max_year):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -129,13 +129,13 @@ for train_end_year in range(mid_year, max_year):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -329,9 +329,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -358,13 +358,13 @@ for train_end_year in range(mid_year, max_year - 4):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -558,9 +558,9 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -587,13 +587,13 @@ for train_end_year in range(mid_year, max_year - 9):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',

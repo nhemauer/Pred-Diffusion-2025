@@ -2,7 +2,7 @@
 # launch_all.sh
 # Loops over every .py file in scripts/ and submits a job for each
 
-for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_random/*.py; do
+for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_forecast/*.py; do
     name=$(basename "$script" .py)
 
     sbatch <<EOF
@@ -17,7 +17,7 @@ for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_random/*.py;
 #SBATCH --time=336:00:00
 #SBATCH --job-name=${name}
 #SBATCH --chdir=/storage/work/ndh5286/Projects/Pred_Diffusion_2025
-#SBATCH --output=ml_random/logs/%x_%j.out
+#SBATCH --output=ml_forecast/logs/%x_%j.out
 
 python "$script"
 EOF

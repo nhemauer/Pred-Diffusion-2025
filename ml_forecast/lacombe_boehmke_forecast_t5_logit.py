@@ -47,7 +47,8 @@ os.chdir("ml_forecast")
 
 # Initialize storage for results
 results = {
-    'xgb': {'ap_score': []}
+    'original': {'ap_score': []},
+    'logit': {'ap_score': []},
 }
 
 # Rolling window forecasting
@@ -89,34 +90,60 @@ for train_end_year in range(mid_year, max_year - 4):
     X_val_scaled = scaler.transform(X_val)
     X_test_scaled = scaler.transform(X_test)
     X_train_val_scaled = scaler.transform(X_train_val)
+
+    # Original Logit
+    original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
+
+    original_model.fit(X_train_scaled, y_train)
+    original_pred = original_model.predict(X_test_scaled)
+    original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    # XGBoost
-    param_grid = {
-        'n_estimators': (100, 300),
-        'max_depth': (3, 6, 20),
-        'max_bin': (16, 32, 64),
-        'booster': ['dart'],
-        'objective': ['binary:logistic'],
-        'eval_metric': ['aucpr'],
-        'tree_method': ['auto'],
-        'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1),
-        'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'min_child_weight': (5, 10),
-        'max_leaves': (16, 32),
+    results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
+    
+    # Logistic Regression
+    common_params = {
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
+    param_grid = [
+        # lbfgs supports only l2 or none
+        {
+            **common_params,
+            'solver': ['lbfgs'],
+            'penalty': ['l2', None]
+        },
+        # newton-cholesky supports only l2 or none
+        {
+            **common_params,
+            'solver': ['newton-cholesky'],
+            'penalty': ['l2', None]
+        },
+        # liblinear supports l1 and l2 only (no elasticnet or none)
+        {
+            **common_params,
+            'solver': ['liblinear'],
+            'penalty': ['l1', 'l2']
+        },
+        # saga supports l1, l2, elasticnet
+        {
+            **common_params,
+            'solver': ['saga'],
+            'penalty': ['l1', 'l2', 'elasticnet', None],
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+        }
+    ]
+
     # Set up GridSearchCV
-    grid_search = BayesSearchCV(
-        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
-        search_spaces = param_grid,
-        n_iter = 150,
+    grid_search = GridSearchCV(
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
+        param_grid = param_grid,
         cv = cv_split,
+        scoring = 'average_precision',
         n_jobs = -1,
         verbose = 0,
-        scoring = "average_precision",
-        random_state = 1337
+        refit = True
     )
 
     # Fit grid search
@@ -126,23 +153,24 @@ for train_end_year in range(mid_year, max_year - 4):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"XGBoost AP Score: {ap_score}")
+    print(f"Logistic Regression AP Score: {ap_score}")
     
-    results['xgb']['ap_score'].append(ap_score)
+    results['logit']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/lacombe_boehmke2021/t5_forecast_results_xgb.txt", "w") as f:
-    for model in ['xgb']:
+with open("figures/lacombe_boehmke2021/t5_forecast_results_logit.txt", "w") as f:
+    for model in ['original', 'logit']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
 # Plot time series of results from t+5 rolling window
-years = list(range(mid_year + 6, mid_year + 6 + len(results['xgb']['ap_score'])))
+years = list(range(mid_year + 6, mid_year + 6 + len(results['original']['ap_score'])))
 
 plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
-plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
+plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
+plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.title('Average Precision Score Over Time (t+5 Forecasting)')
 plt.xlabel('Forecast Year')
 plt.ylabel('AP Score')
@@ -150,13 +178,14 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/lacombe_boehmke2021/t5_forecast_timeseries_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/t5_forecast_timeseries_logit.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
 time_series_results = pd.DataFrame({
     'year': years,
-    'xgb_ap_score': results['xgb']['ap_score']
+    'original_ap_score': results['original']['ap_score'],
+    'logit_ap_score': results['logit']['ap_score'],
 })
 
-time_series_results.to_csv('figures/lacombe_boehmke2021/t5_forecast_timeseries_xgb.csv', index = False)
+time_series_results.to_csv('figures/lacombe_boehmke2021/t5_forecast_timeseries_logit.csv', index = False)

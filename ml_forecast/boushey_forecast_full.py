@@ -17,23 +17,24 @@ import os
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
 
-covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "year", "adopt"] + covariates].dropna()
+covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
+                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
+                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
+                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
+boushey_2016 = boushey_2016_full[["state", "year", "dvadopt"] + covariates].dropna()
 
 # Ensure year column is an integer
-boehmke_2017['year'] = boehmke_2017['year'].astype(int)
+boushey_2016['year'] = boushey_2016['year'].astype(int)
 
-boehmke_2017 = boehmke_2017.sort_values(["state", "year"])
+boushey_2016 = boushey_2016.sort_values(["state", "year"])
 
-# Create count variable (0 for first year, 1 for second year, etc.)
-boehmke_2017['count'] = boehmke_2017['year'] - boehmke_2017['year'].min()
+# Not adding count here because the data already has "counter", "counter2", and "counter3" variables
 
 # Get year range
-min_year = boehmke_2017['year'].min()
-max_year = boehmke_2017['year'].max()
+min_year = int(boushey_2016['year'].min())
+max_year = int(boushey_2016['year'].max())
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
@@ -54,22 +55,21 @@ for train_end_year in range(mid_year, max_year):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = boehmke_2017[boehmke_2017['year'] <= train_end_year]
-    val_data = boehmke_2017[boehmke_2017['year'] == val_year]
-    test_data = boehmke_2017[boehmke_2017['year'] == test_year]
+    train_data = boushey_2016[boushey_2016['year'] <= train_end_year]
+    val_data = boushey_2016[boushey_2016['year'] == val_year]
+    test_data = boushey_2016[boushey_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
-    # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adopt', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adopt', 'state', 'year'])
     
-    y_train = train_data['adopt']
-    y_val = val_data['adopt']
-    y_test = test_data['adopt']
-
+    # Prepare features
+    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_train = train_data['dvadopt']
+    X_val = val_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_val = val_data['dvadopt']
+    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_test = test_data['dvadopt']
+    
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -97,9 +97,9 @@ for train_end_year in range(mid_year, max_year):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -126,13 +126,13 @@ for train_end_year in range(mid_year, max_year):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -154,10 +154,9 @@ for train_end_year in range(mid_year, max_year):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
+            'n_estimators': (100, 500),
             'criterion': ['gini', 'entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -190,20 +189,17 @@ for train_end_year in range(mid_year, max_year):
     # XGBoost
     param_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree'],
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 128, 256),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
-        'min_child_weight': (5, 10),
+        'reg_lambda': (1, 2),
         'max_leaves': (16, 32),
-        'scale_pos_weight': (1, 5)
     }
 
     # Set up GridSearchCV
@@ -230,7 +226,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/boehmke2017/t1_forecast_results.txt", "w") as f:
+with open("figures/boushey2016/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -252,7 +248,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -264,7 +260,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/boehmke2017/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/boushey2016/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -286,22 +282,21 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = boehmke_2017[boehmke_2017['year'] <= train_end_year]
-    val_data = boehmke_2017[boehmke_2017['year'] == val_year]
-    test_data = boehmke_2017[boehmke_2017['year'] == test_year]
+    train_data = boushey_2016[boushey_2016['year'] <= train_end_year]
+    val_data = boushey_2016[boushey_2016['year'] == val_year]
+    test_data = boushey_2016[boushey_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
+    
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adopt', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adopt', 'state', 'year'])
-
-    y_train = train_data['adopt']
-    y_val = val_data['adopt']
-    y_test = test_data['adopt']
-
+    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_train = train_data['dvadopt']
+    X_val = val_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_val = val_data['dvadopt']
+    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_test = test_data['dvadopt']
+    
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -329,9 +324,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -358,13 +353,13 @@ for train_end_year in range(mid_year, max_year - 4):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -386,10 +381,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
+            'n_estimators': (100, 500),
             'criterion': ['gini', 'entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -422,20 +416,17 @@ for train_end_year in range(mid_year, max_year - 4):
     # XGBoost
     param_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree'],
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 128, 256),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
-        'min_child_weight': (5, 10),
+        'reg_lambda': (1, 2),
         'max_leaves': (16, 32),
-        'scale_pos_weight': (1, 5)
     }
 
     # Set up GridSearchCV
@@ -462,7 +453,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/boehmke2017/t5_forecast_results.txt", "w") as f:
+with open("figures/boushey2016/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -484,7 +475,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -496,7 +487,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/boehmke2017/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/boushey2016/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -518,22 +509,21 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = boehmke_2017[boehmke_2017['year'] <= train_end_year]
-    val_data = boehmke_2017[boehmke_2017['year'] == val_year]
-    test_data = boehmke_2017[boehmke_2017['year'] == test_year]
+    train_data = boushey_2016[boushey_2016['year'] <= train_end_year]
+    val_data = boushey_2016[boushey_2016['year'] == val_year]
+    test_data = boushey_2016[boushey_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
-    # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adopt', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adopt', 'state', 'year'])
     
-    y_train = train_data['adopt']
-    y_val = val_data['adopt']
-    y_test = test_data['adopt']
-
+    # Prepare features
+    X_train = train_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_train = train_data['dvadopt']
+    X_val = val_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_val = val_data['dvadopt']
+    X_test = test_data.drop(columns = ['dvadopt', 'state', 'year'])
+    y_test = test_data['dvadopt']
+    
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -561,9 +551,9 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -590,13 +580,13 @@ for train_end_year in range(mid_year, max_year - 9):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -618,10 +608,9 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
+            'n_estimators': (100, 500),
             'criterion': ['gini', 'entropy'],
             'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -654,20 +643,17 @@ for train_end_year in range(mid_year, max_year - 9):
     # XGBoost
     param_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree'],
+        'max_depth': (3, 6, 20),
+        'max_bin': (32, 128, 256),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
-        'min_child_weight': (5, 10),
+        'reg_lambda': (1, 2),
         'max_leaves': (16, 32),
-        'scale_pos_weight': (1, 5)
     }
 
     # Set up GridSearchCV
@@ -694,7 +680,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/boehmke2017/t10_forecast_results.txt", "w") as f:
+with open("figures/boushey2016/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -716,7 +702,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -728,4 +714,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/boehmke2017/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/boushey2016/t10_forecast_timeseries.csv', index = False)

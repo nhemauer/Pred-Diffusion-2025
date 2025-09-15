@@ -17,33 +17,30 @@ import os
 random.seed(1337)
 
 # Data
-lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-covariates = [
-    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
-    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
-    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
-]
-
-lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", 'state'] + covariates].dropna()
-lacombe_boehmke2021 = lacombe_boehmke2021.sort_values(["state", "year"])
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy", "state", "year"] + covariates].dropna()
 
 # Ensure year column is an integer
-lacombe_boehmke2021['year'] = lacombe_boehmke2021['year'].astype(int)
+mallinson_2019['year'] = mallinson_2019['year'].astype(int)
+
+mallinson_2019 = mallinson_2019.sort_values(["state", "year"])
 
 # Create count variable (0 for first year, 1 for second year, etc.)
-lacombe_boehmke2021['count'] = lacombe_boehmke2021['year'] - lacombe_boehmke2021['year'].min()
+mallinson_2019['count'] = mallinson_2019['year'] - mallinson_2019['year'].min()
 
 # Get year range
-min_year = lacombe_boehmke2021['year'].min()
-max_year = lacombe_boehmke2021['year'].max()
+min_year = mallinson_2019['year'].min()
+max_year = mallinson_2019['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 os.chdir("ml_forecast")
 
 #--------------------------------------------------------------------------------------------------------
 
-### Rolling Window t+5
+### Rolling Window t+10
 
 # Initialize storage for results
 results = {
@@ -51,29 +48,28 @@ results = {
 }
 
 # Rolling window forecasting
-for train_end_year in range(mid_year, max_year - 4):
-    val_year = train_end_year + 5
-    test_year = train_end_year + 6
-
+for train_end_year in range(mid_year, max_year - 9):
+    val_year = train_end_year + 10
+    test_year = train_end_year + 11
+    
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
-
+    
     # Split data
-    train_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] <= train_end_year]
-    val_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == val_year]
-    test_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == test_year]
+    train_data = mallinson_2019[mallinson_2019['year'] <= train_end_year]
+    val_data = mallinson_2019[mallinson_2019['year'] == val_year]
+    test_data = mallinson_2019[mallinson_2019['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
-    # Prepare features
-    X_train = train_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
     
-    y_train = train_data['adoption']
-    y_val = val_data['adoption']
-    y_test = test_data['adoption']
-
+    # Prepare features
+    X_train = train_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'policy', 'state', 'year'])
+    y_test = test_data['adopt']
+    
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -94,15 +90,14 @@ for train_end_year in range(mid_year, max_year - 4):
     param_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (16, 32, 64),
-        'booster': ['dart'],
+        'max_bin': (32, 64, 256),
+        'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
@@ -126,31 +121,30 @@ for train_end_year in range(mid_year, max_year - 4):
     best_model = grid_search.best_estimator_
     test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
     ap_score = average_precision_score(y_test, test_scores)
-    print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/lacombe_boehmke2021/t5_forecast_results_xgb.txt", "w") as f:
+with open("figures/mallinson2019/t10_forecast_results_xgb.txt", "w") as f:
     for model in ['xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
-# Plot time series of results from t+5 rolling window
-years = list(range(mid_year + 6, mid_year + 6 + len(results['xgb']['ap_score'])))
+# Plot time series of results from t+10 rolling window
+years = list(range(mid_year + 11, mid_year + 11 + len(results['xgb']['ap_score'])))
 
 plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
 plt.plot(years, results['xgb']['ap_score'], marker = '^', label = 'XGBoost')
-plt.title('Average Precision Score Over Time (t+5 Forecasting)')
+plt.title('Average Precision Score Over Time (t+10 Forecasting)')
 plt.xlabel('Forecast Year')
 plt.ylabel('AP Score')
 plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/lacombe_boehmke2021/t5_forecast_timeseries_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/t10_forecast_timeseries_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -159,4 +153,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/lacombe_boehmke2021/t5_forecast_timeseries_xgb.csv', index = False)
+time_series_results.to_csv('figures/mallinson2019/t10_forecast_timeseries_xgb.csv', index = False)

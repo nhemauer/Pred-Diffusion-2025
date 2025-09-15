@@ -17,65 +17,69 @@ import os
 random.seed(1337)
 
 # Data
-lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 covariates = [
-    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
-    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
-    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
 ]
 
-lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", 'state'] + covariates].dropna()
-lacombe_boehmke2021 = lacombe_boehmke2021.sort_values(["state", "year"])
+karch_2016 = karch_2016_full[["adopt", "state", "year"] + covariates].dropna()
 
 # Ensure year column is an integer
-lacombe_boehmke2021['year'] = lacombe_boehmke2021['year'].astype(int)
+karch_2016['year'] = karch_2016['year'].astype(int)
+
+karch_2016 = karch_2016.sort_values(["state", "year"])
 
 # Create count variable (0 for first year, 1 for second year, etc.)
-lacombe_boehmke2021['count'] = lacombe_boehmke2021['year'] - lacombe_boehmke2021['year'].min()
+karch_2016['count'] = karch_2016['year'] - karch_2016['year'].min()
 
 # Get year range
-min_year = lacombe_boehmke2021['year'].min()
-max_year = lacombe_boehmke2021['year'].max()
+min_year = karch_2016['year'].min()
+max_year = karch_2016['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 os.chdir("ml_forecast")
 
 #--------------------------------------------------------------------------------------------------------
 
-### Rolling Window t+5
+### Rolling Window t+10
 
 # Initialize storage for results
 results = {
     'original': {'ap_score': []},
     'logit': {'ap_score': []},
-    'rf': {'ap_score': []},
 }
 
 # Rolling window forecasting
-for train_end_year in range(mid_year, max_year - 4):
-    val_year = train_end_year + 5
-    test_year = train_end_year + 6
-
+for train_end_year in range(mid_year, max_year - 9):
+    val_year = train_end_year + 10
+    test_year = train_end_year + 11
+    
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] <= train_end_year]
-    val_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == val_year]
-    test_data = lacombe_boehmke2021[lacombe_boehmke2021['year'] == test_year]
+    train_data = karch_2016[karch_2016['year'] <= train_end_year]
+    val_data = karch_2016[karch_2016['year'] == val_year]
+    test_data = karch_2016[karch_2016['year'] == test_year]
     
     if len(test_data) == 0:
         continue
-
-    # Prepare features
-    X_train = train_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
-    X_val = val_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
-    X_test = test_data.drop(columns = ['adoption', 'policyno', 'state', 'year'])
     
-    y_train = train_data['adoption']
-    y_val = val_data['adoption']
-    y_test = test_data['adoption']
-
+    # Prepare features
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state']) # CHANGE; CANT FORECAST WITH DATA. THERE IS ONLY STATEYEAR VARIABLE.
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
+    y_test = test_data['adopt']
+    
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -103,9 +107,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -132,13 +136,13 @@ for train_end_year in range(mid_year, max_year - 4):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -157,64 +161,29 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
-    
-    # Random Forest
-    param_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['entropy'],
-            'max_depth': (10, 25, 50),
-            'min_samples_leaf': (1, 4),
-            'bootstrap': [True],
-            'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1),
-    }
-
-    # Set up GridSearchCV
-    grid_search = BayesSearchCV(
-        estimator = RandomForestClassifier(random_state = 1337),
-        search_spaces = param_grid,
-        n_iter = 150,
-        cv = cv_split,
-        n_jobs = -1,
-        verbose = 0,
-        scoring = "average_precision",
-        random_state = 1337
-    )
-
-    # Fit grid search
-    grid_search.fit(X_train_val_scaled, y_train_val)
-
-    # Get the best model and score on test set
-    best_model = grid_search.best_estimator_
-    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
-    ap_score = average_precision_score(y_test, test_scores)
-    print(f"Random Forest AP Score: {ap_score}")
-    
-    results['rf']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/lacombe_boehmke2021/t5_forecast_results_logrf.txt", "w") as f:
-    for model in ['original', 'logit', 'rf']:
+with open("figures/karch2016/t10_forecast_results_logit.txt", "w") as f:
+    for model in ['original', 'logit']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
 
-# Plot time series of results from t+5 rolling window
-years = list(range(mid_year + 6, mid_year + 6 + len(results['original']['ap_score'])))
+# Plot time series of results from t+10 rolling window
+years = list(range(mid_year + 11, mid_year + 11 + len(results['original']['ap_score'])))
 
 plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
 plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
-plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
-plt.title('Average Precision Score Over Time (t+5 Forecasting)')
+plt.title('Average Precision Score Over Time (t+10 Forecasting)')
 plt.xlabel('Forecast Year')
 plt.ylabel('AP Score')
 plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/lacombe_boehmke2021/t5_forecast_timeseries_logrf.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/t10_forecast_timeseries_logit.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -222,7 +191,6 @@ time_series_results = pd.DataFrame({
     'year': years,
     'original_ap_score': results['original']['ap_score'],
     'logit_ap_score': results['logit']['ap_score'],
-    'rf_ap_score': results['rf']['ap_score'],
 })
 
-time_series_results.to_csv('figures/lacombe_boehmke2021/t5_forecast_timeseries_logrf.csv', index = False)
+time_series_results.to_csv('figures/karch2016/t10_forecast_timeseries_logit.csv', index = False)

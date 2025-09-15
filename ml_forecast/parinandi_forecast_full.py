@@ -17,22 +17,27 @@ import os
 random.seed(1337)
 
 # Data
-berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+parinandi_2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
-berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
+covariates = [
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+]
+
+parinandi_2020 = parinandi_2020_full[["oneemulation", "state"] + covariates].dropna()
 
 # Ensure year column is an integer
-berry_berry1990['year'] = berry_berry1990['year'].astype(int)
+parinandi_2020['year'] = parinandi_2020['year'].astype(int)
 
-berry_berry1990 = berry_berry1990.sort_values(["state", "year"])
+parinandi_2020 = parinandi_2020.sort_values(["state", "year"])
 
 # Create count variable (0 for first year, 1 for second year, etc.)
-berry_berry1990['count'] = berry_berry1990['year'] - berry_berry1990['year'].min()
+parinandi_2020['count'] = parinandi_2020['year'] - parinandi_2020['year'].min()
 
 # Get year range
-min_year = berry_berry1990['year'].min()
-max_year = berry_berry1990['year'].max()
+min_year = parinandi_2020['year'].min()
+max_year = parinandi_2020['year'].max()
 mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
@@ -53,21 +58,22 @@ for train_end_year in range(mid_year, max_year):
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
     
     # Split data
-    train_data = berry_berry1990[berry_berry1990['year'] <= train_end_year]
-    val_data = berry_berry1990[berry_berry1990['year'] == val_year]
-    test_data = berry_berry1990[berry_berry1990['year'] == test_year]
+    train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
+    val_data = parinandi_2020[parinandi_2020['year'] == val_year]
+    test_data = parinandi_2020[parinandi_2020['year'] == test_year]
     
     if len(test_data) == 0:
         continue
     
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_train = train_data['adopt']
-    X_val = val_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_val = val_data['adopt']
-    X_test = test_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_test = test_data['adopt']
+    X_train = train_data.drop(columns = ['oneemulation', 'state', 'year'])
+    X_val = val_data.drop(columns = ['oneemulation', 'state', 'year'])
+    X_test = test_data.drop(columns = ['oneemulation', 'state', 'year'])
     
+    y_train = train_data['oneemulation']
+    y_val = val_data['oneemulation']
+    y_test = test_data['oneemulation']
+
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -95,9 +101,9 @@ for train_end_year in range(mid_year, max_year):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -124,13 +130,13 @@ for train_end_year in range(mid_year, max_year):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -152,9 +158,10 @@ for train_end_year in range(mid_year, max_year):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'log_loss'],
+            'n_estimators': (100, 500),
+            'criterion': ['entropy', 'log_loss'],
             'max_depth': (10, 25, 50),
+            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
@@ -186,18 +193,21 @@ for train_end_year in range(mid_year, max_year):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 128, 256),
+        'n_estimators': (100, 500),
+        'max_depth': (3, 10, 20),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
-        'colsample_bytree': (0.5, 1.0),
+        'subsample': (0.5, 1.0),
+        'gamma': (0, 2),
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
         'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
+        'scale_pos_weight': (1, 5, 10)
     }
 
     # Set up GridSearchCV
@@ -224,7 +234,7 @@ for train_end_year in range(mid_year, max_year):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/berry_berry1990/t1_forecast_results.txt", "w") as f:
+with open("figures/parinandi2020/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -246,7 +256,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/t1_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -258,7 +268,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/berry_berry1990/t1_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/parinandi2020/t1_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -278,23 +288,24 @@ for train_end_year in range(mid_year, max_year - 4):
     test_year = train_end_year + 6
 
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
-    
+
     # Split data
-    train_data = berry_berry1990[berry_berry1990['year'] <= train_end_year]
-    val_data = berry_berry1990[berry_berry1990['year'] == val_year]
-    test_data = berry_berry1990[berry_berry1990['year'] == test_year]
-    
+    train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
+    val_data = parinandi_2020[parinandi_2020['year'] == val_year]
+    test_data = parinandi_2020[parinandi_2020['year'] == test_year]
+
     if len(test_data) == 0:
         continue
-    
+
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_train = train_data['adopt']
-    X_val = val_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_val = val_data['adopt']
-    X_test = test_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_test = test_data['adopt']
+    X_train = train_data.drop(columns = ['oneemulation', 'state', 'year'])
+    X_val = val_data.drop(columns = ['oneemulation', 'state', 'year'])
+    X_test = test_data.drop(columns = ['oneemulation', 'state', 'year'])
     
+    y_train = train_data['oneemulation']
+    y_val = val_data['oneemulation']
+    y_test = test_data['oneemulation']
+
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -322,9 +333,9 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -351,13 +362,13 @@ for train_end_year in range(mid_year, max_year - 4):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -379,9 +390,10 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'log_loss'],
+            'n_estimators': (100, 500),
+            'criterion': ['entropy', 'log_loss'],
             'max_depth': (10, 25, 50),
+            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
@@ -413,18 +425,21 @@ for train_end_year in range(mid_year, max_year - 4):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 128, 256),
+        'n_estimators': (100, 500),
+        'max_depth': (3, 10, 20),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
-        'colsample_bytree': (0.5, 1.0),
+        'subsample': (0.5, 1.0),
+        'gamma': (0, 2),
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
         'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
+        'scale_pos_weight': (1, 5, 10)
     }
 
     # Set up GridSearchCV
@@ -451,7 +466,7 @@ for train_end_year in range(mid_year, max_year - 4):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/berry_berry1990/t5_forecast_results.txt", "w") as f:
+with open("figures/parinandi2020/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -473,7 +488,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/t5_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -485,7 +500,7 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/berry_berry1990/t5_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/parinandi2020/t5_forecast_timeseries.csv', index = False)
 
 #--------------------------------------------------------------------------------------------------------
 
@@ -505,23 +520,24 @@ for train_end_year in range(mid_year, max_year - 9):
     test_year = train_end_year + 11
     
     print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
-    
+
     # Split data
-    train_data = berry_berry1990[berry_berry1990['year'] <= train_end_year]
-    val_data = berry_berry1990[berry_berry1990['year'] == val_year]
-    test_data = berry_berry1990[berry_berry1990['year'] == test_year]
-    
+    train_data = parinandi_2020[parinandi_2020['year'] <= train_end_year]
+    val_data = parinandi_2020[parinandi_2020['year'] == val_year]
+    test_data = parinandi_2020[parinandi_2020['year'] == test_year]
+
     if len(test_data) == 0:
         continue
-    
+
     # Prepare features
-    X_train = train_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_train = train_data['adopt']
-    X_val = val_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_val = val_data['adopt']
-    X_test = test_data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
-    y_test = test_data['adopt']
+    X_train = train_data.drop(columns = ['oneemulation', 'state', 'year'])
+    X_val = val_data.drop(columns = ['oneemulation', 'state', 'year'])
+    X_test = test_data.drop(columns = ['oneemulation', 'state', 'year'])
     
+    y_train = train_data['oneemulation']
+    y_val = val_data['oneemulation']
+    y_test = test_data['oneemulation']
+
     # Combine train and validation for sklearn GridSearchCV
     X_train_val = pd.concat([X_train, X_val])
     y_train_val = pd.concat([y_train, y_val])
@@ -549,9 +565,9 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1, 1, 2],
-        'class_weight': [None, 'balanced', {0: 1, 1: 3}, {0: 1, 1: 4}, {0: 1, 1: 5}, {0: 1, 1: 6}, {0: 1, 1: 7}, {0: 1, 1: 8}, {0: 1, 1: 9}, {0: 1, 1: 10}],
-        'fit_intercept': [True, False]
+        'C': [0.001, 0.01, 0.1],
+        'class_weight': [None, 'balanced'],
+        'fit_intercept': [True]
     }
 
     param_grid = [
@@ -578,13 +594,13 @@ for train_end_year in range(mid_year, max_year - 9):
             **common_params,
             'solver': ['saga'],
             'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.25, 0.5, 0.75, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
         }
     ]
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = cv_split,
         scoring = 'average_precision',
@@ -606,9 +622,10 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Random Forest
     param_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'log_loss'],
+            'n_estimators': (100, 500),
+            'criterion': ['entropy', 'log_loss'],
             'max_depth': (10, 25, 50),
+            'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
@@ -640,18 +657,21 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 128, 256),
+        'n_estimators': (100, 500),
+        'max_depth': (3, 10, 20),
+        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
-        'colsample_bytree': (0.5, 1.0),
+        'subsample': (0.5, 1.0),
+        'gamma': (0, 2),
+        'reg_alpha': (0, 2),
+        'reg_lambda': (1, 2),
         'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
+        'scale_pos_weight': (1, 5, 10)
     }
 
     # Set up GridSearchCV
@@ -678,7 +698,7 @@ for train_end_year in range(mid_year, max_year - 9):
     results['xgb']['ap_score'].append(ap_score)
 
 # Save aggregated results
-with open("figures/berry_berry1990/t10_forecast_results.txt", "w") as f:
+with open("figures/parinandi2020/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
         f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
@@ -689,6 +709,7 @@ years = list(range(mid_year + 11, mid_year + 11 + len(results['original']['ap_sc
 plt.figure(figsize = (8, 6))
 
 # AP Score Over Time
+plt.subplot(1, 3, 3)
 plt.plot(years, results['original']['ap_score'], marker = 'o', label = 'Original Logit')
 plt.plot(years, results['logit']['ap_score'], marker = 'o', label = 'Logit')
 plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
@@ -700,7 +721,7 @@ plt.legend()
 plt.grid(True, alpha = 0.3)
 
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/t10_forecast_timeseries.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save CSV
@@ -712,4 +733,4 @@ time_series_results = pd.DataFrame({
     'xgb_ap_score': results['xgb']['ap_score']
 })
 
-time_series_results.to_csv('figures/berry_berry1990/t10_forecast_timeseries.csv', index = False)
+time_series_results.to_csv('figures/parinandi2020/t10_forecast_timeseries.csv', index = False)

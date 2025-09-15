@@ -1,0 +1,157 @@
+### Preprocessing and Rolling Window t+1
+import warnings
+warnings.filterwarnings("ignore")
+from sklearn import linear_model
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import average_precision_score
+from skopt import BayesSearchCV
+from sklearn.model_selection import GridSearchCV
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+import random
+import os
+
+random.seed(1337)
+
+# Data
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
+
+covariates = [
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
+]
+
+karch_2016 = karch_2016_full[["adopt", "state", "year"] + covariates].dropna()
+
+# Ensure year column is an integer
+karch_2016['year'] = karch_2016['year'].astype(int)
+
+karch_2016 = karch_2016.sort_values(["state", "year"])
+
+# Create count variable (0 for first year, 1 for second year, etc.)
+karch_2016['count'] = karch_2016['year'] - karch_2016['year'].min()
+
+# Get year range
+min_year = karch_2016['year'].min()
+max_year = karch_2016['year'].max()
+mid_year = min_year + (max_year - min_year) // 2
+
+# Initialize storage for results
+results = {
+    'rf': {'ap_score': []},
+}
+
+os.chdir("ml_forecast")
+
+# Rolling window forecasting
+for train_end_year in range(mid_year, max_year):
+    val_year = train_end_year + 1
+    test_year = train_end_year + 2
+    
+    print(f"Training on years {min_year}-{train_end_year}, validation year {val_year}, predicting year {test_year}")
+    
+    # Split data
+    train_data = karch_2016[karch_2016['year'] <= train_end_year]
+    val_data = karch_2016[karch_2016['year'] == val_year]
+    test_data = karch_2016[karch_2016['year'] == test_year]
+    
+    if len(test_data) == 0:
+        continue
+    
+    # Prepare features
+    X_train = train_data.drop(columns = ['adopt', 'year', 'state'])
+    y_train = train_data['adopt']
+    X_val = val_data.drop(columns = ['adopt', 'year', 'state'])
+    y_val = val_data['adopt']
+    X_test = test_data.drop(columns = ['adopt', 'year', 'state'])
+    y_test = test_data['adopt']
+    
+    # Combine train and validation for sklearn GridSearchCV
+    X_train_val = pd.concat([X_train, X_val])
+    y_train_val = pd.concat([y_train, y_val])
+    
+    # Create custom validation split indices
+    train_indices = list(range(len(X_train)))
+    val_indices = list(range(len(X_train), len(X_train_val)))
+    cv_split = [(train_indices, val_indices)]
+    
+    # Scale features
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_val_scaled = scaler.transform(X_val)
+    X_test_scaled = scaler.transform(X_test)
+    X_train_val_scaled = scaler.transform(X_train_val)
+    
+    # Random Forest
+    param_grid = {
+            'n_estimators': (100, 500),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25, 50),
+            'bootstrap': [True],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1),
+            'max_samples': (0.5, 0.75)
+    }
+
+    # Set up GridSearchCV
+    grid_search = BayesSearchCV(
+        estimator = RandomForestClassifier(random_state = 1337),
+        search_spaces = param_grid,
+        n_iter = 150,
+        cv = cv_split,
+        n_jobs = -1,
+        verbose = 0,
+        scoring = "average_precision",
+        random_state = 1337
+    )
+
+    # Fit grid search
+    grid_search.fit(X_train_val_scaled, y_train_val)
+
+    # Get the best model and score on test set
+    best_model = grid_search.best_estimator_
+    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+    ap_score = average_precision_score(y_test, test_scores)
+    print(f"Random Forest AP Score: {ap_score}")
+    
+    results['rf']['ap_score'].append(ap_score)
+
+# Save aggregated results
+with open("figures/karch2016/t1_forecast_results_rf.txt", "w") as f:
+    for model in ['rf']:
+        f.write(f"\n{model.upper()} Results:\n")
+        f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+
+# Plot time series of results from t+1 rolling window
+years = list(range(mid_year + 2, mid_year + 2 + len(results['rf']['ap_score'])))
+
+plt.figure(figsize = (8, 6))
+
+# AP Score Over Time
+plt.plot(years, results['rf']['ap_score'], marker = 's', label = 'Random Forest')
+plt.title('Average Precision Score Over Time (t+1 Forecasting)')
+plt.xlabel('Forecast Year')
+plt.ylabel('AP Score')
+plt.legend()
+plt.grid(True, alpha = 0.3)
+
+plt.tight_layout()
+plt.savefig('figures/karch2016/t1_forecast_timeseries_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+# Save CSV
+time_series_results = pd.DataFrame({
+    'year': years,
+    'rf_ap_score': results['rf']['ap_score'],
+})
+
+time_series_results.to_csv('figures/karch2016/t1_forecast_timeseries_rf.csv', index = False)
