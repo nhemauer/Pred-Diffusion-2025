@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,21 +10,22 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
 
-schiller_sidorsky2022_full = pd.read_stata(r"data/schiller_sidorsky2022.dta")
+bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
 
-covariates = [
-    "gunhomicideslag1", "citizenideologylag1", "numregdvgunlawenactlag1", "vawa1994", "vawa1995", 
-    "lautenbergamdt1996", "Lautenbergamndt1997", "legislature_election_year", "femleg", "innovation_index"
-]
-schiller_sidorsky2022 = schiller_sidorsky2022_full[["dvgunlaw", "state", "year"] + covariates].dropna()
+# Covariates
+covariates = ["std_score","initiative","init_sigs","std_population",
+                "std_citideology","unified","std_income","std_legp_squire",
+                "duration","durationsq","durationcb"]
+bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
 
-X = schiller_sidorsky2022[covariates].copy()
-y = schiller_sidorsky2022['dvgunlaw']
+# Define X and y
+X = bricker_lacombe_2021[['year'] + covariates].copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
+y = bricker_lacombe_2021['adoption']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -85,11 +87,11 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/schiller_sidorsky2022/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/bricker_lacombe2021/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -149,7 +151,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/schiller_sidorsky2022/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/bricker_lacombe2021/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

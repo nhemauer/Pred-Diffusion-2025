@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,25 +10,19 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
 
-kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-covariates = [
-    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
-    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
-]
-
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + covariates].dropna()
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
 
 # Define X and y
-X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
-X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)
-y = kreitzer_boehmke_2016['adopt_policy']
+X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
+y = mallinson_2019['adopt']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -89,11 +84,11 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/kreitzer_boehmke2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/mallinson2019/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -153,7 +148,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/kreitzer_boehmke2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/mallinson2019/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,7 +10,6 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
@@ -89,7 +89,7 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 

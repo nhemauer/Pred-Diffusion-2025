@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,21 +10,26 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
 
-mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
+# Data
+parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
-covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
-              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
-mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
+covariates = [
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+]
+
+parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
 
 # Define X and y
-X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
-y = mallinson_2019['adopt']
+X = parinandi2020.drop(columns = ['oneemulation']).copy()
+y = parinandi2020['oneemulation']
 
+# Scale features
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
@@ -84,11 +90,11 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/mallinson2019/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/parinandi2020/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -148,7 +154,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/mallinson2019/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/parinandi2020/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

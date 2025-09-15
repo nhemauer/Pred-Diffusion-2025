@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,23 +10,29 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
 
-bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 # Covariates
-covariates = ["std_score","initiative","init_sigs","std_population",
-                "std_citideology","unified","std_income","std_legp_squire",
-                "duration","durationsq","durationcb"]
-bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
+covariates = [
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
+]
+
+karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
 
 # Define X and y
-X = bricker_lacombe_2021[['year'] + covariates].copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)
-y = bricker_lacombe_2021['adoption']
+X = karch_2016[covariates].copy()
+y = karch_2016['adopt']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -87,11 +94,11 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/bricker_lacombe2021/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/karch2016/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -151,7 +158,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/bricker_lacombe2021/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/karch2016/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

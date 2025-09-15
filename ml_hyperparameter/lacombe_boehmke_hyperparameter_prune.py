@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,19 +10,24 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
 
-berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
 
-berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
+covariates = [
+    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
+    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
+]
+
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno"] + covariates].dropna()
 
 # Define X and y
-X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
-y = berry_berry1990['adopt']
+X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
+y = lacombe_boehmke2021['adoption']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -83,11 +89,11 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/berry_berry1990/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -147,7 +153,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/berry_berry1990/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/lacombe_boehmke2021/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")

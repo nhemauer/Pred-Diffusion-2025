@@ -1,7 +1,8 @@
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import numpy as np
 import random
-import warnings
 import os
 from scipy.stats import f_oneway
 from sklearn.model_selection import cross_val_score
@@ -9,30 +10,21 @@ from sklearn.preprocessing import StandardScaler
 from xgboost import XGBClassifier
 from sklearn.ensemble import RandomForestClassifier
 
-warnings.filterwarnings('ignore')
 random.seed(1337)
 
 ### Load Data
 
-karch_2016_full = pd.read_stata(r"data/karch2016.dta")
+boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
 # Covariates
-covariates = [
-    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
-    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
-    "logpopstd", "collegstd", "perurbanstd", "profstd",
-    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
-    "traditional_igrole", "traditional_regov", "traditional_unified",
-    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
-    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
-    "traditional_profstd"
-]
-
-karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
+covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
+boehmke_2017 = boehmke_2017_full[["state", "year", "statepol", "adopt"] + covariates].dropna()
 
 # Define X and y
-X = karch_2016[covariates].copy()
-y = karch_2016['adopt']
+X = boehmke_2017.drop(columns = ['adopt', 'year', 'statepol']).copy()
+X = pd.get_dummies(X, columns = ['state'], drop_first = True)
+y = boehmke_2017['adopt']
 
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
@@ -94,11 +86,11 @@ for param in param_grid.keys():
 
 ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
-os.chdir("ml_forecast/ml_hyperparameter")
+os.chdir("ml_hyperparameter")
 
 ### Save Outputs
 
-with open("figures/karch2016/xgb_hyperparameter_results.txt", "w") as f:
+with open("figures/boehmke2017/xgb_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
@@ -158,7 +150,7 @@ ftest_df = pd.DataFrame(ftest_df).sort_values("p-value")
 
 ### Save Outputs
 
-with open("figures/karch2016/rf_hyperparameter_results.txt", "w") as f:
+with open("figures/boehmke2017/rf_hyperparameter_results.txt", "w") as f:
     f.write("F-test results:\n")
     f.write(str(ftest_df))
     f.write("\n\n")
