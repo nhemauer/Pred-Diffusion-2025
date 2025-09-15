@@ -115,7 +115,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
 
     # Set up GridSearchCV
     grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
+        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
         param_grid = param_grid,
         cv = LeaveOneGroupOut(),
         scoring = 'average_precision',
