@@ -75,37 +75,42 @@ for bill in boehmke_2017['policy'].unique():
 
     # Logistic Regression
     common_params = {
-        'C': [0.001, 0.01, 0.1],
-        'class_weight': [None, 'balanced'],
-        'fit_intercept': [True, False]
+        "class_weight": [None, "balanced"],
+        "fit_intercept": [True],
     }
 
+    C_params = {"C": [0.001, 0.01, 0.1]}  # only for models with a penalty
+
     param_grid = [
-        # lbfgs supports only l2 or none
+        # lbfgs: l2 with C
+        {**common_params, **C_params, "solver": ["lbfgs"], "penalty": ["l2"]},
+
+        # lbfgs: no penalty
+        {**common_params, "solver": ["lbfgs"], "penalty": [None]},
+
+        # newton-cholesky: l2 with C
+        {**common_params, **C_params, "solver": ["newton-cholesky"], "penalty": ["l2"]},
+
+        # newton-cholesky: no penalty
+        {**common_params, "solver": ["newton-cholesky"], "penalty": [None]},
+
+        # liblinear: l1 / l2 (no “none” allowed)
+        {**common_params, **C_params, "solver": ["liblinear"], "penalty": ["l1", "l2"]},
+
+        # saga: l1 / l2 with C
+        {**common_params, **C_params, "solver": ["saga"], "penalty": ["l1", "l2"]},
+
+        # saga: elasticnet with l1_ratio
         {
             **common_params,
-            'solver': ['lbfgs'],
-            'penalty': ['l2', None]
+            **C_params,
+            "solver": ["saga"],
+            "penalty": ["elasticnet"],
+            "l1_ratio": [0, 0.5, 1],
         },
-        # newton-cholesky supports only l2 or none
-        {
-            **common_params,
-            'solver': ['newton-cholesky'],
-            'penalty': ['l2', None]
-        },
-        # liblinear supports l1 and l2 only (no elasticnet or none)
-        {
-            **common_params,
-            'solver': ['liblinear'],
-            'penalty': ['l1', 'l2']
-        },
-        # saga supports l1, l2, elasticnet
-        {
-            **common_params,
-            'solver': ['saga'],
-            'penalty': ['l1', 'l2', 'elasticnet', None],
-            'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
-        }
+
+        # saga: no penalty
+        {**common_params, "solver": ["saga"], "penalty": [None]},
     ]
 
     # Set up GridSearchCV
