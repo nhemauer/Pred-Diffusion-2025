@@ -1,10 +1,7 @@
 ### Preprocessing and Rolling Window t+1
 import warnings
-warnings.filterwarnings(
-    "ignore",
-    category=UserWarning,
-    module="sklearn"
-)
+import warnings
+warnings.filterwarnings("ignore")
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
