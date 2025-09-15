@@ -1,4 +1,4 @@
-### Preprocessing Karch et al. 2016
+### Preprocessing Kreitzer & Boehmke 2016
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn import linear_model
@@ -18,25 +18,20 @@ import os
 random.seed(1337)
 
 # Data
-karch_2016_full = pd.read_stata(r"data/karch2016.dta")
+kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
 
-# Covariates
 covariates = [
-    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
-    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
-    "logpopstd", "collegstd", "perurbanstd", "profstd",
-    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
-    "traditional_igrole", "traditional_regov", "traditional_unified",
-    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
-    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
-    "traditional_profstd"
+    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
+    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
+    "time2", "webster", "policy_num"
 ]
 
-karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + covariates].dropna()
 
 # Define X and y
-X = karch_2016[covariates].copy()
-y = karch_2016['adopt']
+X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
+X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)
+y = kreitzer_boehmke_2016['adopt_policy']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -48,9 +43,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-os.chdir("ml_application")
+os.chdir("ml_random")
 
-### Karch et al. 2016 Logistic (No Optimization)
+### Kreitzer & Boehmke 2016 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -68,7 +63,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/karch2016/unoptimized_logistic_karch.txt", "w") as f:
+with open("figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -89,15 +84,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Karch et al. 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Kreitzer & Boehmke 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/karch2016/unoptimized_logistic_karch.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch et al. 2016 Regularized Logistic (Optimized)
+### Kreitzer & Boehmke 2016 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -164,7 +159,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/karch2016/optimized_logistic_karch.txt", "w") as f:
+with open("figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -186,15 +181,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Karch et al. 2016)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Kreitzer & Boehmke 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/karch2016/optimized_logistic_karch.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch et al. 2016 RF (No Optimization)
+### Kreitzer & Boehmke 2016 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -212,7 +207,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/karch2016/unoptimized_rf_karch.txt", "w") as f:
+with open("figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -233,15 +228,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Karch et al. 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/karch2016/unoptimized_rf_karch.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch et al. 2016 RF (Optimized)
+### Kreitzer & Boehmke 2016 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -300,9 +295,9 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/karch2016/optimized_rf_karch.txt", "w") as f:
+with open("figures/kreitzer_boehmke2016/optimized_rf_kreitzer.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
-    f.write(f"F1 Score: {f1}\n")
+    f.write(f"F1 Macro Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
     f.write(report)
@@ -322,15 +317,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Karch et al. 2016)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/karch2016/optimized_rf_karch.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/optimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch et al. 2016 XGBoost (No Optimization)
+### Kreitzer & Boehmke 2016 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -348,7 +343,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/karch2016/unoptimized_xgboost_karch.txt", "w") as f:
+with open("figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -369,15 +364,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Karch et al. 2016)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/karch2016/unoptimized_xgboost_karch.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Karch et al. 2016 XGBoost (Optimized)
+### Kreitzer & Boehmke 2016 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -427,7 +422,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/karch2016/optimized_xgboost_karch.txt", "w") as f:
+with open("figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -449,8 +444,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Karch et al. 2016)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/karch2016/optimized_xgboost_karch.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

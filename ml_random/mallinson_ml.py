@@ -1,4 +1,4 @@
-### Preprocessing Boushey 2016
+### Preprocessing Mallinson 2019
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn import linear_model
@@ -18,18 +18,15 @@ import os
 random.seed(1337)
 
 # Data
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-# Covariates
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
 
 # Define X and y
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
+y = mallinson_2019['adopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -41,9 +38,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-os.chdir("ml_application")
+os.chdir("ml_random")
 
-### Boushey 2016 Logistic (No Optimization)
+### Mallinson 2019 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -61,7 +58,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/boushey2016/unoptimized_logistic_boushey.txt", "w") as f:
+with open("figures/mallinson2019/unoptimized_logistic_mallinson.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -82,15 +79,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Boushey 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Mallinson 2019)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boushey2016/unoptimized_logistic_boushey.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/unoptimized_logistic_mallinson.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Boushey 2016 Regularized Logistic (Optimized)
+### Mallinson 2019 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -133,7 +130,7 @@ param_grid = [
 grid_search = GridSearchCV(
     estimator = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337),
     param_grid = param_grid,
-    scoring = "average_precision",
+    scoring = "average_precision", 
     cv = 10,
     n_jobs = -1,
     verbose = 0,
@@ -157,7 +154,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/boushey2016/optimized_logistic_boushey.txt", "w") as f:
+with open("figures/mallinson2019/optimized_logistic_mallinson.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -179,15 +176,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Boushey 2016)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Mallinson 2019)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boushey2016/optimized_logistic_boushey.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/optimized_logistic_mallinson.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Boushey 2016 RF (No Optimization)
+### Mallinson 2019 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -205,7 +202,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/boushey2016/unoptimized_rf_boushey.txt", "w") as f:
+with open("figures/mallinson2019/unoptimized_rf_mallinson.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -226,45 +223,26 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Boushey 2016)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Mallinson 2019)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boushey2016/unoptimized_rf_boushey.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/unoptimized_rf_mallinson.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Boushey 2016 RF (Optimized)
+### Mallinson 2019 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
-param_grid = [
-    {
-        'n_estimators': (100, 300, 500),
-        'criterion': ['gini', 'entropy', 'log_loss'],
-        'max_depth': (None, 10, 25, 50),
-        'min_samples_split': (2, 10),
+param_grid = {
+        'n_estimators': (100, 500),
+        'criterion': ['entropy'],
+        'max_depth': (10, 25, 50),
         'min_samples_leaf': (1, 4),
-        'max_features': ['sqrt', 'log2', None],
-        'max_leaf_nodes': (None, 10, 25, 50),
         'bootstrap': [True],
         'class_weight': [None, 'balanced'],
-        'ccp_alpha': (0.0, 0.1, 'uniform'),
-        'max_samples': (None, 0.5, 0.75)
-    },
-    {
-        'n_estimators': (100, 300, 500),
-        'criterion': ['gini', 'entropy', 'log_loss'],
-        'max_depth': (None, 10, 25, 50),
-        'min_samples_split': (2, 10),
-        'min_samples_leaf': (1, 4),
-        'max_features': ['sqrt', 'log2', None],
-        'max_leaf_nodes': (None, 10, 25, 50),
-        'bootstrap': [False],
-        'class_weight': [None, 'balanced'],
-        'ccp_alpha': (0.0, 0.1, 'uniform'),
-        'max_samples': [None]
-    }
-]
+        'ccp_alpha': (0.0, 0.1),
+}
 
 bayes_search = BayesSearchCV(
     estimator = RandomForestClassifier(random_state = 1337),
@@ -293,7 +271,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/boushey2016/optimized_rf_boushey.txt", "w") as f:
+with open("figures/mallinson2019/optimized_rf_mallinson.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -315,15 +293,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Boushey 2016)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Mallinson 2019)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boushey2016/optimized_rf_boushey.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/optimized_rf_mallinson.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Boushey 2016 XGBoost (No Optimization)
+### Mallinson 2019 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -341,7 +319,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/boushey2016/unoptimized_xgboost_boushey.txt", "w") as f:
+with open("figures/mallinson2019/unoptimized_xgboost_mallinson.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -362,35 +340,30 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Boushey 2016)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Mallinson 2019)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boushey2016/unoptimized_xgboost_boushey.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/unoptimized_xgboost_mallinson.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Boushey 2016 XGBoost (Optimized)
+### Mallinson 2019 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
-    'n_estimators': (100, 300, 500),
-    'max_depth': (3, 6, 10, 20),
-    'max_bin': (16, 32, 64, 128, 256),
-    'booster': ['gbtree', 'dart'],
+    'n_estimators': (100, 300),
+    'max_depth': (3, 6, 20),
+    'max_bin': (32, 64, 256),
+    'booster': ['gbtree'],
     'objective': ['binary:logistic'],
-    'eval_metric': ['logloss', 'auc', 'error', 'aucpr'],
-    'tree_method': ['auto', 'exact', 'approx', 'hist'],
-    'grow_policy': ['depthwise', 'lossguide'],
-    'learning_rate': (0.01, 0.1, 0.3),
+    'eval_metric': ['aucpr'],
+    'tree_method': ['auto'],
+    'grow_policy': ['depthwise'],
+    'learning_rate': (0.01, 0.1),
     'subsample': (0.5, 1.0),
-    'colsample_bytree': (0.5, 1.0),
-    'gamma': (0, 2),
-    'reg_alpha': (0, 2),
-    'reg_lambda': (1, 2),
-    'min_child_weight': (1, 5, 10),
-    'max_leaves': (0, 16, 32),
-    'scale_pos_weight': (1, 5, 10)
+    'min_child_weight': (5, 10),
+    'max_leaves': (16, 32),
 }
 
 bayes_search = BayesSearchCV(
@@ -420,7 +393,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/boushey2016/optimized_xgboost_boushey.txt", "w") as f:
+with open("figures/mallinson2019/optimized_xgboost_mallinson.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -442,8 +415,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Boushey 2016)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Mallinson 2019)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/boushey2016/optimized_xgboost_boushey.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/optimized_xgboost_mallinson.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

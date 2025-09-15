@@ -41,7 +41,7 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-os.chdir("ml_application")
+os.chdir("ml_random")
 
 ### Schiller and Sidorsky 2022 Logistic (No Optimization)
 

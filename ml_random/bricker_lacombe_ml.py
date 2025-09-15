@@ -1,4 +1,4 @@
-### Preprocessing Berry and Berry 1990
+### Preprocessing Bricker and Lacombe 2021
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn import linear_model
@@ -18,14 +18,18 @@ import os
 random.seed(1337)
 
 # Data
-berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
 
-berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
+# Covariates
+covariates = ["std_score","initiative","init_sigs","std_population",
+                "std_citideology","unified","std_income","std_legp_squire",
+                "duration","durationsq","durationcb"]
+bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
 
 # Define X and y
-X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
-y = berry_berry1990['adopt']
+X = bricker_lacombe_2021[['year'] + covariates].copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
+y = bricker_lacombe_2021['adoption']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -37,9 +41,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-os.chdir("ml_application")
+os.chdir("ml_random")
 
-### Berry and Berry 1990 Logistic (No Optimization)
+### Bricker and Lacombe 2021 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -57,7 +61,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/unoptimized_logistic_berry.txt", "w") as f:
+with open("figures/bricker_lacombe2021/unoptimized_logistic_bricker.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -78,15 +82,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Berry and Berry 1990)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Bricker and Lacombe 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/unoptimized_logistic_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/unoptimized_logistic_bricker.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 Regularized Logistic (Optimized)
+### Bricker and Lacombe 2021 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -153,7 +157,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/optimized_logistic_berry.txt", "w") as f:
+with open("figures/bricker_lacombe2021/optimized_logistic_bricker.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -175,15 +179,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Berry and Berry 1990)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Bricker and Lacombe 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/optimized_logistic_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/optimized_logistic_bricker.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 RF (No Optimization)
+### Bricker and Lacombe 2021 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -201,7 +205,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/unoptimized_rf_berry.txt", "w") as f:
+with open("figures/bricker_lacombe2021/unoptimized_rf_bricker.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -222,15 +226,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Berry and Berry 1990)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Bricker and Lacombe 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/unoptimized_rf_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/unoptimized_rf_bricker.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 RF (Optimized)
+### Bricker and Lacombe 2021 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -289,7 +293,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/optimized_rf_berry.txt", "w") as f:
+with open("figures/bricker_lacombe2021/optimized_rf_bricker.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -311,15 +315,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Berry and Berry 1990)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Bricker and Lacombe 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/optimized_rf_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/optimized_rf_bricker.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 XGBoost (No Optimization)
+### Bricker and Lacombe 2021 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -337,7 +341,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/unoptimized_xgboost_berry.txt", "w") as f:
+with open("figures/bricker_lacombe2021/unoptimized_xgboost_bricker.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -358,15 +362,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Berry and Berry 1990)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Bricker and Lacombe 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/unoptimized_xgboost_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/unoptimized_xgboost_bricker.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Berry and Berry 1990 XGBoost (Optimized)
+### Bricker and Lacombe 2021 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -416,7 +420,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/berry_berry1990/optimized_xgboost_berry.txt", "w") as f:
+with open("figures/bricker_lacombe2021/optimized_xgboost_bricker.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -438,8 +442,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Berry and Berry 1990)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Bricker and Lacombe 2021)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/berry_berry1990/optimized_xgboost_berry.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/optimized_xgboost_bricker.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

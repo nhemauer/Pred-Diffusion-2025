@@ -1,4 +1,4 @@
-### Preprocessing Parinandi 2020
+### Preprocessing Berry and Berry 1990
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn import linear_model
@@ -18,19 +18,14 @@ import os
 random.seed(1337)
 
 # Data
-parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
+berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
+berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
 
-covariates = [
-    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
-    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
-    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
-]
-
-parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
+berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
 
 # Define X and y
-X = parinandi2020.drop(columns = ['oneemulation']).copy()
-y = parinandi2020['oneemulation']
+X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
+y = berry_berry1990['adopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -42,9 +37,9 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-os.chdir("ml_application")
+os.chdir("ml_random")
 
-### Parinandi 2020 Logistic (No Optimization)
+### Berry and Berry 1990 Logistic (No Optimization)
 
 # Fit
 logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -62,7 +57,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/parinandi2020/unoptimized_logistic_parinandi.txt", "w") as f:
+with open("figures/berry_berry1990/unoptimized_logistic_berry.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -83,15 +78,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Parinandi 2020)')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Berry and Berry 1990)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/unoptimized_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/unoptimized_logistic_berry.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Parinandi 2020 Regularized Logistic (Optimized)
+### Berry and Berry 1990 Regularized Logistic (Optimized)
 
 # Define parameter grid for Logistic Regression
 # Base params common to all
@@ -158,7 +153,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/parinandi2020/optimized_logistic_parinandi.txt", "w") as f:
+with open("figures/berry_berry1990/optimized_logistic_berry.txt", "w") as f:
     f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -180,15 +175,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Parinandi 2020)')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Berry and Berry 1990)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/optimized_logistic_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/optimized_logistic_berry.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Parinandi 2020 RF (No Optimization)
+### Berry and Berry 1990 RF (No Optimization)
 
 # Fit
 random_forest = RandomForestClassifier(random_state = 1337)
@@ -206,7 +201,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/parinandi2020/unoptimized_rf_parinandi.txt", "w") as f:
+with open("figures/berry_berry1990/unoptimized_rf_berry.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -227,15 +222,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Parinandi 2020)')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Berry and Berry 1990)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/unoptimized_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/unoptimized_rf_berry.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Parinandi 2020 RF (Optimized)
+### Berry and Berry 1990 RF (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = [
@@ -294,7 +289,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/parinandi2020/optimized_rf_parinandi.txt", "w") as f:
+with open("figures/berry_berry1990/optimized_rf_berry.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -316,15 +311,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Parinandi 2020)')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Berry and Berry 1990)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/optimized_rf_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/optimized_rf_berry.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Parinandi 2020 XGBoost (No Optimization)
+### Berry and Berry 1990 XGBoost (No Optimization)
 
 # Fit
 xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
@@ -342,7 +337,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/parinandi2020/unoptimized_xgboost_parinandi.txt", "w") as f:
+with open("figures/berry_berry1990/unoptimized_xgboost_berry.txt", "w") as f:
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
     f.write("Classification Report:\n")
@@ -363,15 +358,15 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Parinandi 2020)')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Berry and Berry 1990)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/unoptimized_xgboost_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/unoptimized_xgboost_berry.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
-### Parinandi 2020 XGBoost (Optimized)
+### Berry and Berry 1990 XGBoost (Optimized)
 
 # Define the parameter search space for BayesSearchCV
 param_grid = {
@@ -421,7 +416,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("figures/parinandi2020/optimized_xgboost_parinandi.txt", "w") as f:
+with open("figures/berry_berry1990/optimized_xgboost_berry.txt", "w") as f:
     f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -443,8 +438,8 @@ plt.figure(figsize = (7, 5))
 plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
-plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Parinandi 2020)')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Berry and Berry 1990)')
 plt.legend()
 plt.grid(True)
-plt.savefig('figures/parinandi2020/optimized_xgboost_parinandi.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/optimized_xgboost_berry.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
