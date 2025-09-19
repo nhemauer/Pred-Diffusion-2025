@@ -5,9 +5,10 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.metrics import average_precision_score
 from skopt import BayesSearchCV
-from sklearn.model_selection import GridSearchCV, LeaveOneGroupOut
+from sklearn.model_selection import GridSearchCV, GroupKFold
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
+import numpy as np
 import random
 import os
 
@@ -42,8 +43,9 @@ for bill in mallinson_2019['policy'].unique():
     X_test = test_data[covariates].copy()
     y_test = test_data['adopt']
 
-    # Create groups for LeaveOneGroupOut
+    # Create groups for CV
     groups = train_data['policy']
+    unique_groups = np.unique(groups)
 
     # Scale features
     scaler = StandardScaler()
