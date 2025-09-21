@@ -153,7 +153,7 @@ for bill in boehmke_2017['policy'].unique():
     ap_logit, ap_rf, ap_xgb = [], [], []
 
     for rep in range(n_repeats): # 3 CV repeats
-        shuffled = unique_groups.copy()
+        shuffled = unique_groups.copy() # Shuffle to ensure group randomness
         np.random.shuffle(shuffled)
         mapping = {g: i for i, g in enumerate(shuffled)}
         shuffled_groups = np.array([mapping[g] for g in groups])
