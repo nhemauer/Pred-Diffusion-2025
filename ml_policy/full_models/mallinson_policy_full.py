@@ -64,7 +64,7 @@ for bill in mallinson_2019['policy'].unique():
     results['bill']['billname'].append(bill)
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
 
-    # Logistic Regression
+    # Logistic Regression hyperparameters
     common_params = {
         "class_weight": [None, "balanced"],
         "fit_intercept": [True],
@@ -72,7 +72,7 @@ for bill in mallinson_2019['policy'].unique():
 
     C_params = {"C": [0.001, 0.01, 0.1]}  # only for models with a penalty
 
-    param_grid = [
+    logit_grid = [
         # lbfgs: l2 with C
         {**common_params, **C_params, "solver": ["lbfgs"], "penalty": ["l2"]},
 
@@ -104,30 +104,8 @@ for bill in mallinson_2019['policy'].unique():
         {**common_params, "solver": ["saga"], "penalty": [None]},
     ]
 
-    # Set up GridSearchCV
-    grid_search = GridSearchCV(
-        estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
-        param_grid = param_grid,
-        cv = LeaveOneGroupOut(),
-        scoring = 'average_precision',
-        n_jobs = -1,
-        verbose = 0,
-        refit = True
-    )
-
-    # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, groups = groups)
-
-    # Get the best model and score on test set
-    best_model = grid_search.best_estimator_
-    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
-    ap_score = average_precision_score(y_test, test_scores)
-    print(f"Logistic Regression AP Score: {ap_score}")
-    
-    results['logit']['ap_score'].append(ap_score)
-
-    # Random Forest
-    param_grid = {
+    # Random Forest hyperparameters
+    rf_grid = {
             'n_estimators': (100, 500),
             'criterion': ['entropy'],
             'max_depth': (10, 25, 50),
@@ -137,31 +115,8 @@ for bill in mallinson_2019['policy'].unique():
             'ccp_alpha': (0.0, 0.1),
     }
 
-    # Set up GridSearchCV
-    grid_search = BayesSearchCV(
-        estimator = RandomForestClassifier(random_state = 1337),
-        search_spaces = param_grid,
-        n_iter = 150,
-        cv = LeaveOneGroupOut(),
-        n_jobs = -1,
-        verbose = 0,
-        scoring = "average_precision",
-        random_state = 1337
-    )
-
-    # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, groups = groups)
-
-    # Get the best model and score on test set
-    best_model = grid_search.best_estimator_
-    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
-    ap_score = average_precision_score(y_test, test_scores)
-    print(f"Random Forest AP Score: {ap_score}")
-    
-    results['rf']['ap_score'].append(ap_score)
-
-    # XGBoost
-    param_grid = {
+    # XGBoost hyperparameters
+    xgb_grid = {
         'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
         'max_bin': (32, 64, 256),
@@ -176,28 +131,124 @@ for bill in mallinson_2019['policy'].unique():
         'max_leaves': (16, 32),
     }
 
-    # Set up GridSearchCV
-    grid_search = BayesSearchCV(
-        estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
-        search_spaces = param_grid,
-        n_iter = 150,
-        cv = LeaveOneGroupOut(),
-        n_jobs = -1,
-        verbose = 0,
-        scoring = "average_precision",
-        random_state = 1337
-    )
+    # CV setup
+    n_splits = 5
+    n_repeats = 3
 
-    # Fit grid search
-    grid_search.fit(X_train_scaled, y_train, groups = groups)
+    ap_logit, ap_rf, ap_xgb = [], [], []
 
-    # Get the best model and score on test set
-    best_model = grid_search.best_estimator_
-    test_scores = best_model.predict_proba(X_test_scaled)[:, 1]
-    ap_score = average_precision_score(y_test, test_scores)
-    print(f"XGBoost AP Score: {ap_score}")
-    
-    results['xgb']['ap_score'].append(ap_score)
+    for rep in range(n_repeats): # 3 CV repeats
+        shuffled = unique_groups.copy() # Shuffle to ensure group randomness
+        np.random.shuffle(shuffled)
+        mapping = {g: i for i, g in enumerate(shuffled)}
+        shuffled_groups = np.array([mapping[g] for g in groups])
+
+        # Fit GridSearch
+        grid_search = GridSearchCV(
+            estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
+            param_grid = logit_grid,
+            scoring = "average_precision",
+            cv = GroupKFold(n_splits = n_splits),
+            n_jobs = -1,
+            verbose = 0,
+            random_state = 1337
+        )
+
+        grid_search.fit(X_train_scaled, y_train, groups = shuffled_groups)
+
+        # Use the refitted best model
+        best_model = grid_search.best_estimator_
+        
+        # Get predicted probabilities for the positive class
+        y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+
+        # Compute average precision (AUC PR)
+        ap_score = average_precision_score(y_test, y_scores)
+
+        # Append to list
+        ap_logit.append(ap_score)
+
+    # Average AP over repeats
+    ap_score = np.mean(ap_logit)
+
+    # Save to results
+    results["logit"]["ap_score"].append(ap_score)
+
+    for rep in range(n_repeats): # 3 CV repeats
+        shuffled = unique_groups.copy() # Shuffle to ensure group randomness
+        np.random.shuffle(shuffled)
+        mapping = {g: i for i, g in enumerate(shuffled)}
+        shuffled_groups = np.array([mapping[g] for g in groups])
+
+        # Fit BayesSearchCV
+        grid_search = BayesSearchCV(
+            estimator = RandomForestClassifier(random_state = 1337),
+            search_spaces = rf_grid,
+            n_iter = 150,
+            cv = GroupKFold(n_splits = n_splits),
+            n_jobs = -1,
+            verbose = 0,
+            scoring = "average_precision",
+            random_state = 1337
+        )
+
+        grid_search.fit(X_train_scaled, y_train, groups = shuffled_groups)
+
+        # Use the refitted best model
+        best_model = grid_search.best_estimator_
+        
+        # Get predicted probabilities for the positive class
+        y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+
+        # Compute average precision (AUC PR)
+        ap_score = average_precision_score(y_test, y_scores)
+
+        # Append to list
+        ap_rf.append(ap_score)
+
+    # Average AP over repeats
+    ap_score = np.mean(ap_rf)
+
+    # Save to results
+    results["rf"]["ap_score"].append(ap_score)
+
+    for rep in range(n_repeats): # 3 CV repeats
+        shuffled = unique_groups.copy() # Shuffle to ensure group randomness
+        np.random.shuffle(shuffled)
+        mapping = {g: i for i, g in enumerate(shuffled)}
+        shuffled_groups = np.array([mapping[g] for g in groups])
+
+        # Fit BayesSearchCV
+        grid_search = BayesSearchCV(
+            estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+            search_spaces = xgb_grid,
+            n_iter = 150,
+            cv = GroupKFold(n_splits = n_splits),
+            n_jobs = -1,
+            verbose = 0,
+            scoring = "average_precision",
+            random_state = 1337
+        )
+
+        grid_search.fit(X_train_scaled, y_train, groups = shuffled_groups)
+
+        # Use the refitted best model
+        best_model = grid_search.best_estimator_
+        
+        # Get predicted probabilities for the positive class
+        y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+
+        # Compute average precision (AUC PR)
+        ap_score = average_precision_score(y_test, y_scores)
+
+        # Append to list
+        ap_xgb.append(ap_score)
+
+    # Average AP over repeats
+    ap_score = np.mean(ap_xgb)
+
+    # Save to results
+    results["xgb"]["ap_score"].append(ap_score)
 
 # Convert to dataframe
 results_df = pd.DataFrame({
