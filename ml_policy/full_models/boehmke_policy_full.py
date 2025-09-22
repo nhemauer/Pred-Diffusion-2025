@@ -166,7 +166,6 @@ for bill in boehmke_2017['policy'].unique():
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
-            refit = True,
             random_state = 1337
         )
 
