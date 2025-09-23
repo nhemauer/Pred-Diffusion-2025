@@ -49,6 +49,11 @@ for bill in parinandi_2020['featurenumber'].unique():
 
     # Create groups for CV
     groups = train_data['featurenumber']
+    
+    # Remove current bill from groups for CV
+    groups = groups[groups != bill]
+
+    # Grab unique groups
     unique_groups = np.unique(groups)
 
     # Scale features

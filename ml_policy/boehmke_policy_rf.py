@@ -42,6 +42,11 @@ for bill in boehmke_2017['policy'].unique():
 
     # Create groups for CV
     groups = train_data['policy']
+    
+    # Remove current bill from groups for CV
+    groups = groups[groups != bill]
+
+    # Grab unique groups
     unique_groups = np.unique(groups)
 
     # Create dummies for train set

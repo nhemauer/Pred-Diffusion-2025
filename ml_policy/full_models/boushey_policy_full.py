@@ -47,6 +47,11 @@ for bill in boushey_2016['billname'].unique():
 
     # Create groups for CV
     groups = train_data['billname']
+    
+    # Remove current bill from groups for CV
+    groups = groups[groups != bill]
+
+    # Grab unique groups
     unique_groups = np.unique(groups)
 
     # Scale features
