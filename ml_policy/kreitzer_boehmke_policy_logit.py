@@ -129,8 +129,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
             scoring = "average_precision",
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
-            verbose = 0,
-            random_state = 1337
+            verbose = 0
         )
 
         grid_search.fit(X_train_scaled, y_train, groups = shuffled_groups)
