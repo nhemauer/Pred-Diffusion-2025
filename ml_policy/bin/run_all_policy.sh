@@ -1,6 +1,6 @@
 #!/bin/bash
 # launch_all.sh
-# Loops over every .py file in scripts/ and submits a job for each #
+# Loops over every .py file in scripts/ and submits a job for each
 
 for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_policy/*.py; do
     name=$(basename "$script" .py)
