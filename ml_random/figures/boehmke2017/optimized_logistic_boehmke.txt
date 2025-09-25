@@ -1,13 +1,13 @@
-Best Parameters Found: {'C': 1, 'class_weight': {0: 1, 1: 5}, 'fit_intercept': False, 'penalty': 'l2', 'solver': 'lbfgs'}
-F1 Score: 0.1584064500829974
-Balanced Accuracy Score: 0.6725868268837019
+Best Parameters Found: {'C': 0.001, 'class_weight': None, 'fit_intercept': True, 'penalty': None, 'solver': 'newton-cholesky'}
+F1 Score: 0.047722342733188726
+Balanced Accuracy Score: 0.5120322737510238
 Classification Report:
               precision    recall  f1-score   support
 
-         0.0       0.98      0.59      0.74      8448
-         1.0       0.09      0.75      0.16       444
+         0.0       0.95      1.00      0.97      8448
+         1.0       0.65      0.02      0.05       444
 
-    accuracy                           0.60      8892
-   macro avg       0.53      0.67      0.45      8892
-weighted avg       0.93      0.60      0.71      8892
-Model Fit Elapsed Time: 35.98 Minutes
+    accuracy                           0.95      8892
+   macro avg       0.80      0.51      0.51      8892
+weighted avg       0.94      0.95      0.93      8892
+Model Fit Elapsed Time: 0.83 Minutes

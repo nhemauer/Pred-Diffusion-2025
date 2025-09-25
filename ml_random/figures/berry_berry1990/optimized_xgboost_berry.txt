@@ -1,4 +1,4 @@
-Best Parameters Found: OrderedDict([('booster', 'dart'), ('colsample_bytree', 0.5), ('eval_metric', 'auc'), ('gamma', 1), ('grow_policy', 'depthwise'), ('learning_rate', 0.01), ('max_bin', 128), ('max_depth', 20), ('max_leaves', 0), ('min_child_weight', 5), ('n_estimators', 300), ('objective', 'binary:logistic'), ('reg_alpha', 0), ('reg_lambda', 2), ('scale_pos_weight', 1), ('subsample', 0.6683821824171767), ('tree_method', 'exact')])
+Best Parameters Found: OrderedDict([('booster', 'gbtree'), ('colsample_bytree', 0.5), ('eval_metric', 'aucpr'), ('grow_policy', 'depthwise'), ('learning_rate', 0.0885607150747851), ('max_bin', 64), ('max_depth', 20), ('max_leaves', 16), ('min_child_weight', 5), ('n_estimators', 500), ('objective', 'binary:logistic'), ('tree_method', 'auto')])
 F1 Score: 0.0
 Balanced Accuracy Score: 0.5
 Classification Report:
@@ -10,4 +10,4 @@ Classification Report:
     accuracy                           0.97       172
    macro avg       0.49      0.50      0.49       172
 weighted avg       0.94      0.97      0.96       172
-Model Fit Elapsed Time: 161.74 Minutes
+Model Fit Elapsed Time: 9.88 Minutes

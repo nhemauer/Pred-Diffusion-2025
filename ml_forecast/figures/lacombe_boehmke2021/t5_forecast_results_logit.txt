@@ -1,0 +1,6 @@
+
+ORIGINAL Results:
+Average AP Score: 0.1159 (±0.0294)
+
+LOGIT Results:
+Average AP Score: 0.1150 (±0.0304)

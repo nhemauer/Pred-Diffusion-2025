@@ -3,7 +3,7 @@ ORIGINAL Results:
 Average AP Score: 0.1434 (±0.0497)
 
 LOGIT Results:
-Average AP Score: 0.1467 (±0.0484)
+Average AP Score: 0.1481 (±0.0494)
 
 RF Results:
 Average AP Score: 0.1443 (±0.0445)
