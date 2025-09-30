@@ -1,4 +1,4 @@
-Article,original_ap_score_logit,logit_ap_score_logit,xgb_ap_score_xgb,rf_ap_score_rf
+Article,original_ap_score,logit_ap_score,xgb_ap_score,rf_ap_score
 boehmke_policy_results,0.15110791326803288,0.14974256867088606,0.1653566841592122,
 boushey_policy_results,0.2170826357832858,0.2181489606246635,,0.24505442007528658
 bricker_policy_results,0.1350041335532902,0.13250449179981935,,
