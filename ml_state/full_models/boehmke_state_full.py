@@ -17,9 +17,9 @@ random.seed(1337)
 # Data
 boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
-covariates = ["year","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "policy", "adopt"] + covariates].dropna()
+boehmke_2017 = boehmke_2017_full[["state", "adopt"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -46,7 +46,7 @@ for state in boehmke_2017['state'].unique():
     # Create groups for CV
     groups = train_data['state']
 
-    # Remove current bill from groups for CV
+    # Remove current state from groups for CV
     groups = groups[groups != state]
 
     # Grab unique groups
