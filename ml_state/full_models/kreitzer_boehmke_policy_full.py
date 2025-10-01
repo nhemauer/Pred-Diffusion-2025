@@ -15,11 +15,14 @@ import os
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
 
-covariates = ["state","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["year", "policy", "adopt"] + covariates].dropna()
+covariates = [
+    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
+    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
+    "time2", "webster"
+]
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year", "policy_num"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -32,36 +35,25 @@ results = {
 
 os.chdir("ml_policy")
 
-for bill in boehmke_2017['policy'].unique():
+for bill in kreitzer_boehmke_2016['policy_num'].unique():
     # Create datasets
-    train_data = boehmke_2017[boehmke_2017['policy'] != bill]
-    test_data = boehmke_2017[boehmke_2017['policy'] == bill]
+    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['policy_num'] != bill]
+    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['policy_num'] == bill]
     
     # Define X and y for the current bill
     X_train = train_data[covariates].copy()
-    y_train = train_data['adopt']
+    y_train = train_data['adopt_policy']
     X_test = test_data[covariates].copy()
-    y_test = test_data['adopt']
+    y_test = test_data['adopt_policy']
 
     # Create groups for CV
-    groups = train_data['policy']
-
+    groups = train_data['policy_num']
+    
     # Remove current bill from groups for CV
     groups = groups[groups != bill]
 
     # Grab unique groups
     unique_groups = np.unique(groups)
-
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['state'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['state'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
 
     # Scale features
     scaler = StandardScaler()
@@ -122,9 +114,9 @@ for bill in boehmke_2017['policy'].unique():
 
     # Random Forest hyperparameters
     rf_grid = {
-            'n_estimators': (100, 300, 500),
+            'n_estimators': (100, 500),
             'criterion': ['gini', 'entropy'],
-            'max_depth': (10, 25, 50),
+            'max_depth': (None, 10, 25, 50),
             'min_samples_split': (2, 10),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
@@ -134,20 +126,18 @@ for bill in boehmke_2017['policy'].unique():
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 300),
-        'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
-        'booster': ['gbtree'],
+        'n_estimators': (100, 500),
+        'max_depth': (6, 10, 20),
+        'max_bin': (16, 64, 256),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1),
+        'learning_rate': (0.01, 0.1, 0.3),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
-        'gamma': (0, 2),
-        'min_child_weight': (5, 10),
-        'max_leaves': (16, 32),
+        'reg_alpha': (0, 2),
+        'min_child_weight': (1, 10),
         'scale_pos_weight': (1, 5)
     }
 
@@ -279,4 +269,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boehmke2017/boehmke_policy_results.csv', index = False)
+results_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_policy_results.csv', index = False)

@@ -17,9 +17,9 @@ random.seed(1337)
 # Data
 boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
-covariates = ["year","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+covariates = ["state","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "policy", "adopt"] + covariates].dropna()
+boehmke_2017 = boehmke_2017_full[["year", "policy", "adopt"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -50,10 +50,10 @@ for bill in boehmke_2017['policy'].unique():
     unique_groups = np.unique(groups)
 
     # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
+    X_train = pd.get_dummies(X_train, columns = ['state'], drop_first = True)
     
     # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
+    X_test = pd.get_dummies(X_test, columns = ['state'], drop_first = True)
     
     # Ensure both have the same columns by reindexing
     all_columns = X_train.columns.union(X_test.columns)

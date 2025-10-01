@@ -15,11 +15,13 @@ import os
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
 
-covariates = ["state","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["year", "policy", "adopt"] + covariates].dropna()
+# Covariates
+covariates = ["year","std_score","initiative","init_sigs","std_population",
+                "std_citideology","unified","std_income","std_legp_squire",
+                "duration","durationsq","durationcb"]
+bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "policy", "adoption"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -32,16 +34,16 @@ results = {
 
 os.chdir("ml_policy")
 
-for bill in boehmke_2017['policy'].unique():
+for bill in bricker_lacombe_2021['policy'].unique():
     # Create datasets
-    train_data = boehmke_2017[boehmke_2017['policy'] != bill]
-    test_data = boehmke_2017[boehmke_2017['policy'] == bill]
+    train_data = bricker_lacombe_2021[bricker_lacombe_2021['policy'] != bill]
+    test_data = bricker_lacombe_2021[bricker_lacombe_2021['policy'] == bill]
     
     # Define X and y for the current bill
     X_train = train_data[covariates].copy()
-    y_train = train_data['adopt']
+    y_train = train_data['adoption']
     X_test = test_data[covariates].copy()
-    y_test = test_data['adopt']
+    y_test = test_data['adoption']
 
     # Create groups for CV
     groups = train_data['policy']
@@ -53,10 +55,10 @@ for bill in boehmke_2017['policy'].unique():
     unique_groups = np.unique(groups)
 
     # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['state'], drop_first = True)
+    X_train = pd.get_dummies(X_train, columns = ['year'], drop_first = True)
     
     # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['state'], drop_first = True)
+    X_test = pd.get_dummies(X_test, columns = ['year'], drop_first = True)
     
     # Ensure both have the same columns by reindexing
     all_columns = X_train.columns.union(X_test.columns)
@@ -134,9 +136,9 @@ for bill in boehmke_2017['policy'].unique():
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 300),
+        'n_estimators': (100, 500),
         'max_depth': (3, 6, 10),
-        'max_bin': (16, 32, 64, 128, 256),
+        'max_bin': (32, 64, 128),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -144,10 +146,8 @@ for bill in boehmke_2017['policy'].unique():
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
-        'colsample_bytree': (0.5, 1.0),
         'gamma': (0, 2),
         'min_child_weight': (5, 10),
-        'max_leaves': (16, 32),
         'scale_pos_weight': (1, 5)
     }
 
@@ -279,4 +279,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boehmke2017/boehmke_policy_results.csv', index = False)
+results_df.to_csv('figures/bricker_lacombe2021/bricker_policy_results.csv', index = False)

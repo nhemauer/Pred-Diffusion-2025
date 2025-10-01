@@ -17,25 +17,25 @@ random.seed(1337)
 # Data
 boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
-covariates = ["state","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+covariates = ["year","srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["year", "policy", "adopt"] + covariates].dropna()
+boehmke_2017 = boehmke_2017_full[["state", "policy", "adopt"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
-    'bill': {'billname': []},
+    'state': {'state': []},
     'original': {'ap_score': []},
     'logit': {'ap_score': []},
     'rf': {'ap_score': []},
     'xgb': {'ap_score': []}
 }
 
-os.chdir("ml_policy")
+os.chdir("ml_state")
 
-for bill in boehmke_2017['policy'].unique():
+for state in boehmke_2017['state'].unique():
     # Create datasets
-    train_data = boehmke_2017[boehmke_2017['policy'] != bill]
-    test_data = boehmke_2017[boehmke_2017['policy'] == bill]
+    train_data = boehmke_2017[boehmke_2017['state'] != state]
+    test_data = boehmke_2017[boehmke_2017['state'] == state]
     
     # Define X and y for the current bill
     X_train = train_data[covariates].copy()
@@ -44,31 +44,20 @@ for bill in boehmke_2017['policy'].unique():
     y_test = test_data['adopt']
 
     # Create groups for CV
-    groups = train_data['policy']
+    groups = train_data['state']
 
     # Remove current bill from groups for CV
-    groups = groups[groups != bill]
+    groups = groups[groups != state]
 
     # Grab unique groups
     unique_groups = np.unique(groups)
-
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['state'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['state'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
 
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    print(f"Processing bill: {bill}")
+    print(f"Processing State: {state}")
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -77,7 +66,7 @@ for bill in boehmke_2017['policy'].unique():
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['bill']['billname'].append(bill)
+    results['state']['state'].append(state)
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
 
     # Logistic Regression hyperparameters
@@ -271,7 +260,7 @@ for bill in boehmke_2017['policy'].unique():
 
 # Convert to dataframe
 results_df = pd.DataFrame({
-    'billname': results['bill']['billname'],
+    'state': results['state']['state'],
     'original_ap_score': results['original']['ap_score'],
     'logit_ap_score': results['logit']['ap_score'],
     'rf_ap_score': results['rf']['ap_score'],
@@ -279,4 +268,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boehmke2017/boehmke_policy_results.csv', index = False)
+results_df.to_csv('figures/boehmke2017/boehmke_state_results.csv', index = False)
