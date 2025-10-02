@@ -39,7 +39,7 @@ for state in boushey_2016['state'].unique():
     train_data = boushey_2016[boushey_2016['state'] != state]
     test_data = boushey_2016[boushey_2016['state'] == state]
     
-    # Define X and y for the current bill
+    # Define X and y for the current state
     X_train = train_data[covariates].copy()
     y_train = train_data['dvadopt']
     X_test = test_data[covariates].copy()

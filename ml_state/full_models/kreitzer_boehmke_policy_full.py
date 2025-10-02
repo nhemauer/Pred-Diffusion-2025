@@ -20,47 +20,58 @@ kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
 covariates = [
     "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
     "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster"
+    "time2", "webster", "policy_num"
 ]
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year", "policy_num"] + covariates].dropna()
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
-    'bill': {'billname': []},
+    'state': {'state': []},
     'original': {'ap_score': []},
     'logit': {'ap_score': []},
     'rf': {'ap_score': []},
     'xgb': {'ap_score': []}
 }
 
-os.chdir("ml_policy")
+os.chdir("ml_state")
 
-for bill in kreitzer_boehmke_2016['policy_num'].unique():
+for state in kreitzer_boehmke_2016['state'].unique():
     # Create datasets
-    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['policy_num'] != bill]
-    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['policy_num'] == bill]
+    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['state'] != state]
+    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['state'] == state]
     
-    # Define X and y for the current bill
+    # Define X and y for the current state
     X_train = train_data[covariates].copy()
     y_train = train_data['adopt_policy']
     X_test = test_data[covariates].copy()
     y_test = test_data['adopt_policy']
 
     # Create groups for CV
-    groups = train_data['policy_num']
+    groups = train_data['state']
     
-    # Remove current bill from groups for CV
-    groups = groups[groups != bill]
+    # Remove current state from groups for CV
+    groups = groups[groups != state]
 
     # Grab unique groups
     unique_groups = np.unique(groups)
+
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
 
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    print(f"Processing bill: {bill}")
+    print(f"Processing State: {state}")
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -69,7 +80,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['bill']['billname'].append(bill)
+    results['state']['state'].append(state)
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
 
     # Logistic Regression hyperparameters
@@ -261,7 +272,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
 
 # Convert to dataframe
 results_df = pd.DataFrame({
-    'billname': results['bill']['billname'],
+    'state': results['state']['state'],
     'original_ap_score': results['original']['ap_score'],
     'logit_ap_score': results['logit']['ap_score'],
     'rf_ap_score': results['rf']['ap_score'],
@@ -269,4 +280,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_policy_results.csv', index = False)
+results_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_state_results.csv', index = False)

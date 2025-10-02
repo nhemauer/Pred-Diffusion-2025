@@ -23,21 +23,21 @@ mallinson_2019 = mallinson_2019_full[["adopt", "policy", "state", "year"] + cova
 
 # Initialize storage for results
 results = {
-    'bill': {'billname': []},
+    'state': {'state': []},
     'original': {'ap_score': []},
     'logit': {'ap_score': []},
     'rf': {'ap_score': []},
     'xgb': {'ap_score': []}
 }
 
-os.chdir("ml_policy")
+os.chdir("ml_state")
 
-for bill in mallinson_2019['policy'].unique():
+for state in mallinson_2019['state'].unique():
     # Create datasets
-    train_data = mallinson_2019[mallinson_2019['policy'] != bill]
-    test_data = mallinson_2019[mallinson_2019['policy'] == bill]
+    train_data = mallinson_2019[mallinson_2019['state'] != state]
+    test_data = mallinson_2019[mallinson_2019['state'] == state]
     
-    # Define X and y for the current bill
+    # Define X and y for the current state
     X_train = train_data[covariates].copy()
     y_train = train_data['adopt']
     X_test = test_data[covariates].copy()
@@ -46,8 +46,8 @@ for bill in mallinson_2019['policy'].unique():
     # Create groups for CV
     groups = train_data['policy']
     
-    # Remove current bill from groups for CV
-    groups = groups[groups != bill]
+    # Remove current state from groups for CV
+    groups = groups[groups != state]
 
     # Grab unique groups
     unique_groups = np.unique(groups)
@@ -57,7 +57,7 @@ for bill in mallinson_2019['policy'].unique():
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
     
-    print(f"Processing bill: {bill}")
+    print(f"Processing State: {state}")
 
     # Original Logit
     original_model = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
@@ -66,7 +66,7 @@ for bill in mallinson_2019['policy'].unique():
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['bill']['billname'].append(bill)
+    results['state']['state'].append(state)
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
 
     # Logistic Regression hyperparameters
@@ -256,7 +256,7 @@ for bill in mallinson_2019['policy'].unique():
 
 # Convert to dataframe
 results_df = pd.DataFrame({
-    'billname': results['bill']['billname'],
+    'state': results['state']['state'],
     'original_ap_score': results['original']['ap_score'],
     'logit_ap_score': results['logit']['ap_score'],
     'rf_ap_score': results['rf']['ap_score'],
@@ -264,4 +264,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/mallinson2019/mallinson_policy_results.csv', index = False)
+results_df.to_csv('figures/mallinson2019/mallinson_state_results.csv', index = False)

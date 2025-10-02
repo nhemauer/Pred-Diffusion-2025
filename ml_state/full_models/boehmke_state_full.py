@@ -37,7 +37,7 @@ for state in boehmke_2017['state'].unique():
     train_data = boehmke_2017[boehmke_2017['state'] != state]
     test_data = boehmke_2017[boehmke_2017['state'] == state]
     
-    # Define X and y for the current bill
+    # Define X and y for the current state
     X_train = train_data[covariates].copy()
     y_train = train_data['adopt']
     X_test = test_data[covariates].copy()
