@@ -12,17 +12,18 @@ import os
 random.seed(1337)
 
 # Data
-boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
 
 # Covariates
-covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full[["state", "year", "statepol", "adopt"] + covariates].dropna()
+covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
+                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
+                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
+                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
+boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
 
 # Define X and y
-X = boehmke_2017.drop(columns = ['adopt', 'year', 'statepol']).copy()
-X = pd.get_dummies(X, columns = ['state'], drop_first = True)
-y = boehmke_2017['adopt']
+X = boushey_2016[covariates].copy()
+y = boushey_2016['dvadopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -39,10 +40,9 @@ rf_model = RandomForestClassifier(
     bootstrap = True,
     ccp_alpha = 0.0,
     class_weight = None,
-    criterion = 'entropy',
-    max_depth = 25,
-    min_samples_leaf = 4,
-    min_samples_split = 8,
+    criterion = 'gini',
+    max_depth = 10,
+    min_samples_leaf = 3,
     n_estimators = 500,
     random_state = 1337
 )
@@ -56,20 +56,17 @@ rf_feature_importance = rf_model.feature_importances_
 
 # Use best hyperparameters from the random-split experiment
 xgb_model = XGBClassifier(
-    booster = 'gbtree',
-    colsample_bytree = 0.7639498961822481,
+    booster = 'dart',
     eval_metric = 'aucpr',
-    gamma = 2,
     grow_policy = 'depthwise',
-    learning_rate = 0.027136817935642106,
-    max_bin = 128,
+    learning_rate = 0.01759560389789212,
+    max_bin = 256,
     max_depth = 6,
-    max_leaves = 31,
-    min_child_weight = 10,
-    n_estimators = 187,
+    max_leaves = 32,
+    n_estimators = 228,
     objective = 'binary:logistic',
-    scale_pos_weight = 4,
-    subsample = 0.6526184572569168,
+    reg_lambda = 1,
+    subsample = 0.7949870515841156,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -108,8 +105,8 @@ ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/boehmke_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/boushey_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/boehmke2017/boehmke_feature_importance.csv', index = False)
+importance_df.to_csv('figures/boushey2016/boushey_feature_importance.csv', index = False)
