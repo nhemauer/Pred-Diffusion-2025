@@ -1,0 +1,305 @@
+--------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /storage/work/ndh5286/Projects/Pred_Diffusion_2025/bricker_split_re
+> sults.txt
+  log type:  text
+ opened on:   6 Oct 2025, 13:18:19
+
+. 
+. ***************************************************************
+. * Step 1. Split the dataset into halves
+. ***************************************************************
+. sort year
+
+. gen sample_half = cond(_n <= _N/2, 1, 2)
+
+. 
+. ***************************************************************
+. * Step 2. Run models and store results
+. ***************************************************************
+. * Full dataset
+. melogit adoption std_score initiative init_sigs ///
+>     std_pop std_citideology unified std_income std_legp_squire ///
+>     duration durationsq durationcb i.year || policyno:
+note: 2014.year identifies no observations in the sample.
+
+Fitting fixed-effects model:
+
+Iteration 0:  Log likelihood = -19099.862  
+Iteration 1:  Log likelihood = -17354.933  
+Iteration 2:  Log likelihood = -17342.384  
+Iteration 3:  Log likelihood = -17342.348  
+Iteration 4:  Log likelihood = -17342.348  
+
+Refining starting values:
+
+Grid node 0:  Log likelihood = -16604.248
+
+Fitting full model:
+
+Iteration 0:  Log likelihood = -16604.248  
+Iteration 1:  Log likelihood = -16187.667  
+Iteration 2:  Log likelihood = -16180.709  
+Iteration 3:  Log likelihood = -16180.517  
+Iteration 4:  Log likelihood = -16180.516  
+
+Mixed-effects logistic regression               Number of obs     =     85,878
+Group variable: policyno                        Number of groups  =        244
+
+                                                Obs per group:
+                                                              min =         50
+                                                              avg =      352.0
+                                                              max =      1,038
+
+Integration method: mvaghermite                 Integration pts.  =          7
+
+                                                Wald chi2(34)     =     719.39
+Log likelihood = -16180.516                     Prob > chi2       =     0.0000
+-------------------------------------------------------------------------------
+     adoption | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    std_score |   .1914511   .0114984    16.65   0.000     .1689145    .2139876
+   initiative |   .2157561   .0747083     2.89   0.004     .0693306    .3621816
+    init_sigs |  -.0097687   .0084318    -1.16   0.247    -.0262947    .0067573
+std_populat~n |   .0757826   .0201398     3.76   0.000     .0363092    .1152559
+std_citideo~y |   .0189541   .0220796     0.86   0.391    -.0243211    .0622292
+      unified |  -.0329366   .0330652    -1.00   0.319    -.0977432    .0318701
+   std_income |   .0660424   .0268294     2.46   0.014     .0134578     .118627
+std_legp_sq~e |  -.0655644   .0267747    -2.45   0.014    -.1180418    -.013087
+     duration |    .022567   .0261956     0.86   0.389    -.0287755    .0739095
+   durationsq |  -.0001434   .0035568    -0.04   0.968    -.0071145    .0068278
+   durationcb |   .0000569   .0001379     0.41   0.680    -.0002134    .0003271
+              |
+         year |
+        1991  |   .4495838   .1830342     2.46   0.014     .0908433    .8083243
+        1992  |   1.293538    .171925     7.52   0.000     .9565714    1.630505
+        1993  |   .3692891   .1857836     1.99   0.047       .00516    .7334183
+        1994  |   .9091064   .1865128     4.87   0.000     .5435481    1.274665
+        1995  |   .6697265   .1937419     3.46   0.001     .2899993    1.049454
+        1996  |     .84167   .1943379     4.33   0.000     .4607748    1.222565
+        1997  |   .9853843   .1988049     4.96   0.000     .5957338    1.375035
+        1998  |   .8314017   .2053443     4.05   0.000     .4289342    1.233869
+        1999  |   .9947858   .2076743     4.79   0.000     .5877516     1.40182
+        2000  |   .6520786   .2175108     3.00   0.003     .2257652    1.078392
+        2001  |   1.084247   .2195866     4.94   0.000     .6538647    1.514628
+        2002  |   .9108222   .2278085     4.00   0.000     .4643258    1.357319
+        2003  |   .8934716   .2323308     3.85   0.000     .4381115    1.348832
+        2004  |   .5849378   .2422885     2.41   0.016     .1100612    1.059814
+        2005  |     1.1506   .2436893     4.72   0.000     .6729776    1.628222
+        2006  |   1.183068   .2514878     4.70   0.000     .6901606    1.675975
+        2007  |   1.198224   .2570594     4.66   0.000     .6943965    1.702051
+        2008  |   .9122951   .2665684     3.42   0.001     .3898306     1.43476
+        2009  |   1.203103   .2717491     4.43   0.000     .6704847    1.735722
+        2010  |   .5701623    .289367     1.97   0.049     .0030133    1.137311
+        2011  |   1.023604   .2877528     3.56   0.000     .4596187    1.587589
+        2012  |   .4101681   .3023906     1.36   0.175    -.1825067    1.002843
+        2013  |   1.207879   .3049053     3.96   0.000     .6102751    1.805482
+        2014  |          0  (empty)
+              |
+        _cons |   -4.10332   .2006747   -20.45   0.000    -4.496635   -3.710005
+--------------+----------------------------------------------------------------
+policyno      |
+    var(_cons)|    1.17927   .1209006                      .9645987    1.441716
+-------------------------------------------------------------------------------
+LR test vs. logistic model: chibar2(01) = 2323.66     Prob >= chibar2 = 0.0000
+
+. estimates store full
+
+. 
+. * First 50%
+. melogit adoption std_score initiative init_sigs ///
+>     std_pop std_citideology unified std_income std_legp_squire ///
+>     duration durationsq durationcb i.year if sample_half == 1 || policyno:
+
+Fitting fixed-effects model:
+
+Iteration 0:  Log likelihood = -9997.9491  
+Iteration 1:  Log likelihood = -9152.3164  
+Iteration 2:  Log likelihood = -9147.8327  
+Iteration 3:  Log likelihood = -9147.8243  
+Iteration 4:  Log likelihood = -9147.8243  
+
+Refining starting values:
+
+Grid node 0:  Log likelihood = -8608.7637
+
+Fitting full model:
+
+Iteration 0:  Log likelihood = -8608.7637  
+Iteration 1:  Log likelihood = -8318.0584  
+Iteration 2:  Log likelihood = -8309.8202  
+Iteration 3:  Log likelihood = -8309.7694  
+Iteration 4:  Log likelihood = -8309.7694  
+
+Mixed-effects logistic regression               Number of obs     =     43,821
+Group variable: policyno                        Number of groups  =        168
+
+                                                Obs per group:
+                                                              min =         24
+                                                              avg =      260.8
+                                                              max =        626
+
+Integration method: mvaghermite                 Integration pts.  =          7
+
+                                                Wald chi2(23)     =     340.45
+Log likelihood = -8309.7694                     Prob > chi2       =     0.0000
+-------------------------------------------------------------------------------
+     adoption | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    std_score |   .1114973   .0151483     7.36   0.000     .0818072    .1411874
+   initiative |   .2033114   .1071964     1.90   0.058    -.0067898    .4134126
+    init_sigs |  -.0048303   .0121554    -0.40   0.691    -.0286545    .0189938
+std_populat~n |   .1372997   .0290168     4.73   0.000     .0804279    .1941715
+std_citideo~y |  -.0008263   .0319687    -0.03   0.979    -.0634838    .0618312
+      unified |  -.0927511   .0449036    -2.07   0.039    -.1807605   -.0047417
+   std_income |    .130394   .0431741     3.02   0.003     .0457743    .2150137
+std_legp_sq~e |  -.0947033     .03792    -2.50   0.013    -.1690251   -.0203816
+     duration |   .1751058   .0610357     2.87   0.004      .055478    .2947337
+   durationsq |  -.0194239    .013518    -1.44   0.151    -.0459186    .0070709
+   durationcb |   .0009319   .0008899     1.05   0.295    -.0008123    .0026762
+              |
+         year |
+        1991  |   .4196516    .188064     2.23   0.026     .0510528    .7882503
+        1992  |   1.243992   .1849523     6.73   0.000     .8814924    1.606492
+        1993  |   .4376741   .2062829     2.12   0.034      .033367    .8419812
+        1994  |   .7674311   .2202469     3.48   0.000     .3357552    1.199107
+        1995  |    .530083   .2383002     2.22   0.026     .0630231    .9971429
+        1996  |   .6439297    .253242     2.54   0.011     .1475844    1.140275
+        1997  |   .7805193   .2737106     2.85   0.004     .2440563    1.316982
+        1998  |   .5887413    .296081     1.99   0.047     .0084332    1.169049
+        1999  |   .7222762   .3168454     2.28   0.023     .1012707    1.343282
+        2000  |    .356689   .3433937     1.04   0.299    -.3163502    1.029728
+        2001  |   .7444598   .3646489     2.04   0.041      .029761    1.459159
+        2002  |   .5850601   .3929999     1.49   0.137    -.1852056    1.355326
+              |
+        _cons |  -4.184309   .2386003   -17.54   0.000    -4.651957   -3.716661
+--------------+----------------------------------------------------------------
+policyno      |
+    var(_cons)|   1.622661   .2063745                      1.264648    2.082025
+-------------------------------------------------------------------------------
+LR test vs. logistic model: chibar2(01) = 1676.11     Prob >= chibar2 = 0.0000
+
+. estimates store first
+
+. 
+. * Last 50%
+. melogit adoption std_score initiative init_sigs ///
+>     std_pop std_citideology unified std_income std_legp_squire ///
+>     duration durationsq durationcb i.year if sample_half == 2 || policyno:
+note: 2014.year identifies no observations in the sample.
+
+Fitting fixed-effects model:
+
+Iteration 0:  Log likelihood = -9091.5266  
+Iteration 1:  Log likelihood = -8176.5054  
+Iteration 2:  Log likelihood = -8167.3665  
+Iteration 3:  Log likelihood = -8167.3283  
+Iteration 4:  Log likelihood = -8167.3283  
+
+Refining starting values:
+
+Grid node 0:  Log likelihood = -7872.5569
+
+Fitting full model:
+
+Iteration 0:  Log likelihood = -7872.5569  
+Iteration 1:  Log likelihood = -7753.5576  
+Iteration 2:  Log likelihood = -7746.8134  
+Iteration 3:  Log likelihood = -7746.3658  
+Iteration 4:  Log likelihood = -7746.3658  
+
+Mixed-effects logistic regression               Number of obs     =     42,057
+Group variable: policyno                        Number of groups  =        188
+
+                                                Obs per group:
+                                                              min =         10
+                                                              avg =      223.7
+                                                              max =        556
+
+Integration method: mvaghermite                 Integration pts.  =          7
+
+                                                Wald chi2(22)     =     294.70
+Log likelihood = -7746.3658                     Prob > chi2       =     0.0000
+-------------------------------------------------------------------------------
+     adoption | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+    std_score |    .221411   .0198354    11.16   0.000     .1825344    .2602876
+   initiative |   .1867872   .1076322     1.74   0.083    -.0241681    .3977425
+    init_sigs |  -.0105758   .0120278    -0.88   0.379    -.0341498    .0129982
+std_populat~n |   .0250881    .028745     0.87   0.383    -.0312511    .0814273
+std_citideo~y |   .0411265   .0309084     1.33   0.183    -.0194528    .1017059
+      unified |   .0688519    .050501     1.36   0.173    -.0301282    .1678319
+   std_income |   .0229671   .0347742     0.66   0.509    -.0451891    .0911233
+std_legp_sq~e |  -.0493182   .0391347    -1.26   0.208    -.1260209    .0273845
+     duration |  -.0980557   .0392531    -2.50   0.012    -.1749905    -.021121
+   durationsq |    .006428   .0051486     1.25   0.212     -.003663     .016519
+   durationcb |  -.0000812    .000187    -0.43   0.664    -.0004477    .0002853
+              |
+         year |
+        2003  |   .0956728   .1538399     0.62   0.534    -.2058478    .3971935
+        2004  |  -.1301741   .1614409    -0.81   0.420    -.4465925    .1862442
+        2005  |   .5049041   .1581908     3.19   0.001     .1948559    .8149524
+        2006  |   .5976576     .16227     3.68   0.000     .2796143    .9157009
+        2007  |   .6507611   .1666716     3.90   0.000     .3240907    .9774314
+        2008  |   .4031078   .1756497     2.29   0.022     .0588407    .7473749
+        2009  |   .7863252    .177516     4.43   0.000     .4384002     1.13425
+        2010  |    .212063   .1975308     1.07   0.283    -.1750903    .5992164
+        2011  |   .6982187    .192094     3.63   0.000     .3217214    1.074716
+        2012  |   .2053217    .208733     0.98   0.325    -.2037875    .6144308
+        2013  |   .9906749   .2066402     4.79   0.000     .5856675    1.395682
+        2014  |          0  (empty)
+              |
+        _cons |  -3.395377   .1719344   -19.75   0.000    -3.732362   -3.058391
+--------------+----------------------------------------------------------------
+policyno      |
+    var(_cons)|   1.017508    .132454                      .7883753    1.313237
+-------------------------------------------------------------------------------
+LR test vs. logistic model: chibar2(01) = 841.93      Prob >= chibar2 = 0.0000
+
+. estimates store last
+
+. 
+. ***************************************************************
+. * Step 3. Display sample sizes
+. ***************************************************************
+. display as text "Sample Sizes:"
+Sample Sizes:
+
+. 
+. count if sample_half == 1
+  43,823
+
+. local n_first = r(N)
+
+. display as text "First_50%: n = `n_first'"
+First_50%: n = 43823
+
+. 
+. count if sample_half == 2
+  43,823
+
+. local n_last = r(N)
+
+. display as text "Last_50%: n = `n_last'"
+Last_50%: n = 43823
+
+. 
+. count
+  87,646
+
+. local n_full = r(N)
+
+. display as text "Full_Dataset: n = `n_full'"
+Full_Dataset: n = 87646
+
+. 
+. ***************************************************************
+. * Step 7. Close log file
+. ***************************************************************
+. log close
+      name:  <unnamed>
+       log:  /storage/work/ndh5286/Projects/Pred_Diffusion_2025/bricker_split_re
+> sults.txt
+  log type:  text
+ closed on:   6 Oct 2025, 13:18:27
+--------------------------------------------------------------------------------
