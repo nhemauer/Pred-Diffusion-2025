@@ -4,7 +4,7 @@ import pandas as pd
 figures_dir = Path(".")  # Current directory (figures folder)
 
 # Find all CSV files recursively
-csv_files = list(figures_dir.rglob("*.csv"))
+csv_files = [f for f in figures_dir.rglob("*.csv") if not f.name.endswith("combined.csv")]
 
 # Create a dictionary to store DataFrames with file names as keys
 dataframes = {}
