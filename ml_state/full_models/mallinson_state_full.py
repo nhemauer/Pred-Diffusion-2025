@@ -113,7 +113,7 @@ for state in mallinson_2019['state'].unique():
     rf_grid = {
             'n_estimators': (100, 500),
             'criterion': ['entropy'],
-            'max_depth': (10, 25, 50),
+            'max_depth': (10, 25),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -123,15 +123,12 @@ for state in mallinson_2019['state'].unique():
     # XGBoost hyperparameters
     xgb_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
-        'subsample': (0.5, 1.0),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
@@ -188,7 +185,7 @@ for state in mallinson_2019['state'].unique():
         grid_search = BayesSearchCV(
             estimator = RandomForestClassifier(random_state = 1337),
             search_spaces = rf_grid,
-            n_iter = 150,
+            n_iter = 80,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
@@ -226,7 +223,7 @@ for state in mallinson_2019['state'].unique():
         grid_search = BayesSearchCV(
             estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
             search_spaces = xgb_grid,
-            n_iter = 150,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,

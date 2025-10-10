@@ -61,15 +61,12 @@ for bill in mallinson_2019['policy'].unique():
     # XGBoost hyperparameters
     xgb_grid = {
         'n_estimators': (100, 300),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 256),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
-        'subsample': (0.5, 1.0),
         'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
@@ -90,7 +87,7 @@ for bill in mallinson_2019['policy'].unique():
         grid_search = BayesSearchCV(
             estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
             search_spaces = xgb_grid,
-            n_iter = 150,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
