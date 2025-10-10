@@ -69,9 +69,8 @@ for state in karch_2016['state'].unique():
 
     # Random Forest hyperparameters
     rf_grid = {
-            'n_estimators': (100, 500),
             'criterion': ['entropy'],
-            'max_depth': (10, 25, 50),
+            'max_depth': (10, 25),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
@@ -94,7 +93,7 @@ for state in karch_2016['state'].unique():
         grid_search = BayesSearchCV(
             estimator = RandomForestClassifier(random_state = 1337),
             search_spaces = rf_grid,
-            n_iter = 150,
+            n_iter = 80,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,

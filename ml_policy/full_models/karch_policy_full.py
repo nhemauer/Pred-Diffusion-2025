@@ -120,9 +120,8 @@ for bill in karch_2016['compnum'].unique():
 
     # Random Forest hyperparameters
     rf_grid = {
-            'n_estimators': (100, 500),
             'criterion': ['entropy'],
-            'max_depth': (10, 25, 50),
+            'max_depth': (10, 25),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
             'ccp_alpha': (0.0, 0.1),
@@ -131,10 +130,8 @@ for bill in karch_2016['compnum'].unique():
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 500),
-        'max_depth': (3, 6, 10, 20),
-        'max_bin': (16, 32, 128),
-        'booster': ['gbtree', 'dart'],
+        'max_depth': (3, 6, 10),
+        'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
@@ -142,7 +139,6 @@ for bill in karch_2016['compnum'].unique():
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
-        'min_child_weight': (5, 10),
         'max_leaves': (16, 32)
     }
 
@@ -198,7 +194,7 @@ for bill in karch_2016['compnum'].unique():
         grid_search = BayesSearchCV(
             estimator = RandomForestClassifier(random_state = 1337),
             search_spaces = rf_grid,
-            n_iter = 150,
+            n_iter = 80,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
@@ -236,7 +232,7 @@ for bill in karch_2016['compnum'].unique():
         grid_search = BayesSearchCV(
             estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
             search_spaces = xgb_grid,
-            n_iter = 150,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
