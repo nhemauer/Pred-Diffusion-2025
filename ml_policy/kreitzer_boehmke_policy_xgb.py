@@ -63,15 +63,13 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 500),
-        'max_depth': (6, 10, 20),
-        'max_bin': (16, 64, 256),
+        'max_depth': (6, 10),
         'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'reg_alpha': (0, 2),
         'min_child_weight': (1, 10),
@@ -94,7 +92,7 @@ for bill in kreitzer_boehmke_2016['policy_num'].unique():
         grid_search = BayesSearchCV(
             estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
             search_spaces = xgb_grid,
-            n_iter = 150,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
