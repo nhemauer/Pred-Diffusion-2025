@@ -73,10 +73,9 @@ for bill in bricker_lacombe_2021['policy'].unique():
 
     # Random Forest hyperparameters
     rf_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['gini', 'entropy'],
-            'max_depth': (10, 25, 50),
-            'min_samples_split': (2, 10),
+            'n_estimators': (100, 500),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25),
             'min_samples_leaf': (1, 4),
             'bootstrap': [True],
             'class_weight': [None, 'balanced'],
@@ -99,7 +98,7 @@ for bill in bricker_lacombe_2021['policy'].unique():
         grid_search = BayesSearchCV(
             estimator = RandomForestClassifier(random_state = 1337),
             search_spaces = rf_grid,
-            n_iter = 150,
+            n_iter = 80,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
