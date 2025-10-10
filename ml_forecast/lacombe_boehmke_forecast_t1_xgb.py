@@ -88,9 +88,7 @@ for train_end_year in range(mid_year, max_year):
     
     # XGBoost
     param_grid = {
-        'n_estimators': (100, 300),
         'max_depth': (3, 6, 20),
-        'max_bin': (16, 32, 64),
         'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -99,7 +97,6 @@ for train_end_year in range(mid_year, max_year):
         'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'colsample_bytree': (0.5, 1.0),
-        'min_child_weight': (5, 10),
         'max_leaves': (16, 32),
     }
 
@@ -107,7 +104,7 @@ for train_end_year in range(mid_year, max_year):
     grid_search = BayesSearchCV(
         estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
         search_spaces = param_grid,
-        n_iter = 150,
+        n_iter = 100,
         cv = cv_split,
         n_jobs = -1,
         verbose = 0,
