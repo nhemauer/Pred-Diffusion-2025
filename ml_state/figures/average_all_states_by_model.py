@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 
-figures_dir = Path(".")  # Current directory (figures folder)
+figures_dir = Path("ml_state/figures")  # Current directory (figures folder)
 
 # Find all CSV files recursively
 csv_files = [f for f in figures_dir.rglob("*.csv") if not f.name.endswith("combined.csv")]
@@ -51,4 +51,4 @@ results = list(results_dict.values())
 summary_df = pd.DataFrame(results)
 
 # Write the summary dataframe to CSV
-summary_df.to_csv('average_all_states_by_model.csv', index = False)
+summary_df.to_csv('ml_state/figures/average_all_states_by_model.csv', index = False)

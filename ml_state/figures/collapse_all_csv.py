@@ -25,7 +25,7 @@ def full_join_csvs_in_folder(folder_path):
     return result_df
 
 # Use absolute path or check current directory
-figures_dir = Path(".")
+figures_dir = Path("ml_state/figures")
 
 # Check if path exists
 if not figures_dir.exists():
