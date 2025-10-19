@@ -11,17 +11,15 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
 # Covariates
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt", "year"] + covariates].dropna()
+covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
+boehmke_2017 = boehmke_2017_full[["state", "year", "statepol", "adopt"] + covariates].dropna()
 
 # Get unique year values and split into 50/50
-unique_styears = sorted(boushey_2016['year'].unique())
+unique_styears = sorted(boehmke_2017['year'].unique())
 n_styears = len(unique_styears)
 split_point = int(n_styears * 0.5)
 
@@ -31,9 +29,9 @@ last_50_styears = unique_styears[split_point:]
 
 # Split data by 50/50
 splits = {
-    'First_50': boushey_2016[boushey_2016['year'].isin(first_50_styears)],
-    'Last_50': boushey_2016[boushey_2016['year'].isin(last_50_styears)],
-    'Full_Dataset': boushey_2016
+    'First_50': boehmke_2017[boehmke_2017['year'].isin(first_50_styears)],
+    'Last_50': boehmke_2017[boehmke_2017['year'].isin(last_50_styears)],
+    'Full_Dataset': boehmke_2017
 }
 
 # Store results for comparison
@@ -42,14 +40,15 @@ results_dict = {}
 # Run logistic regression for each split
 for split_name, data in splits.items():
         # Define X and y
-        X = data[covariates].copy()
+        X = data[covariates + ["state"]].copy()
+        X = pd.get_dummies(X, columns = ['state'], drop_first = True)
         X = sm.add_constant(X)
-        y = data['dvadopt']
+        y = data['adopt']
         
         # Fit Logistic Regression model with clustering
         logistic = sm.Logit(y.astype(float), X.astype(float)).fit(
             cov_type = "cluster", 
-            cov_kwds = {'groups': data['styear']}, 
+            cov_kwds = {'groups': data['statepol']}, 
             disp = 0
         )
         
@@ -112,6 +111,6 @@ plt.ylabel('Feature')
 plt.legend(loc = 'lower right')
 plt.grid(axis = 'x', linestyle = ':', alpha = 0.4)
 plt.tight_layout()
-plt.savefig('misc/coef_data_split/figures/boushey2016/boushey_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('misc/coef_data_split/figures/boehmke2017/boehmke_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
