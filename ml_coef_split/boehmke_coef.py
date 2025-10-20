@@ -49,16 +49,12 @@ for split_name, data in splits.items():
         y = data['adopt']
         
         # Fit Logistic Regression model with clustering
-        logistic = sm.Logit(y.astype(float), X.astype(float)).fit(
-            cov_type = "cluster", 
-            cov_kwds = {'groups': data['statepol']}, 
-            disp = 0
-        )
+        logistic = sm.Logit(y.astype(float), X.astype(float)).fit()
         
         # Extract summary table
         summary_df = logistic.summary2().tables[1]
         
-        # Filter out state dummy variables
+        # Filter out dummy variables
         summary_filtered = summary_df[~summary_df.index.str.startswith("state_")]
         
         # Store coefficients and p-values

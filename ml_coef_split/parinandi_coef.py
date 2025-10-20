@@ -12,31 +12,33 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
 os.chdir("ml_coef_split")
 
 # Covariates
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt", "year"] + covariates].dropna()
+covariates = [
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+]
 
-# Get unique year values and split into 50/50
-unique_styears = sorted(boushey_2016['year'].unique())
+parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
+
+# Get unique year values and split into 70/30
+unique_styears = sorted(parinandi2020['year'].unique())
 n_styears = len(unique_styears)
-split_point = int(n_styears * 0.5)
+split_point = int(n_styears * 0.7)
 
 # Define ranges for each split
-first_50_styears = unique_styears[:split_point]
-last_50_styears = unique_styears[split_point:]
+first_70_styears = unique_styears[:split_point]
+last_30_styears = unique_styears[split_point:]
 
-# Split data by 50/50
+# Split data by 70/30
 splits = {
-    'First_50': boushey_2016[boushey_2016['year'].isin(first_50_styears)],
-    'Last_50': boushey_2016[boushey_2016['year'].isin(last_50_styears)],
-    'Full_Dataset': boushey_2016
+    'First_70': parinandi2020[parinandi2020['year'].isin(first_70_styears)],
+    'Last_30': parinandi2020[parinandi2020['year'].isin(last_30_styears)],
+    'Full_Dataset': parinandi2020
 }
 
 # Store results for comparison
@@ -47,7 +49,7 @@ for split_name, data in splits.items():
         # Define X and y
         X = data[covariates].copy()
         X = sm.add_constant(X)
-        y = data['dvadopt']
+        y = data['oneemulation']
         
         # Fit Logistic Regression model with clustering
         logistic = sm.Logit(y.astype(float), X.astype(float)).fit()
@@ -56,7 +58,7 @@ for split_name, data in splits.items():
         summary_df = logistic.summary2().tables[1]
         
         # Filter out dummy variables
-        summary_filtered = summary_df[~summary_df.index.str.startswith("state_")]
+        summary_filtered = summary_df[~summary_df.index.str.startswith("policy_num")]
         
         # Store coefficients and p-values
         results_dict[split_name] = {
@@ -68,8 +70,8 @@ for split_name, data in splits.items():
         }
 
 # Convert results to DataFrames
-df_first = pd.DataFrame(results_dict['First_50'])
-df_last = pd.DataFrame(results_dict['Last_50'])
+df_first = pd.DataFrame(results_dict['First_70'])
+df_last = pd.DataFrame(results_dict['Last_30'])
 
 # Merge on feature name
 coef_compare = pd.merge(
@@ -105,12 +107,12 @@ plt.errorbar(
     fmt = 'o', color = 'steelblue', ecolor = 'lightgray', elinewidth = 2, capsize = 3
 )
 
-plt.title('ROPE Plot: Difference in Logistic Coefficients\n(50/50 Year Split)')
+plt.title('ROPE Plot: Difference in Logistic Coefficients\n(70/30 Year Split)')
 plt.xlabel('Difference in logit coefficients')
 plt.ylabel('Feature')
 plt.legend(loc = 'lower right')
 plt.grid(axis = 'x', linestyle = ':', alpha = 0.4)
 plt.tight_layout()
-plt.savefig('figures/boushey2016/boushey_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/parinandi_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 

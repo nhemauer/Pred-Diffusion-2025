@@ -12,19 +12,17 @@ warnings.filterwarnings('ignore')
 random.seed(1337)
 
 # Data
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
 
 os.chdir("ml_coef_split")
 
 # Covariates
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt", "year"] + covariates].dropna()
+berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+
+berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
 
 # Get unique year values and split into 50/50
-unique_styears = sorted(boushey_2016['year'].unique())
+unique_styears = sorted(berry_berry1990['year'].unique())
 n_styears = len(unique_styears)
 split_point = int(n_styears * 0.5)
 
@@ -34,9 +32,9 @@ last_50_styears = unique_styears[split_point:]
 
 # Split data by 50/50
 splits = {
-    'First_50': boushey_2016[boushey_2016['year'].isin(first_50_styears)],
-    'Last_50': boushey_2016[boushey_2016['year'].isin(last_50_styears)],
-    'Full_Dataset': boushey_2016
+    'First_50': berry_berry1990[berry_berry1990['year'].isin(first_50_styears)],
+    'Last_50': berry_berry1990[berry_berry1990['year'].isin(last_50_styears)],
+    'Full_Dataset': berry_berry1990
 }
 
 # Store results for comparison
@@ -45,9 +43,9 @@ results_dict = {}
 # Run logistic regression for each split
 for split_name, data in splits.items():
         # Define X and y
-        X = data[covariates].copy()
+        X = data.drop(columns = ['adopt', 'neighbor', 'state', 'year'])
         X = sm.add_constant(X)
-        y = data['dvadopt']
+        y = data['adopt']
         
         # Fit Logistic Regression model with clustering
         logistic = sm.Logit(y.astype(float), X.astype(float)).fit()
@@ -111,6 +109,6 @@ plt.ylabel('Feature')
 plt.legend(loc = 'lower right')
 plt.grid(axis = 'x', linestyle = ':', alpha = 0.4)
 plt.tight_layout()
-plt.savefig('figures/boushey2016/boushey_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/berry_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
