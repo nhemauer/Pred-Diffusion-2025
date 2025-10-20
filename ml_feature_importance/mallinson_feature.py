@@ -12,19 +12,15 @@ import os
 random.seed(1337)
 
 # Data
-parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-covariates = [
-    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
-    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
-    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
-]
-
-parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
 
 # Define X and y
-X = parinandi2020.drop(columns = ['oneemulation']).copy()
-y = parinandi2020['oneemulation']
+X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
+y = mallinson_2019['adopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -34,18 +30,17 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-os.chdir("misc/feature_importance")
+os.chdir("ml_feature_importance")
 
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 0.0,
+    ccp_alpha = 1.8209810854730173e-05,
     class_weight = None,
     criterion = 'entropy',
-    max_depth = 10,
-    max_samples = 0.75,
+    max_depth = 50,
     min_samples_leaf = 1,
-    n_estimators = 245,
+    n_estimators = 393,
     random_state = 1337
 )
 
@@ -60,18 +55,15 @@ rf_feature_importance = rf_model.feature_importances_
 xgb_model = XGBClassifier(
     booster = 'gbtree',
     eval_metric = 'aucpr',
-    gamma = 0,
     grow_policy = 'depthwise',
     learning_rate = 0.1,
     max_bin = 256,
-    max_depth = 3,
+    max_depth = 20,
+    max_leaves = 32,
     min_child_weight = 5,
-    n_estimators = 500,
+    n_estimators = 300,
     objective = 'binary:logistic',
-    reg_alpha = 0,
-    reg_lambda = 1,
-    scale_pos_weight = 1,
-    subsample = 0.5,
+    subsample = 1.0,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -110,8 +102,8 @@ ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/parinandi_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/mallinson_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/parinandi2020/parinandi_feature_importance.csv', index = False)
+importance_df.to_csv('figures/mallinson2019/mallinson_feature_importance.csv', index = False)

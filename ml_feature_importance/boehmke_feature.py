@@ -12,15 +12,17 @@ import os
 random.seed(1337)
 
 # Data
-mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
+boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
 
-covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
-              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
-mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
+# Covariates
+covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
+boehmke_2017 = boehmke_2017_full[["state", "year", "statepol", "adopt"] + covariates].dropna()
 
 # Define X and y
-X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
-y = mallinson_2019['adopt']
+X = boehmke_2017.drop(columns = ['adopt', 'year', 'statepol']).copy()
+X = pd.get_dummies(X, columns = ['state'], drop_first = True)
+y = boehmke_2017['adopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -30,17 +32,18 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-os.chdir("misc/feature_importance")
+os.chdir("ml_feature_importance")
 
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 1.8209810854730173e-05,
+    ccp_alpha = 0.0,
     class_weight = None,
     criterion = 'entropy',
-    max_depth = 50,
-    min_samples_leaf = 1,
-    n_estimators = 393,
+    max_depth = 25,
+    min_samples_leaf = 4,
+    min_samples_split = 8,
+    n_estimators = 500,
     random_state = 1337
 )
 
@@ -54,16 +57,19 @@ rf_feature_importance = rf_model.feature_importances_
 # Use best hyperparameters from the random-split experiment
 xgb_model = XGBClassifier(
     booster = 'gbtree',
+    colsample_bytree = 0.7639498961822481,
     eval_metric = 'aucpr',
+    gamma = 2,
     grow_policy = 'depthwise',
-    learning_rate = 0.1,
-    max_bin = 256,
-    max_depth = 20,
-    max_leaves = 32,
-    min_child_weight = 5,
-    n_estimators = 300,
+    learning_rate = 0.027136817935642106,
+    max_bin = 128,
+    max_depth = 6,
+    max_leaves = 31,
+    min_child_weight = 10,
+    n_estimators = 187,
     objective = 'binary:logistic',
-    subsample = 1.0,
+    scale_pos_weight = 4,
+    subsample = 0.6526184572569168,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -102,8 +108,8 @@ ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/mallinson2019/mallinson_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/boehmke_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/mallinson2019/mallinson_feature_importance.csv', index = False)
+importance_df.to_csv('figures/boehmke2017/boehmke_feature_importance.csv', index = False)

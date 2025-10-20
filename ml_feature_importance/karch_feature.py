@@ -12,18 +12,25 @@ import os
 random.seed(1337)
 
 # Data
-bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
+karch_2016_full = pd.read_stata(r"data/karch2016.dta")
 
 # Covariates
-covariates = ["std_score","initiative","init_sigs","std_population",
-                "std_citideology","unified","std_income","std_legp_squire",
-                "duration","durationsq","durationcb"]
-bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
+covariates = [
+    "traditional", "nborsstd", "prevadoptstd", "complexity", "igrole",
+    "regov", "unified", "perdemstd", "incpcadjstd", "exppcadjstd",
+    "logpopstd", "collegstd", "perurbanstd", "profstd",
+    "traditional_nborsstd", "traditional_prevadoptstd", "traditional_complexity",
+    "traditional_igrole", "traditional_regov", "traditional_unified",
+    "traditional_perdemstd", "traditional_incpcadjstd", "traditional_exppcadjstd",
+    "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
+    "traditional_profstd"
+]
+
+karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
 
 # Define X and y
-X = bricker_lacombe_2021[['year'] + covariates].copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)
-y = bricker_lacombe_2021['adoption']
+X = karch_2016[covariates].copy()
+y = karch_2016['adopt']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -33,18 +40,17 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-os.chdir("misc/feature_importance")
+os.chdir("ml_feature_importance")
 
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 9.088623462683024e-05,
+    ccp_alpha = 0.0,
     class_weight = None,
     criterion = 'entropy',
     max_depth = 50,
-    min_samples_leaf = 2,
-    min_samples_split = 3,
-    n_estimators = 300,
+    max_samples = 0.7236542889639881,
+    n_estimators = 500,
     random_state = 1337
 )
 
@@ -58,17 +64,17 @@ rf_feature_importance = rf_model.feature_importances_
 # Use best hyperparameters from the random-split experiment
 xgb_model = XGBClassifier(
     booster = 'gbtree',
+    colsample_bytree = 1.0,
     eval_metric = 'aucpr',
-    gamma = 2,
     grow_policy = 'depthwise',
-    learning_rate = 0.033245479413080606,
-    max_bin = 64,
-    max_depth = 6,
+    learning_rate = 0.1,
+    max_bin = 128,
+    max_depth = 20,
+    max_leaves = 32,
     min_child_weight = 5,
-    n_estimators = 465,
+    n_estimators = 500,
     objective = 'binary:logistic',
-    scale_pos_weight = 4,
-    subsample = 0.8753024969914462,
+    subsample = 0.8906472506924005,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -107,8 +113,8 @@ ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/bricker_lacombe2021/bricker_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/karch_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/bricker_lacombe2021/bricker_feature_importance.csv', index = False)
+importance_df.to_csv('figures/karch2016/karch_feature_importance.csv', index = False)

@@ -12,18 +12,20 @@ import os
 random.seed(1337)
 
 # Data
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
 
-# Covariates
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
+covariates = [
+    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
+    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
+]
+
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno"] + covariates].dropna()
 
 # Define X and y
-X = boushey_2016[covariates].copy()
-y = boushey_2016['dvadopt']
+X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
+X = pd.get_dummies(X, columns = ['year'], drop_first = True)
+y = lacombe_boehmke2021['adoption']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -33,16 +35,16 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-os.chdir("misc/feature_importance")
+os.chdir("ml_feature_importance")
 
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 0.0,
+    ccp_alpha = 1.4673493976469224e-05,
     class_weight = None,
-    criterion = 'gini',
-    max_depth = 10,
-    min_samples_leaf = 3,
+    criterion = 'entropy',
+    max_depth = 50,
+    min_samples_leaf = 2,
     n_estimators = 500,
     random_state = 1337
 )
@@ -57,16 +59,17 @@ rf_feature_importance = rf_model.feature_importances_
 # Use best hyperparameters from the random-split experiment
 xgb_model = XGBClassifier(
     booster = 'dart',
+    colsample_bytree = 0.5,
     eval_metric = 'aucpr',
     grow_policy = 'depthwise',
-    learning_rate = 0.01759560389789212,
-    max_bin = 256,
+    learning_rate = 0.1,
+    max_bin = 64,
     max_depth = 6,
     max_leaves = 32,
-    n_estimators = 228,
+    min_child_weight = 5,
+    n_estimators = 300,
     objective = 'binary:logistic',
-    reg_lambda = 1,
-    subsample = 0.7949870515841156,
+    subsample = 0.9091013322130326,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -105,8 +108,8 @@ ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/boushey2016/boushey_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/lacombe_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/boushey2016/boushey_feature_importance.csv', index = False)
+importance_df.to_csv('figures/lacombe_boehmke2021/lacombe_feature_importance.csv', index = False)

@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import random
 import warnings
+import os
 
 warnings.filterwarnings('ignore')
 
@@ -12,6 +13,8 @@ random.seed(1337)
 
 # Data
 boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+
+os.chdir("ml_coef_split")
 
 # Covariates
 covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
@@ -112,6 +115,6 @@ plt.ylabel('Feature')
 plt.legend(loc = 'lower right')
 plt.grid(axis = 'x', linestyle = ':', alpha = 0.4)
 plt.tight_layout()
-plt.savefig('misc/coef_data_split/figures/boushey2016/boushey_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/boushey_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 

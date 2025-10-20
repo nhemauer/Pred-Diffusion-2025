@@ -35,7 +35,7 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-os.chdir("misc/feature_importance")
+os.chdir("ml_feature_importance")
 
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(

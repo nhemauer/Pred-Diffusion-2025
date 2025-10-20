@@ -12,14 +12,19 @@ import os
 random.seed(1337)
 
 # Data
-berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_berry1990_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+parinandi2020_full = pd.read_stata(r"data/parinandi2020.dta")
 
-berry_berry1990 = berry_berry1990_full[berry_berry1990_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
+covariates = [
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+]
+
+parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
 
 # Define X and y
-X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
-y = berry_berry1990['adopt']
+X = parinandi2020.drop(columns = ['oneemulation']).copy()
+y = parinandi2020['oneemulation']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -29,17 +34,18 @@ scaler = StandardScaler()
 X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
-os.chdir("misc/feature_importance")
+os.chdir("ml_feature_importance")
 
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 0.07870049004782728,
-    class_weight = 'balanced',
-    criterion = 'gini',
+    ccp_alpha = 0.0,
+    class_weight = None,
+    criterion = 'entropy',
     max_depth = 10,
-    max_samples = 0.5,
-    n_estimators = 100,
+    max_samples = 0.75,
+    min_samples_leaf = 1,
+    n_estimators = 245,
     random_state = 1337
 )
 
@@ -54,14 +60,18 @@ rf_feature_importance = rf_model.feature_importances_
 xgb_model = XGBClassifier(
     booster = 'gbtree',
     eval_metric = 'aucpr',
+    gamma = 0,
     grow_policy = 'depthwise',
-    learning_rate = 0.0885607150747851,
-    max_bin = 64,
-    max_depth = 20,
-    max_leaves = 16,
+    learning_rate = 0.1,
+    max_bin = 256,
+    max_depth = 3,
     min_child_weight = 5,
     n_estimators = 500,
     objective = 'binary:logistic',
+    reg_alpha = 0,
+    reg_lambda = 1,
+    scale_pos_weight = 1,
+    subsample = 0.5,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -100,8 +110,8 @@ ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/berry_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/parinandi_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/berry_berry1990/berry_feature_importance.csv', index = False)
+importance_df.to_csv('figures/parinandi2020/parinandi_feature_importance.csv', index = False)

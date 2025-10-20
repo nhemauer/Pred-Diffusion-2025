@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import random
 import warnings
+import os
 
 warnings.filterwarnings('ignore')
 
@@ -12,6 +13,8 @@ random.seed(1337)
 
 # Data
 boehmke_2017_full = pd.read_stata(r"data/boehmke2017.dta")
+
+os.chdir("ml_coef_split")
 
 # Covariates
 covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
@@ -111,6 +114,6 @@ plt.ylabel('Feature')
 plt.legend(loc = 'lower right')
 plt.grid(axis = 'x', linestyle = ':', alpha = 0.4)
 plt.tight_layout()
-plt.savefig('misc/coef_data_split/figures/boehmke2017/boehmke_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/boehmke_coef_comparison.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
