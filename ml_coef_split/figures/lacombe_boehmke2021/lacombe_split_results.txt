@@ -1,0 +1,279 @@
+--------------------------------------------------------------------------------
+      name:  <unnamed>
+       log:  /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_coefficient_s
+> plit/figures/lacombe_boehmke2021/lacombe_split_results.txt
+  log type:  text
+ opened on:  21 Oct 2025, 20:00:37
+
+. 
+. ***************************************************************
+. * Step 1. Split the dataset into halves by year
+. ***************************************************************
+. use "data/lacombe_boehmke2021.dta", clear
+(SPID v1.0 - adoption dates)
+
+. 
+. * Find the midpoint year
+. summ year, meanonly
+
+. local midyear = floor((r(min) + r(max)) / 2)
+
+. 
+. * Create a variable that splits based on year
+. gen sample_half = cond(year <= `midyear', 1, 2)
+
+. 
+. ***************************************************************
+. * Step 2. Run models and store results
+. ***************************************************************
+. * First (earlier years)
+. melogit adoption initiative init_sigs std_latnt_decay std_nbrs_lag std_pop ///
+>     std_masssociallib_est unified duration durationsq durationcb std_income //
+> /
+>     std_bowen_1 std_bowen_2 change_pop change_inc party_change i.year if sampl
+> e_half == 1 ///
+>     || policyno: std_masssociallib_est, cov(un)
+note: 1960.year identifies no observations in the sample.
+note: 1961.year identifies no observations in the sample.
+note: 1962.year identifies no observations in the sample.
+note: 1963.year identifies no observations in the sample.
+note: 1964.year identifies no observations in the sample.
+note: 1965.year identifies no observations in the sample.
+note: 1966.year identifies no observations in the sample.
+note: 1967.year identifies no observations in the sample.
+note: 1968.year identifies no observations in the sample.
+note: 1969.year identifies no observations in the sample.
+note: 1970.year identifies no observations in the sample.
+note: 1971.year identifies no observations in the sample.
+note: 1972.year identifies no observations in the sample.
+note: 1987.year omitted because of collinearity.
+
+Fitting fixed-effects model:
+
+Iteration 0:  Log likelihood = -16514.435  
+Iteration 1:  Log likelihood =  -11912.14  
+Iteration 2:  Log likelihood = -11868.021  
+Iteration 3:  Log likelihood = -11867.502  
+Iteration 4:  Log likelihood = -11867.502  
+
+Refining starting values:
+
+Grid node 0:  Log likelihood = -11361.874
+
+Fitting full model:
+
+Iteration 0:  Log likelihood = -11361.874  (not concave)
+Iteration 1:  Log likelihood = -11312.874  
+Iteration 2:  Log likelihood = -11085.533  
+Iteration 3:  Log likelihood = -11078.276  
+Iteration 4:  Log likelihood = -11077.972  
+Iteration 5:  Log likelihood = -11077.971  
+Iteration 6:  Log likelihood = -11077.971  
+
+Mixed-effects logistic regression               Number of obs     =    111,269
+Group variable: policyno                        Number of groups  =        284
+
+                                                Obs per group:
+                                                              min =          3
+                                                              avg =      391.8
+                                                              max =        735
+
+Integration method: mvaghermite                 Integration pts.  =          7
+
+                                                Wald chi2(30)     =     360.48
+Log likelihood = -11077.971                     Prob > chi2       =     0.0000
+-------------------------------------------------------------------------------
+     adoption | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+   initiative |   .4868151   .1010756     4.82   0.000     .2887105    .6849197
+    init_sigs |  -.0475739   .0110177    -4.32   0.000    -.0691681   -.0259796
+std_latnt_d~y |   .1342131   .0134555     9.97   0.000     .1078409    .1605853
+ std_nbrs_lag |   .1339642   .0204064     6.56   0.000     .0939683      .17396
+std_populat~n |   .0972442   .0481772     2.02   0.044     .0028187    .1916698
+std_masssoc~t |   .1279762   .0740281     1.73   0.084    -.0171162    .2730686
+      unified |   .0043045   .0454921     0.09   0.925    -.0848583    .0934673
+     duration |  -.0232915   .0124249    -1.87   0.061    -.0476439    .0010608
+   durationsq |   .0003111   .0002616     1.19   0.234    -.0002017    .0008239
+   durationcb |  -1.03e-06   1.20e-06    -0.86   0.390    -3.39e-06    1.32e-06
+   std_income |   .0485363   .0591889     0.82   0.412    -.0674718    .1645444
+  std_bowen_1 |    -.09353   .0476019    -1.96   0.049    -.1868281   -.0002319
+  std_bowen_2 |   .0408911   .0313784     1.30   0.193    -.0206095    .1023917
+   change_pop |  -.5350347   1.529133    -0.35   0.726    -3.532081    2.462012
+   change_inc |   .0240517   .2342583     0.10   0.918    -.4350862    .4831895
+ party_change |   .1126658   .0817322     1.38   0.168    -.0475263     .272858
+              |
+         year |
+        1960  |          0  (empty)
+        1961  |          0  (empty)
+        1962  |          0  (empty)
+        1963  |          0  (empty)
+        1964  |          0  (empty)
+        1965  |          0  (empty)
+        1966  |          0  (empty)
+        1967  |          0  (empty)
+        1968  |          0  (empty)
+        1969  |          0  (empty)
+        1970  |          0  (empty)
+        1971  |          0  (empty)
+        1972  |          0  (empty)
+        1973  |   .2214412   .1568975     1.41   0.158    -.0860723    .5289547
+        1974  |  -.0892225   .1540125    -0.58   0.562    -.3910815    .2126364
+        1975  |  -.0742902   .1473604    -0.50   0.614    -.3631114     .214531
+        1976  |  -.3495808    .148956    -2.35   0.019    -.6415293   -.0576324
+        1977  |  -.0186824   .1361716    -0.14   0.891    -.2855738     .248209
+        1978  |  -.4344566   .1441343    -3.01   0.003    -.7169547   -.1519585
+        1979  |  -.2323155   .1322533    -1.76   0.079    -.4915273    .0268963
+        1980  |  -.6283748   .1475187    -4.26   0.000    -.9175061   -.3392434
+        1981  |  -.0741579   .1223064    -0.61   0.544    -.3138741    .1655583
+        1982  |   -.065907   .1185983    -0.56   0.578    -.2983553    .1665414
+        1983  |   .3459526   .1057723     3.27   0.001     .1386428    .5532625
+        1984  |   .1007268   .1118413     0.90   0.368    -.1184782    .3199318
+        1985  |   .3123462   .1029168     3.03   0.002     .1106331    .5140593
+        1986  |    .161512   .1010025     1.60   0.110    -.0364492    .3594733
+        1987  |          0  (omitted)
+              |
+        _cons |  -3.963135   .1718358   -23.06   0.000    -4.299927   -3.626343
+--------------+----------------------------------------------------------------
+policyno      |
+var(std_mas~t)|   .1953168   .0497374                      .1185717    .3217349
+    var(_cons)|   1.779128   .2121409                      1.408351    2.247519
+--------------+----------------------------------------------------------------
+policyno      |
+cov(std_mas~t,|
+        _cons)|   .1479874   .0882063     1.68   0.093    -.0248937    .3208685
+-------------------------------------------------------------------------------
+LR test vs. logistic model: chi2(4) = 1579.06             Prob > chi2 = 0.0000
+
+Note: LR test is conservative and provided only for reference.
+
+. estimates store first
+
+. 
+. * Last (later years)
+. melogit adoption initiative init_sigs std_latnt_decay std_nbrs_lag std_pop ///
+>     std_masssociallib_est unified duration durationsq durationcb std_income //
+> /
+>     std_bowen_1 std_bowen_2 change_pop change_inc party_change i.year if sampl
+> e_half == 2 ///
+>     || policyno: std_masssociallib_est, cov(un)
+
+Fitting fixed-effects model:
+
+Iteration 0:  Log likelihood = -37174.954  
+Iteration 1:  Log likelihood = -31078.617  
+Iteration 2:  Log likelihood = -30972.915  
+Iteration 3:  Log likelihood = -30971.812  
+Iteration 4:  Log likelihood = -30971.812  
+
+Refining starting values:
+
+Grid node 0:  Log likelihood = -29606.081
+
+Fitting full model:
+
+Iteration 0:  Log likelihood = -29606.081  (not concave)
+Iteration 1:  Log likelihood = -29520.915  (not concave)
+Iteration 2:  Log likelihood = -29447.404  
+Iteration 3:  Log likelihood = -28876.277  
+Iteration 4:  Log likelihood = -28868.594  
+Iteration 5:  Log likelihood = -28868.343  
+Iteration 6:  Log likelihood = -28868.342  
+
+Mixed-effects logistic regression               Number of obs     =    200,730
+Group variable: policyno                        Number of groups  =        492
+
+                                                Obs per group:
+                                                              min =          2
+                                                              avg =      408.0
+                                                              max =      1,287
+
+Integration method: mvaghermite                 Integration pts.  =          7
+
+                                                Wald chi2(42)     =    1507.02
+Log likelihood = -28868.342                     Prob > chi2       =     0.0000
+-------------------------------------------------------------------------------
+     adoption | Coefficient  Std. err.      z    P>|z|     [95% conf. interval]
+--------------+----------------------------------------------------------------
+   initiative |   .1182999   .0588943     2.01   0.045     .0028692    .2337306
+    init_sigs |  -.0076149   .0063975    -1.19   0.234    -.0201538     .004924
+std_latnt_d~y |   .1172759   .0075309    15.57   0.000     .1025156    .1320363
+ std_nbrs_lag |    .156961   .0111253    14.11   0.000     .1351558    .1787663
+std_populat~n |   .0118826   .0308949     0.38   0.701    -.0486702    .0724354
+std_masssoc~t |   .1558666   .0330069     4.72   0.000     .0911742    .2205591
+      unified |  -.0093797   .0271751    -0.35   0.730     -.062642    .0438826
+     duration |  -.0185278   .0065299    -2.84   0.005    -.0313261   -.0057296
+   durationsq |   .0002486   .0001313     1.89   0.058    -8.76e-06    .0005059
+   durationcb |  -6.90e-07   5.62e-07    -1.23   0.220    -1.79e-06    4.12e-07
+   std_income |  -.0802557   .0296028    -2.71   0.007    -.1382762   -.0222352
+  std_bowen_1 |  -.0538928   .0253808    -2.12   0.034    -.1036383   -.0041472
+  std_bowen_2 |   .0222458    .014331     1.55   0.121    -.0058425    .0503341
+   change_pop |   5.481814   1.244598     4.40   0.000     3.042446    7.921182
+   change_inc |  -.2185994   .1686129    -1.30   0.195    -.5490747    .1118759
+ party_change |   .1821993   .0520962     3.50   0.000     .0800926     .284306
+              |
+         year |
+        1989  |   .1900695   .0939311     2.02   0.043      .005968     .374171
+        1990  |  -.0554026   .0998485    -0.55   0.579     -.251102    .1402969
+        1991  |   .0357199   .0968966     0.37   0.712     -.154194    .2256338
+        1992  |    .217269   .0944691     2.30   0.021      .032113     .402425
+        1993  |   .0362852   .0995398     0.36   0.715    -.1588092    .2313795
+        1994  |    .564029   .0925831     6.09   0.000     .3825694    .7454886
+        1995  |    .528182    .095888     5.51   0.000     .3402451    .7161189
+        1996  |   .5241962   .0982236     5.34   0.000     .3316814     .716711
+        1997  |   .8091757   .0963025     8.40   0.000     .6204263    .9979251
+        1998  |   .6227771   .1028181     6.06   0.000     .4212574    .8242968
+        1999  |   .9343071   .1005547     9.29   0.000     .7372235    1.131391
+        2000  |   .6526069   .1066781     6.12   0.000     .4435217    .8616922
+        2001  |   1.067099     .10491    10.17   0.000     .8614787    1.272718
+        2002  |   .9263122   .1112373     8.33   0.000      .708291    1.144333
+        2003  |   1.033122   .1134463     9.11   0.000     .8107709    1.255472
+        2004  |   .7598122   .1200056     6.33   0.000     .5246056    .9950187
+        2005  |   1.259883   .1169425    10.77   0.000      1.03068    1.489086
+        2006  |   1.547538   .1169675    13.23   0.000     1.318286     1.77679
+        2007  |   1.299099   .1245765    10.43   0.000     1.054934    1.543265
+        2008  |   1.097679   .1316393     8.34   0.000     .8396704    1.355687
+        2009  |   1.387542   .1394674     9.95   0.000     1.114191    1.660893
+        2010  |   1.063915   .1448255     7.35   0.000      .780062    1.347768
+        2011  |   1.597758   .1453458    10.99   0.000     1.312885     1.88263
+        2012  |   1.053068   .1594236     6.61   0.000     .7406033    1.365532
+        2013  |   1.783125   .1548423    11.52   0.000     1.479639     2.08661
+        2014  |   1.126711   .1986251     5.67   0.000     .7374127    1.516009
+              |
+        _cons |   -4.03975   .0999698   -40.41   0.000    -4.235688   -3.843813
+--------------+----------------------------------------------------------------
+policyno      |
+var(std_mas~t)|    .222011   .0231763                       .180932    .2724165
+    var(_cons)|   1.474762   .1152399                      1.265342    1.718842
+--------------+----------------------------------------------------------------
+policyno      |
+cov(std_mas~t,|
+        _cons)|  -.1520557   .0382875    -3.97   0.000    -.2270979   -.0770135
+-------------------------------------------------------------------------------
+LR test vs. logistic model: chi2(4) = 4206.94             Prob > chi2 = 0.0000
+
+Note: LR test is conservative and provided only for reference.
+
+. estimates store last
+
+. 
+. ***************************************************************
+. * Step 3. Save and Export Models
+. ***************************************************************
+. * Export coefficient tables to CSV
+. esttab first last using "ml_coefficient_split/figures/lacombe_boehmke2021/laco
+> mbe_stata_results.csv", replace ///
+>     cells("b se") label
+(file
+    ml_coefficient_split/figures/lacombe_boehmke2021/lacombe_stata_results.csv
+    not found)
+(output written to ml_coefficient_split/figures/lacombe_boehmke2021/lacombe_stat
+> a_results.csv)
+
+.     
+. log close
+      name:  <unnamed>
+       log:  /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_coefficient_s
+> plit/figures/lacombe_boehmke2021/lacombe_split_results.txt
+  log type:  text
+ closed on:  21 Oct 2025, 20:03:03
+--------------------------------------------------------------------------------
