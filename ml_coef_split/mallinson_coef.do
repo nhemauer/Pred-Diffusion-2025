@@ -61,7 +61,7 @@ melogit adopt neighbor_prop ideology_relative_hm congress_majortopic ///
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
     drop(_cons *.year) nolabel xline(0) ///
-    rename(neighbor_prop = "Neighbor Adoptions" ideology_relative_hm = "Ideological Distance" congress_majortopic = "Congressional Hearings" init_avail = "Iniative Available" init_qual = "Iniative Qual. Difficulty" ///
+    rename(neighbor_prop = "Neighbor Adoptions" ideology_relative_hm = "Ideological Distance" congress_majortopic = "Congressional Hearings" init_avail = "Iniative Available" init_qual = "Initiative Qual. Difficulty" ///
            divided_gov = "Divided Government" legprof_squire = "Legislative Professionalism" percap_log = "Per Capita Income" population_log = "Population" mip = "Most Important Problem" complexity_topic = "Complex Policy" ///
            mip_complexity_topic = "MIP x Complex" nyt = "New York Times" year_count = "Year" time_log = "Time") ///
     xtitle("Logit Coefficients")
