@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from sklearn.inspection import PartialDependenceDisplay
 import matplotlib.pyplot as plt
 import pandas as pd
 import random
@@ -112,3 +113,49 @@ plt.show()
 
 # Save output
 importance_df.to_csv('figures/bricker_lacombe2021/bricker_feature_importance.csv', index = False)
+
+# Create RF PDP with top 9 features
+top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+
+# Create partial dependence plot
+fig, axes = plt.subplots(3, 3, figsize = (15, 15))
+axes = axes.ravel()
+
+for i, feature in enumerate(top_features_rf):
+    feature_idx = feature_names.index(feature)
+    PartialDependenceDisplay.from_estimator(
+        rf_model, 
+        X_train_scaled, 
+        features = [feature_idx],
+        feature_names = feature_names,
+        ax = axes[i],
+        kind = 'average'
+    )
+    axes[i].set_title(f'PDP: {feature}')
+
+plt.tight_layout()
+plt.savefig('figures/bricker_lacombe2021/bricker_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+# Create XGBoost PDP with top 9 features
+top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+
+# Create partial dependence plot
+fig, axes = plt.subplots(3, 3, figsize = (15, 15))
+axes = axes.ravel()
+
+for i, feature in enumerate(top_features_xgb):
+    feature_idx = feature_names.index(feature)
+    PartialDependenceDisplay.from_estimator(
+        xgb_model, 
+        X_train_scaled, 
+        features = [feature_idx],
+        feature_names = feature_names,
+        ax = axes[i],
+        kind = 'average'
+    )
+    axes[i].set_title(f'PDP: {feature}')
+
+plt.tight_layout()
+plt.savefig('figures/bricker_lacombe2021/bricker_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
