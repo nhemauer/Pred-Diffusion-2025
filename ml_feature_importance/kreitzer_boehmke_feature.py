@@ -18,10 +18,10 @@ kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
 covariates = [
     "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
     "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
+    "time2", "webster"
 ]
 
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + covariates].dropna()
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", 'policy_num'] + covariates].dropna()
 
 # Define X and y
 X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
@@ -117,7 +117,8 @@ plt.show()
 importance_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_feature_importance.csv', index = False)
 
 # Create RF PDP with top 9 features
-top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -140,7 +141,8 @@ plt.savefig('figures/kreitzer_boehmke2016/breitzer_partial_dependence_rf.png', d
 plt.show()
 
 # Create XGBoost PDP with top 9 features
-top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))

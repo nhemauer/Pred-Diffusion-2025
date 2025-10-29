@@ -116,7 +116,8 @@ plt.show()
 importance_df.to_csv('figures/boehmke2017/boehmke_feature_importance.csv', index = False)
 
 # Create RF PDP with top 9 features
-top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -139,7 +140,8 @@ plt.savefig('figures/boehmke2017/boehmke_partial_dependence_rf.png', dpi = 300, 
 plt.show()
 
 # Create XGBoost PDP with top 9 features
-top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))

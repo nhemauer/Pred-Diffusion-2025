@@ -18,10 +18,10 @@ lacombe_boehmke2021_full = pd.read_stata(r"data/lacombe_boehmke2021.dta")
 covariates = [
     "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
     "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
-    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change", "year"
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change"
 ]
 
-lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno"] + covariates].dropna()
+lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", "year"] + covariates].dropna()
 
 # Define X and y
 X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
@@ -116,7 +116,8 @@ plt.show()
 importance_df.to_csv('figures/lacombe_boehmke2021/lacombe_feature_importance.csv', index = False)
 
 # Create RF PDP with top 9 features
-top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -139,7 +140,8 @@ plt.savefig('figures/lacombe_boehmke2021/lacombe_partial_dependence_rf.png', dpi
 plt.show()
 
 # Create XGBoost PDP with top 9 features
-top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
