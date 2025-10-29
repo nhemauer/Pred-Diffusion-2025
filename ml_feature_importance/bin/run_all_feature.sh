@@ -4,7 +4,7 @@
 
 for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_feature_importance/*.py; do
     name=$(basename "$script" .py)
-
+    
     sbatch <<EOF
 #!/bin/bash
 #SBATCH --account=bbd5087_cr_default
