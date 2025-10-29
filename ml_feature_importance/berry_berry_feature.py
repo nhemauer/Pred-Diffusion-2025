@@ -107,8 +107,8 @@ plt.show()
 # Save output
 importance_df.to_csv('figures/berry_berry1990/berry_feature_importance.csv', index = False)
 
-# Create RF PDP with top 9 features
-top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+# Create RF PDP with top 7 features
+top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(7)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -126,12 +126,16 @@ for i, feature in enumerate(top_features_rf):
     )
     axes[i].set_title(f'PDP: {feature}')
 
+# Hide unused subplots
+for j in range(len(top_features_rf), len(axes)):
+    axes[j].set_visible(False)
+
 plt.tight_layout()
 plt.savefig('figures/berry_berry1990/berry_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-# Create XGBoost PDP with top 9 features
-top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+# Create XGBoost PDP with top 7 features
+top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(7)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -148,6 +152,10 @@ for i, feature in enumerate(top_features_xgb):
         kind = 'average'
     )
     axes[i].set_title(f'PDP: {feature}')
+
+# Hide unused subplots
+for j in range(len(top_features_xgb), len(axes)):
+    axes[j].set_visible(False)
 
 plt.tight_layout()
 plt.savefig('figures/berry_berry1990/berry_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
