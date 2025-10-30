@@ -59,7 +59,7 @@ variable_names = {
     "traditional_profstd": "Traditional x Professionalism"
 }
 
-karch_2016 = karch_2016.rename(columns = variable_names, inplace = True)
+karch_2016 = karch_2016.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]

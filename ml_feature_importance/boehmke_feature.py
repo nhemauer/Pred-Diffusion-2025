@@ -35,7 +35,7 @@ variable_names = {
     "time_cube": "Time Cubed"
 }
 
-boehmke_2017 = boehmke_2017.rename(columns = variable_names, inplace = True)
+boehmke_2017 = boehmke_2017.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]

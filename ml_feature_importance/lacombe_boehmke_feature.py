@@ -42,7 +42,7 @@ variable_names = {
     "party_change": "Change in Party"
 }
 
-lacombe_boehmke2021 = lacombe_boehmke2021.rename(columns = variable_names, inplace = True)
+lacombe_boehmke2021 = lacombe_boehmke2021.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]

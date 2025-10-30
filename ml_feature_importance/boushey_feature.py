@@ -48,7 +48,7 @@ variable_names = {
     "counter3": "Time Cubed"
 }
 
-boushey_2016.rename(columns = variable_names, inplace = True)
+boushey_2016 = boushey_2016.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]

@@ -38,7 +38,7 @@ variable_names = {
     "time_log": "Time"
 }
 
-mallinson_2019 = mallinson_2019.rename(columns = variable_names, inplace = True)
+mallinson_2019 = mallinson_2019.rename(columns = variable_names)
 
 # Define X and y
 X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()

@@ -43,7 +43,7 @@ variable_names = {
     "featureyear": "Provision Year"
 }
 
-parinandi2020 = parinandi2020.rename(columns = variable_names, inplace = True)
+parinandi2020 = parinandi2020.rename(columns = variable_names)
 
 # Define X and y
 X = parinandi2020.drop(columns = ['oneemulation']).copy()

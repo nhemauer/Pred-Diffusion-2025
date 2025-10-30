@@ -36,7 +36,7 @@ variable_names = {
     "durationcb": "Duration Cubed"
 }
 
-bricker_lacombe_2021 = bricker_lacombe_2021.rename(columns = variable_names, inplace = True)
+bricker_lacombe_2021 = bricker_lacombe_2021.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]

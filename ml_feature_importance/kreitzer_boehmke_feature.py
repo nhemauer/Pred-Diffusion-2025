@@ -38,7 +38,7 @@ variable_names = {
     "webster": "Post-Webster Indicator"
 }
 
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016.rename(columns = variable_names, inplace = True)
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]

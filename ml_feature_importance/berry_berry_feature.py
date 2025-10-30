@@ -28,7 +28,7 @@ variable_names = {
     "religion": "Religion"
 }
 
-berry_berry1990 = berry_berry1990.rename(columns = variable_names, inplace = True)
+berry_berry1990 = berry_berry1990.rename(columns = variable_names)
 
 # Define X and y
 X = berry_berry1990.drop(columns = ['adopt', 'neighbor', 'state', 'year']).copy()
