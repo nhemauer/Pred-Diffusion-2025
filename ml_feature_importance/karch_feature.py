@@ -26,11 +26,46 @@ covariates = [
     "traditional_logpopstd", "traditional_collegstd", "traditional_perurbanstd",
     "traditional_profstd"
 ]
-
 karch_2016 = karch_2016_full[["adopt", "stateyear"] + covariates].dropna()
 
+# Rename columns
+variable_names = {
+    "traditional": "Traditional",
+    "nborsstd": "Neighbors",
+    "prevadoptstd": "Previous Adopters",
+    "complexity": "Complexity",
+    "igrole": "Interest Group Role",
+    "regov": "Republican Governor",
+    "unified": "Unified",
+    "perdemstd": "Democratic Legislature",
+    "incpcadjstd": "Income per Capita",
+    "exppcadjstd": "Expenditures per Capita",
+    "logpopstd": "Population",
+    "collegstd": "Pct College Educated",
+    "perurbanstd": "Pct Urban",
+    "profstd": "Legislative Professionalism",
+    "traditional_nborsstd": "Traditional x Neighbors",
+    "traditional_prevadoptstd": "Traditional x Prev. Adopters",
+    "traditional_complexity": "Traditional x Complexity",
+    "traditional_igrole": "Traditional x Interest Group",
+    "traditional_regov": "Traditional x Rep. Governor",
+    "traditional_unified": "Traditional x Unified",
+    "traditional_perdemstd": "Traditional x Dem. Legislature",
+    "traditional_incpcadjstd": "Traditional x Income",
+    "traditional_exppcadjstd": "Traditional x Expenditures",
+    "traditional_logpopstd": "Traditional x Population",
+    "traditional_collegstd": "Traditional x College",
+    "traditional_perurbanstd": "Traditional x Urban",
+    "traditional_profstd": "Traditional x Professionalism"
+}
+
+karch_2016 = karch_2016.rename(columns = variable_names, inplace = True)
+
+# Update covariates list with new names
+covariates_renamed = [variable_names[var] for var in covariates]
+
 # Define X and y
-X = karch_2016[covariates].copy()
+X = karch_2016[covariates_renamed].copy()
 y = karch_2016['adopt']
 
 # Split into train and test sets
@@ -92,29 +127,28 @@ importance_df = pd.DataFrame({
     'rf_importance': rf_feature_importance,
     'xgb_importance': xgb_feature_importance})
 
-# Create side-by-side plots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
-
-# Plot rf feature importance
+# Create Random Forest feature importance plot
+fig1, ax1 = plt.subplots(1, 1, figsize = (10, 10))
 rf_top_features = importance_df.sort_values(by = 'rf_importance', ascending = False).head(20)
 ax1.barh(range(len(rf_top_features)), rf_top_features['rf_importance'])
 ax1.set_yticks(range(len(rf_top_features)))
 ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
-ax1.set_title('Top 20 Feature Importance - Random Forest')
 ax1.invert_yaxis()
+plt.tight_layout()
+plt.savefig('figures/karch2016/karch_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
-# Plot XGBoost feature importance
+# Create XGBoost feature importance plot
+fig2, ax2 = plt.subplots(1, 1, figsize = (10, 10))
 xgb_top_features = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(20)
 ax2.barh(range(len(xgb_top_features)), xgb_top_features['xgb_importance'])
 ax2.set_yticks(range(len(xgb_top_features)))
 ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
-ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
-
 plt.tight_layout()
-plt.savefig('figures/karch2016/karch_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/karch2016/karch_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output

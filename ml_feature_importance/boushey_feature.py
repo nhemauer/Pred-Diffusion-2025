@@ -23,8 +23,38 @@ covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
                 "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
 boushey_2016 = boushey_2016_full[["state", "styear", "dvadopt"] + covariates].dropna()
 
+# Rename columns
+variable_names = {
+    "policycongruent": "Policy Congruence",
+    "gub_election": "Elect1", 
+    "elect2": "Elect2",
+    "hvd_4yr": "Electoral Competition",
+    "fedcrime": "National Crime Salience",
+    "leg_dem_per_2pty": "Democratic Party Strength",
+    "dem_governor": "Democratic Governor",
+    "insession": "Legislative Session",
+    "propneighpol": "Neighbors",
+    "citidist": "Ideological Distance",
+    "squire_prof86": "Legislative Professionalism",
+    "citi6008": "Political Ideology",
+    "crimespendpc": "Crime Spending per Capita",
+    "crimespendpcsq": "Crime Spending (Squared)",
+    "violentthousand": "Violent Crime Rate",
+    "pctwhite": "Pct. Population White",
+    "stateincpercap": "Per Capita Income",
+    "logpop": "Logged Population",
+    "counter": "Time",
+    "counter2": "Time Squared",
+    "counter3": "Time Cubed"
+}
+
+boushey_2016.rename(columns = variable_names, inplace = True)
+
+# Update covariates list with new names
+covariates_renamed = [variable_names[var] for var in covariates]
+
 # Define X and y
-X = boushey_2016[covariates].copy()
+X = boushey_2016[covariates_renamed].copy()
 y = boushey_2016['dvadopt']
 
 # Split into train and test sets
@@ -85,29 +115,28 @@ importance_df = pd.DataFrame({
     'rf_importance': rf_feature_importance,
     'xgb_importance': xgb_feature_importance})
 
-# Create side-by-side plots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
-
-# Plot rf feature importance
+# Create Random Forest feature importance plot
+fig1, ax1 = plt.subplots(1, 1, figsize = (10, 10))
 rf_top_features = importance_df.sort_values(by = 'rf_importance', ascending = False).head(20)
 ax1.barh(range(len(rf_top_features)), rf_top_features['rf_importance'])
 ax1.set_yticks(range(len(rf_top_features)))
 ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
-ax1.set_title('Top 20 Feature Importance - Random Forest')
 ax1.invert_yaxis()
+plt.tight_layout()
+plt.savefig('figures/boushey2016/boushey_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
-# Plot XGBoost feature importance
+# Create XGBoost feature importance plot
+fig2, ax2 = plt.subplots(1, 1, figsize = (10, 10))
 xgb_top_features = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(20)
 ax2.barh(range(len(xgb_top_features)), xgb_top_features['xgb_importance'])
 ax2.set_yticks(range(len(xgb_top_features)))
 ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
-ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
-
 plt.tight_layout()
-plt.savefig('figures/boushey2016/boushey_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boushey2016/boushey_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output

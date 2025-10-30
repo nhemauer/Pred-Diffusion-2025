@@ -19,6 +19,27 @@ covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "i
               "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
 mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
 
+# Rename columns
+variable_names = {
+    "neighbor_prop": "Neighbor Adoptions",
+    "ideology_relative_hm": "Ideological Distance",
+    "congress_majortopic": "Congressional Hearings",
+    "init_avail": "Iniative Available",
+    "init_qual": "Initiative Qual. Difficulty",
+    "divided_gov": "Divided Government",
+    "legprof_squire": "Legislative Professionalism",
+    "percap_log": "Per Capita Income",
+    "population_log": "Population",
+    "mip": "Most Important Problem",
+    "complexity_topic": "Complex Policy",
+    "mip_complexity_topic": "MIP x Complex",
+    "nyt": "New York Times",
+    "year_count": "Year",
+    "time_log": "Time"
+}
+
+mallinson_2019 = mallinson_2019.rename(columns = variable_names, inplace = True)
+
 # Define X and y
 X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
 y = mallinson_2019['adopt']
@@ -81,29 +102,28 @@ importance_df = pd.DataFrame({
     'rf_importance': rf_feature_importance,
     'xgb_importance': xgb_feature_importance})
 
-# Create side-by-side plots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
-
-# Plot rf feature importance
+# Create Random Forest feature importance plot
+fig1, ax1 = plt.subplots(1, 1, figsize = (10, 10))
 rf_top_features = importance_df.sort_values(by = 'rf_importance', ascending = False).head(20)
 ax1.barh(range(len(rf_top_features)), rf_top_features['rf_importance'])
 ax1.set_yticks(range(len(rf_top_features)))
 ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
-ax1.set_title('Top 20 Feature Importance - Random Forest')
 ax1.invert_yaxis()
+plt.tight_layout()
+plt.savefig('figures/mallinson2019/mallinson_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
-# Plot XGBoost feature importance
+# Create XGBoost feature importance plot
+fig2, ax2 = plt.subplots(1, 1, figsize = (10, 10))
 xgb_top_features = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(20)
 ax2.barh(range(len(xgb_top_features)), xgb_top_features['xgb_importance'])
 ax2.set_yticks(range(len(xgb_top_features)))
 ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
-ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
-
 plt.tight_layout()
-plt.savefig('figures/mallinson2019/mallinson_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/mallinson_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output

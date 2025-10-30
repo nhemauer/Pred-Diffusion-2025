@@ -20,8 +20,30 @@ covariates = [
     "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
     "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
 ]
-
 parinandi2020 = parinandi2020_full[["oneemulation"] + covariates].dropna()
+
+# Rename columns
+variable_names = {
+    "adagovideology": "Legislative Ideology",
+    "citizenideology": "Citizen Ideology", 
+    "medianivoteshare": "Median Incumbent Vote Share",
+    "partydecline": "Party Decline",
+    "squirescore": "Legislative Professionalism",
+    "incunemp": "Change in Unemployment",
+    "pctpercapincome": "Per Capita Income",
+    "percenturban": "Urban Percentage",
+    "ugovd": "Unified Dem. Government",
+    "percentfossilprod": "Fossil Fuel Production",
+    "renergyprice11": "Real Energy Price",
+    "deregulated": "Deregulated",
+    "geoneighborlag": "Lagged Geographic Neighbor",
+    "ideoneighborlag": "Lagged Ideological Neighbor",
+    "premulation1": "Prior Borrowing",
+    "year": "Year",
+    "featureyear": "Provision Year"
+}
+
+parinandi2020 = parinandi2020.rename(columns = variable_names, inplace = True)
 
 # Define X and y
 X = parinandi2020.drop(columns = ['oneemulation']).copy()
@@ -89,29 +111,28 @@ importance_df = pd.DataFrame({
     'rf_importance': rf_feature_importance,
     'xgb_importance': xgb_feature_importance})
 
-# Create side-by-side plots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
-
-# Plot rf feature importance
+# Create Random Forest feature importance plot
+fig1, ax1 = plt.subplots(1, 1, figsize = (10, 10))
 rf_top_features = importance_df.sort_values(by = 'rf_importance', ascending = False).head(20)
 ax1.barh(range(len(rf_top_features)), rf_top_features['rf_importance'])
 ax1.set_yticks(range(len(rf_top_features)))
 ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
-ax1.set_title('Top 20 Feature Importance - Random Forest')
 ax1.invert_yaxis()
+plt.tight_layout()
+plt.savefig('figures/parinandi2020/parinandi_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
-# Plot XGBoost feature importance
+# Create XGBoost feature importance plot
+fig2, ax2 = plt.subplots(1, 1, figsize = (10, 10))
 xgb_top_features = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(20)
 ax2.barh(range(len(xgb_top_features)), xgb_top_features['xgb_importance'])
 ax2.set_yticks(range(len(xgb_top_features)))
 ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
-ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
-
 plt.tight_layout()
-plt.savefig('figures/parinandi2020/parinandi_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/parinandi_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output

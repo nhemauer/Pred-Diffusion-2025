@@ -20,8 +20,32 @@ covariates = [
     "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
     "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change"
 ]
-
 lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", "year"] + covariates].dropna()
+
+# Rename columns
+variable_names = {
+    "initiative": "Initiative Process",
+    "init_sigs": "Signatures",
+    "std_latnt_decay": "Latent Decay",
+    "std_nbrs_lag": "Contiguity",
+    "std_population": "Population",
+    "std_masssociallib_est": "Public Liberalism",
+    "unified": "Unified Control",
+    "duration": "Duration",
+    "durationsq": "Duration Squared",
+    "durationcb": "Duration Cubed",
+    "std_income": "Income per Capita",
+    "std_bowen_1": "Legislative Prof. Dim. 1",
+    "std_bowen_2": "Legislative Prof. Dim. 2",
+    "change_pop": "Change Population",
+    "change_inc": "Change Income",
+    "party_change": "Change in Party"
+}
+
+lacombe_boehmke2021 = lacombe_boehmke2021.rename(columns = variable_names, inplace = True)
+
+# Update covariates list with new names
+covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
 X = lacombe_boehmke2021.drop(columns = ['adoption', 'policyno']).copy()
@@ -117,7 +141,7 @@ importance_df.to_csv('figures/lacombe_boehmke2021/lacombe_feature_importance.csv
 
 # Create RF PDP with top 9 features
 top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
-top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates)].head(9)['feature'].tolist()
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -141,7 +165,7 @@ plt.show()
 
 # Create XGBoost PDP with top 9 features
 top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
-top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates)].head(9)['feature'].tolist()
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))

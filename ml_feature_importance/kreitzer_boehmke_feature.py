@@ -20,8 +20,28 @@ covariates = [
     "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
     "time2", "webster"
 ]
-
 kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", 'policy_num'] + covariates].dropna()
+
+# Rename columns
+variable_names = {
+    "norrander_legality": "Abortion Opinion",
+    "religadhrate": "Religious Adherence",
+    "initdif": "Initiative Difficulty",
+    "dem_gov": "Democratic Governor",
+    "uni_dem_leg": "Unified Dem. Legislature",
+    "fem_dem": "Democratic Women",
+    "nbrspct": "Neighbor Adoption %",
+    "rescaledmedincome": "Median Income",
+    "rescaledpopsize": "Population",
+    "time": "Time",
+    "time2": "Time Squared",
+    "webster": "Post-Webster Indicator"
+}
+
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016.rename(columns = variable_names, inplace = True)
+
+# Update covariates list with new names
+covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
 X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
@@ -88,29 +108,28 @@ importance_df = pd.DataFrame({
     'rf_importance': rf_feature_importance,
     'xgb_importance': xgb_feature_importance})
 
-# Create side-by-side plots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
-
-# Plot rf feature importance
+# Create Random Forest feature importance plot
+fig1, ax1 = plt.subplots(1, 1, figsize = (10, 10))
 rf_top_features = importance_df.sort_values(by = 'rf_importance', ascending = False).head(20)
 ax1.barh(range(len(rf_top_features)), rf_top_features['rf_importance'])
 ax1.set_yticks(range(len(rf_top_features)))
 ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
-ax1.set_title('Top 20 Feature Importance - Random Forest')
 ax1.invert_yaxis()
+plt.tight_layout()
+plt.savefig('figures/kreitzer_boehmke2016/kreitzer_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
-# Plot XGBoost feature importance
+# Create XGBoost feature importance plot
+fig2, ax2 = plt.subplots(1, 1, figsize = (10, 10))
 xgb_top_features = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(20)
 ax2.barh(range(len(xgb_top_features)), xgb_top_features['xgb_importance'])
 ax2.set_yticks(range(len(xgb_top_features)))
 ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
-ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
-
 plt.tight_layout()
-plt.savefig('figures/kreitzer_boehmke2016/kreitzer_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/kreitzer_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
@@ -118,7 +137,7 @@ importance_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_feature_importance.c
 
 # Create RF PDP with top 9 features
 top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
-top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates)].head(9)['feature'].tolist()
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -142,7 +161,7 @@ plt.show()
 
 # Create XGBoost PDP with top 9 features
 top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
-top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates)].head(9)['feature'].tolist()
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))

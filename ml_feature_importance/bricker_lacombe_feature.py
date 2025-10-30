@@ -21,8 +21,28 @@ covariates = ["std_score","initiative","init_sigs","std_population",
                 "duration","durationsq","durationcb"]
 bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "policy", "adoption"] + covariates].dropna()
 
+# Rename columns
+variable_names = {
+    "std_score": "Similarity",
+    "initiative": "Initiative Process",
+    "init_sigs": "Average Signatures",
+    "std_population": "Population",
+    "std_citideology": "Citizen Ideology",
+    "unified": "Unified Control",
+    "std_income": "Income",
+    "std_legp_squire": "Legislative Professionalism",
+    "duration": "Duration",
+    "durationsq": "Duration Squared",
+    "durationcb": "Duration Cubed"
+}
+
+bricker_lacombe_2021 = bricker_lacombe_2021.rename(columns = variable_names, inplace = True)
+
+# Update covariates list with new names
+covariates_renamed = [variable_names[var] for var in covariates]
+
 # Define X and y
-X = bricker_lacombe_2021[['year'] + covariates].copy()
+X = bricker_lacombe_2021[['year'] + covariates_renamed].copy()
 X = pd.get_dummies(X, columns = ['year'], drop_first = True)
 y = bricker_lacombe_2021['adoption']
 
@@ -86,29 +106,28 @@ importance_df = pd.DataFrame({
     'rf_importance': rf_feature_importance,
     'xgb_importance': xgb_feature_importance})
 
-# Create side-by-side plots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
-
-# Plot rf feature importance
+# Create Random Forest feature importance plot
+fig1, ax1 = plt.subplots(1, 1, figsize = (10, 10))
 rf_top_features = importance_df.sort_values(by = 'rf_importance', ascending = False).head(20)
 ax1.barh(range(len(rf_top_features)), rf_top_features['rf_importance'])
 ax1.set_yticks(range(len(rf_top_features)))
 ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
-ax1.set_title('Top 20 Feature Importance - Random Forest')
 ax1.invert_yaxis()
+plt.tight_layout()
+plt.savefig('figures/bricker_lacombe2021/bricker_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
 
-# Plot XGBoost feature importance
+# Create XGBoost feature importance plot
+fig2, ax2 = plt.subplots(1, 1, figsize = (10, 10))
 xgb_top_features = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(20)
 ax2.barh(range(len(xgb_top_features)), xgb_top_features['xgb_importance'])
 ax2.set_yticks(range(len(xgb_top_features)))
 ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
-ax2.set_title('Top 20 Feature Importance - XGBoost')
 ax2.invert_yaxis()
-
 plt.tight_layout()
-plt.savefig('figures/bricker_lacombe2021/bricker_feature_importance_comparison.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/bricker_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
@@ -116,7 +135,7 @@ importance_df.to_csv('figures/bricker_lacombe2021/bricker_feature_importance.csv
 
 # Create RF PDP with top 9 features
 top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
-top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates)].head(9)['feature'].tolist()
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -140,7 +159,7 @@ plt.show()
 
 # Create XGBoost PDP with top 9 features
 top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
-top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates)].head(9)['feature'].tolist()
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
