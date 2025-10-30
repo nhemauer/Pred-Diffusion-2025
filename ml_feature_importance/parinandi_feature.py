@@ -153,9 +153,11 @@ for i, feature in enumerate(top_features_rf):
         features = [feature_idx],
         feature_names = feature_names,
         ax = axes[i],
-        kind = 'average'
+        kind = 'average',
+        response_method = 'predict_proba'
     )
     axes[i].set_title(f'PDP: {feature}')
+    axes[i].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
 plt.savefig('figures/parinandi2020/parinandi_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
@@ -176,9 +178,11 @@ for i, feature in enumerate(top_features_xgb):
         features = [feature_idx],
         feature_names = feature_names,
         ax = axes[i],
-        kind = 'average'
+        kind = 'average',
+        response_method = 'predict_proba'
     )
     axes[i].set_title(f'PDP: {feature}')
+    axes[i].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
 plt.savefig('figures/parinandi2020/parinandi_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')

@@ -133,9 +133,11 @@ for i, feature in enumerate(top_features_rf):
         features = [feature_idx],
         feature_names = feature_names,
         ax = axes[i],
-        kind = 'average'
+        kind = 'average',
+        response_method = 'predict_proba'
     )
     axes[i].set_title(f'PDP: {feature}')
+    axes[i].set_ylabel('Predicted Probability of Adoption')
 
 # Hide unused subplots
 for j in range(len(top_features_rf), len(axes)):
@@ -160,9 +162,11 @@ for i, feature in enumerate(top_features_xgb):
         features = [feature_idx],
         feature_names = feature_names,
         ax = axes[i],
-        kind = 'average'
+        kind = 'average',
+        response_method = 'predict_proba'
     )
     axes[i].set_title(f'PDP: {feature}')
+    axes[i].set_ylabel('Predicted Probability of Adoption')
 
 # Hide unused subplots
 for j in range(len(top_features_xgb), len(axes)):
