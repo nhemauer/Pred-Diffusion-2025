@@ -138,7 +138,7 @@ axes = axes.ravel()
 
 for i, feature in enumerate(top_features_rf):
     feature_idx = feature_names.index(feature)
-    PartialDependenceDisplay.from_estimator(
+    display = PartialDependenceDisplay.from_estimator(
         rf_model, 
         X_train_scaled, 
         features = [feature_idx],
@@ -148,7 +148,7 @@ for i, feature in enumerate(top_features_rf):
         response_method = 'predict_proba'
     )
     axes[i].set_title(f'PDP: {feature}')
-    axes[i].set_ylabel('Predicted Probability of Adoption')
+    display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
 plt.savefig('figures/mallinson2019/mallinson_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
@@ -163,7 +163,7 @@ axes = axes.ravel()
 
 for i, feature in enumerate(top_features_xgb):
     feature_idx = feature_names.index(feature)
-    PartialDependenceDisplay.from_estimator(
+    display = PartialDependenceDisplay.from_estimator(
         xgb_model, 
         X_train_scaled, 
         features = [feature_idx],
@@ -173,7 +173,7 @@ for i, feature in enumerate(top_features_xgb):
         response_method = 'predict_proba'
     )
     axes[i].set_title(f'PDP: {feature}')
-    axes[i].set_ylabel('Predicted Probability of Adoption')
+    display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
 plt.savefig('figures/mallinson2019/mallinson_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
