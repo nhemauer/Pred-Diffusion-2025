@@ -1,6 +1,5 @@
 ### Preprocessing and Rolling Window t+1
 import warnings
-import warnings
 warnings.filterwarnings("ignore")
 from sklearn import linear_model
 from sklearn.ensemble import RandomForestClassifier
@@ -38,10 +37,10 @@ mid_year = min_year + (max_year - min_year) // 2
 
 # Initialize storage for results
 results = {
-    'original': {'ap_score': []},
-    'logit': {'ap_score': []},
-    'rf': {'ap_score': []},
-    'xgb': {'ap_score': []}
+    'original': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'logit': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'rf': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'xgb': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []}
 }
 
 os.chdir("ml_forecast")
@@ -93,6 +92,8 @@ for train_end_year in range(mid_year, max_year):
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
+    results['original']['all_predictions'].extend(original_scores)
+    results['original']['all_true_labels'].extend(y_test)
     
     # Logistic Regression
     common_params = {
@@ -150,6 +151,8 @@ for train_end_year in range(mid_year, max_year):
     print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
+    results['logit']['all_predictions'].extend(test_scores)
+    results['logit']['all_true_labels'].extend(y_test)
     
     # Random Forest
     param_grid = {
@@ -184,6 +187,8 @@ for train_end_year in range(mid_year, max_year):
     print(f"Random Forest AP Score: {ap_score}")
     
     results['rf']['ap_score'].append(ap_score)
+    results['rf']['all_predictions'].extend(test_scores)
+    results['rf']['all_true_labels'].extend(y_test)
     
     # XGBoost
     param_grid = {
@@ -223,12 +228,23 @@ for train_end_year in range(mid_year, max_year):
     print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
+    results['xgb']['all_predictions'].extend(test_scores)
+    results['xgb']['all_true_labels'].extend(y_test)
+
+# Calculate overall AUC-PR scores
+overall_ap_scores = {}
+for model in ['original', 'logit', 'rf', 'xgb']:
+    overall_ap_scores[model] = average_precision_score(
+        results[model]['all_true_labels'], 
+        results[model]['all_predictions']
+    )
 
 # Save aggregated results
 with open("figures/berry_berry1990/t1_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
-        f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+        f.write(f"Average AP Score (per year): {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+        f.write(f"Overall AP Score (all predictions): {overall_ap_scores[model]:.4f}\n")
 
 # Plot time series of results from t+1 rolling window
 years = list(range(mid_year + 2, mid_year + 2 + len(results['original']['ap_score'])))
@@ -267,10 +283,10 @@ time_series_results.to_csv('figures/berry_berry1990/t1_forecast_timeseries.csv',
 
 # Initialize storage for results
 results = {
-    'original': {'ap_score': []},
-    'logit': {'ap_score': []},
-    'rf': {'ap_score': []},
-    'xgb': {'ap_score': []}
+    'original': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'logit': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'rf': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'xgb': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []}
 }
 
 # Rolling window forecasting
@@ -320,6 +336,8 @@ for train_end_year in range(mid_year, max_year - 4):
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
+    results['original']['all_predictions'].extend(original_scores)
+    results['original']['all_true_labels'].extend(y_test)
     
     # Logistic Regression
     common_params = {
@@ -377,6 +395,8 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
+    results['logit']['all_predictions'].extend(test_scores)
+    results['logit']['all_true_labels'].extend(y_test)
     
     # Random Forest
     param_grid = {
@@ -411,6 +431,8 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"Random Forest AP Score: {ap_score}")
     
     results['rf']['ap_score'].append(ap_score)
+    results['rf']['all_predictions'].extend(test_scores)
+    results['rf']['all_true_labels'].extend(y_test)
     
     # XGBoost
     param_grid = {
@@ -450,12 +472,23 @@ for train_end_year in range(mid_year, max_year - 4):
     print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
+    results['xgb']['all_predictions'].extend(test_scores)
+    results['xgb']['all_true_labels'].extend(y_test)
+
+# Calculate overall AUC-PR scores
+overall_ap_scores = {}
+for model in ['original', 'logit', 'rf', 'xgb']:
+    overall_ap_scores[model] = average_precision_score(
+        results[model]['all_true_labels'], 
+        results[model]['all_predictions']
+    )
 
 # Save aggregated results
 with open("figures/berry_berry1990/t5_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
-        f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+        f.write(f"Average AP Score (per year): {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+        f.write(f"Overall AP Score (all predictions): {overall_ap_scores[model]:.4f}\n")
 
 # Plot time series of results from t+5 rolling window
 years = list(range(mid_year + 6, mid_year + 6 + len(results['original']['ap_score'])))
@@ -494,10 +527,10 @@ time_series_results.to_csv('figures/berry_berry1990/t5_forecast_timeseries.csv',
 
 # Initialize storage for results
 results = {
-    'original': {'ap_score': []},
-    'logit': {'ap_score': []},
-    'rf': {'ap_score': []},
-    'xgb': {'ap_score': []}
+    'original': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'logit': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'rf': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []},
+    'xgb': {'ap_score': [], 'all_predictions': [], 'all_true_labels': []}
 }
 
 # Rolling window forecasting
@@ -547,6 +580,8 @@ for train_end_year in range(mid_year, max_year - 9):
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
     results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
+    results['original']['all_predictions'].extend(original_scores)
+    results['original']['all_true_labels'].extend(y_test)
     
     # Logistic Regression
     common_params = {
@@ -604,6 +639,8 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"Logistic Regression AP Score: {ap_score}")
     
     results['logit']['ap_score'].append(ap_score)
+    results['logit']['all_predictions'].extend(test_scores)
+    results['logit']['all_true_labels'].extend(y_test)
     
     # Random Forest
     param_grid = {
@@ -638,6 +675,8 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"Random Forest AP Score: {ap_score}")
     
     results['rf']['ap_score'].append(ap_score)
+    results['rf']['all_predictions'].extend(test_scores)
+    results['rf']['all_true_labels'].extend(y_test)
     
     # XGBoost
     param_grid = {
@@ -677,12 +716,23 @@ for train_end_year in range(mid_year, max_year - 9):
     print(f"XGBoost AP Score: {ap_score}")
     
     results['xgb']['ap_score'].append(ap_score)
+    results['xgb']['all_predictions'].extend(test_scores)
+    results['xgb']['all_true_labels'].extend(y_test)
+
+# Calculate overall AUC-PR scores
+overall_ap_scores = {}
+for model in ['original', 'logit', 'rf', 'xgb']:
+    overall_ap_scores[model] = average_precision_score(
+        results[model]['all_true_labels'], 
+        results[model]['all_predictions']
+    )
 
 # Save aggregated results
 with open("figures/berry_berry1990/t10_forecast_results.txt", "w") as f:
     for model in ['original', 'logit', 'rf', 'xgb']:
         f.write(f"\n{model.upper()} Results:\n")
-        f.write(f"Average AP Score: {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+        f.write(f"Average AP Score (per year): {np.mean(results[model]['ap_score']):.4f} (±{np.std(results[model]['ap_score']):.4f})\n")
+        f.write(f"Overall AP Score (all predictions): {overall_ap_scores[model]:.4f}\n")
 
 # Plot time series of results from t+10 rolling window
 years = list(range(mid_year + 11, mid_year + 11 + len(results['original']['ap_score'])))
