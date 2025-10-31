@@ -158,7 +158,7 @@ for i, feature in enumerate(top_features_rf):
     display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
-plt.savefig('figures/kreitzer_boehmke2016/breitzer_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/kreitzer_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Create XGBoost PDP with top 9 features
@@ -184,5 +184,5 @@ for i, feature in enumerate(top_features_xgb):
     display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
-plt.savefig('figures/kreitzer_boehmke2016/breitzer_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/kreitzer_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
