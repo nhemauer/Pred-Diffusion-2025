@@ -22,7 +22,7 @@ mallinson_lovell2022_full = pd.read_csv(r"data/mallinson_lovell2022.csv")
 
 # Covariates
 covariates = ["republican","legprof_squire","exp_pupil10000_adj","mathscore4th","readscore4th",
-                "time"]
+              "time"]
 mallinson_lovell2022 = mallinson_lovell2022_full[["adopt"] + covariates].dropna()
 
 # Define X and y

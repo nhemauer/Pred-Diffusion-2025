@@ -20,7 +20,7 @@ random.seed(1337)
 mallinson_lovell2022_full = pd.read_csv(r"data/mallinson_lovell2022.csv")
 
 covariates = ["republican","legprof_squire","exp_pupil10000_adj","mathscore4th","readscore4th",
-                "time"]
+              "time"]
 mallinson_lovell2022 = mallinson_lovell2022_full[["adopt", "state", "year"] + covariates].dropna()
 
 # Ensure year column is an integer
