@@ -55,9 +55,7 @@ for state in berry_berry1990['state'].unique():
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 300, 500),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 64, 128, 256),
+        'n_estimators': (100, 500),
         'booster': ['gbtree'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
@@ -65,8 +63,8 @@ for state in berry_berry1990['state'].unique():
         'grow_policy': ['depthwise'],
         'learning_rate': (0.01, 0.1),
         'colsample_bytree': (0.5, 1.0),
-        'min_child_weight': (1, 5, 10),
-        'max_leaves': (0, 16, 32),
+        'min_child_weight': (5, 10),
+        'max_leaves': (0, 16),
     }
 
     # CV setup
@@ -88,7 +86,7 @@ for state in berry_berry1990['state'].unique():
         grid_search = BayesSearchCV(
             estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
             search_spaces = xgb_grid,
-            n_iter = 150,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
