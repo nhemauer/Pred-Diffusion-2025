@@ -236,10 +236,9 @@ plt.show()
 # Define the parameter search space for BayesSearchCV
 param_grid = {
         'n_estimators': (100, 300, 500),
-        'criterion': ['gini', 'entropy'],
-        'max_depth': (10, 25, 50),
-        'min_samples_split': (2, 10),
-        'min_samples_leaf': (1, 4),
+        'criterion': ['log_loss'],
+        'max_depth': (10, 25),
+        'max_samples': (0.5, 1.0),
         'bootstrap': [True],
         'class_weight': [None, 'balanced'],
         'ccp_alpha': (0.0, 0.1),
@@ -355,7 +354,7 @@ plt.show()
 param_grid = {
     'n_estimators': (100, 300),
     'max_depth': (3, 6, 10),
-    'max_bin': (16, 32, 64, 128, 256),
+    'max_bin': (64, 128),
     'booster': ['gbtree'],
     'objective': ['binary:logistic'],
     'eval_metric': ['aucpr'],
@@ -363,10 +362,8 @@ param_grid = {
     'grow_policy': ['depthwise'],
     'learning_rate': (0.01, 0.1),
     'subsample': (0.5, 1.0),
-    'colsample_bytree': (0.5, 1.0),
     'gamma': (0, 2),
-    'min_child_weight': (5, 10),
-    'max_leaves': (16, 32),
+    'reg_alpha': (0, 1),
     'scale_pos_weight': (1, 5)
 }
 

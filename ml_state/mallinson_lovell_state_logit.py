@@ -27,8 +27,6 @@ results = {
     'state': {'state': []},
     'original': {'ap_score': []},
     'logit': {'ap_score': []},
-    'rf': {'ap_score': []},
-    'xgb': {'ap_score': []}
 }
 
 os.chdir("ml_state")
@@ -110,31 +108,6 @@ for state in mallinson_lovell2022['state'].unique():
         {**common_params, "solver": ["saga"], "penalty": [None]},
     ]
 
-    # Random Forest hyperparameters
-    rf_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['log_loss'],
-            'max_depth': (10, 25),
-            'max_samples': (0.5, 1.0),
-            'bootstrap': [True],
-            'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1),
-    }
-
-    # XGBoost hyperparameters
-    xgb_grid = {
-        'max_depth': (3, 6, 10),
-        'booster': ['gbtree'],
-        'objective': ['binary:logistic'],
-        'eval_metric': ['aucpr'],
-        'tree_method': ['auto'],
-        'grow_policy': ['depthwise'],
-        'subsample': (0.5, 1.0),
-        'gamma': (0, 2),
-        'reg_alpha': (0, 1),
-        'scale_pos_weight': (1, 5)
-    }
-
     # CV setup
     n_splits = 5
     n_repeats = 3
@@ -177,90 +150,12 @@ for state in mallinson_lovell2022['state'].unique():
     # Save to results
     results["logit"]["ap_score"].append(ap_score)
 
-    for rep in range(n_repeats): # 3 CV repeats
-        shuffled = unique_groups.copy() # Shuffle to ensure group randomness
-        np.random.shuffle(shuffled)
-        mapping = {g: i for i, g in enumerate(shuffled)}
-        shuffled_groups = np.array([mapping[g] for g in groups])
-
-        # Fit BayesSearchCV
-        grid_search = BayesSearchCV(
-            estimator = RandomForestClassifier(random_state = 1337),
-            search_spaces = rf_grid,
-            n_iter = 150,
-            cv = GroupKFold(n_splits = n_splits),
-            n_jobs = -1,
-            verbose = 0,
-            scoring = "average_precision",
-            random_state = 1337
-        )
-
-        grid_search.fit(X_train_scaled, y_train, groups = shuffled_groups)
-
-        # Use the refitted best model
-        best_model = grid_search.best_estimator_
-        
-        # Get predicted probabilities for the positive class
-        y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
-
-        # Compute average precision (AUC PR)
-        ap_score = average_precision_score(y_test, y_scores)
-
-        # Append to list
-        ap_rf.append(ap_score)
-
-    # Average AP over repeats
-    ap_score = np.mean(ap_rf)
-
-    # Save to results
-    results["rf"]["ap_score"].append(ap_score)
-
-    for rep in range(n_repeats): # 3 CV repeats
-        shuffled = unique_groups.copy() # Shuffle to ensure group randomness
-        np.random.shuffle(shuffled)
-        mapping = {g: i for i, g in enumerate(shuffled)}
-        shuffled_groups = np.array([mapping[g] for g in groups])
-
-        # Fit BayesSearchCV
-        grid_search = BayesSearchCV(
-            estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
-            search_spaces = xgb_grid,
-            n_iter = 150,
-            cv = GroupKFold(n_splits = n_splits),
-            n_jobs = -1,
-            verbose = 0,
-            scoring = "average_precision",
-            random_state = 1337
-        )
-
-        grid_search.fit(X_train_scaled, y_train, groups = shuffled_groups)
-
-        # Use the refitted best model
-        best_model = grid_search.best_estimator_
-        
-        # Get predicted probabilities for the positive class
-        y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
-
-        # Compute average precision (AUC PR)
-        ap_score = average_precision_score(y_test, y_scores)
-
-        # Append to list
-        ap_xgb.append(ap_score)
-
-    # Average AP over repeats
-    ap_score = np.mean(ap_xgb)
-
-    # Save to results
-    results["xgb"]["ap_score"].append(ap_score)
-
 # Convert to dataframe
 results_df = pd.DataFrame({
     'state': results['state']['state'],
     'original_ap_score': results['original']['ap_score'],
     'logit_ap_score': results['logit']['ap_score'],
-    'rf_ap_score': results['rf']['ap_score'],
-    'xgb_ap_score': results['xgb']['ap_score']
 })
 
 # Save to CSV
-results_df.to_csv('figures/mallinson_lovell2022/mallinson_lovell_state_results.csv', index = False)
+results_df.to_csv('figures/mallinson_lovell2022/mallinson_lovell_state_results_logit.csv', index = False)
