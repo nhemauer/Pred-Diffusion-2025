@@ -28,12 +28,12 @@ lacombe_boehmke2021 = lacombe_boehmke2021_full[["adoption", "policyno", 'state']
 # Initialize storage for results
 results = {
     'state': {'state': []},
-    'rf': {'ap_score': []},
+    'xgb': {'ap_score': []}
 }
 
 os.chdir("ml_state")
 
-for state in lacombe_boehmke2021['state'].unique():
+for state in lacombe_boehmke2021['state'].unique()[30:35]:
     # Create datasets
     train_data = lacombe_boehmke2021[lacombe_boehmke2021['state'] != state]
     test_data = lacombe_boehmke2021[lacombe_boehmke2021['state'] == state]
@@ -73,15 +73,18 @@ for state in lacombe_boehmke2021['state'].unique():
     
     results['state']['state'].append(state)
 
-    # Random Forest hyperparameters
-    rf_grid = {
-            'n_estimators': (100, 300, 500),
-            'criterion': ['entropy'],
-            'max_depth': (10, 25, 50),
-            'min_samples_leaf': (1, 4),
-            'bootstrap': [True],
-            'class_weight': [None, 'balanced'],
-            'ccp_alpha': (0.0, 0.1),
+    # XGBoost hyperparameters
+    xgb_grid = {
+        'max_depth': (3, 6, 20),
+        'booster': ['dart'],
+        'objective': ['binary:logistic'],
+        'eval_metric': ['aucpr'],
+        'tree_method': ['auto'],
+        'grow_policy': ['depthwise'],
+        'learning_rate': (0.01, 0.1),
+        'subsample': (0.5, 1.0),
+        'colsample_bytree': (0.5, 1.0),
+        'max_leaves': (16, 32),
     }
 
     # CV setup
@@ -98,9 +101,9 @@ for state in lacombe_boehmke2021['state'].unique():
 
         # Fit BayesSearchCV
         grid_search = BayesSearchCV(
-            estimator = RandomForestClassifier(random_state = 1337),
-            search_spaces = rf_grid,
-            n_iter = 150,
+            estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+            search_spaces = xgb_grid,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
@@ -120,19 +123,19 @@ for state in lacombe_boehmke2021['state'].unique():
         ap_score = average_precision_score(y_test, y_scores)
 
         # Append to list
-        ap_rf.append(ap_score)
+        ap_xgb.append(ap_score)
 
     # Average AP over repeats
-    ap_score = np.mean(ap_rf)
+    ap_score = np.mean(ap_xgb)
 
     # Save to results
-    results["rf"]["ap_score"].append(ap_score)
+    results["xgb"]["ap_score"].append(ap_score)
 
 # Convert to dataframe
 results_df = pd.DataFrame({
     'state': results['state']['state'],
-    'rf_ap_score': results['rf']['ap_score'],
+    'xgb_ap_score': results['xgb']['ap_score']
 })
 
 # Save to CSV
-results_df.to_csv('figures/lacombe_boehmke2021/lacombe_state_results_rf.csv', index = False)
+results_df.to_csv('figures/lacombe_boehmke2021/lacombe_state_results_xgb_35.csv', index = False)
