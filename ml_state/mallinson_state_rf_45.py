@@ -15,33 +15,30 @@ import os
 random.seed(1337)
 
 # Data
-kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
-covariates = [
-    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
-    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
-    "time2", "webster", "policy_num"
-]
-kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_2019 = mallinson_2019_full[["adopt", "policy", "state", "year"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
     'state': {'state': []},
-    'xgb': {'ap_score': []}
+    'rf': {'ap_score': []},
 }
 
 os.chdir("ml_state")
 
-for state in kreitzer_boehmke_2016['state'].unique():
+for state in mallinson_2019['state'].unique()[40:45]:
     # Create datasets
-    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['state'] != state]
-    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['state'] == state]
+    train_data = mallinson_2019[mallinson_2019['state'] != state]
+    test_data = mallinson_2019[mallinson_2019['state'] == state]
     
     # Define X and y for the current state
     X_train = train_data[covariates].copy()
-    y_train = train_data['adopt_policy']
+    y_train = train_data['adopt']
     X_test = test_data[covariates].copy()
-    y_test = test_data['adopt_policy']
+    y_test = test_data['adopt']
 
     # Create groups for CV
     groups = train_data['state']
@@ -52,17 +49,6 @@ for state in kreitzer_boehmke_2016['state'].unique():
     # Grab unique groups
     unique_groups = np.unique(groups)
 
-    # Create dummies for train set
-    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
-    
-    # Create dummies for test set
-    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
-    
-    # Ensure both have the same columns by reindexing
-    all_columns = X_train.columns.union(X_test.columns)
-    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
-    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
-
     # Scale features
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
@@ -72,21 +58,15 @@ for state in kreitzer_boehmke_2016['state'].unique():
     
     results['state']['state'].append(state)
 
-    # XGBoost hyperparameters
-    xgb_grid = {
-        'n_estimators': (100, 500),
-        'max_depth': (6, 10, 20),
-        'max_bin': (16, 64, 256),
-        'booster': ['dart'],
-        'objective': ['binary:logistic'],
-        'eval_metric': ['aucpr'],
-        'tree_method': ['auto'],
-        'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
-        'subsample': (0.5, 1.0),
-        'reg_alpha': (0, 2),
-        'min_child_weight': (1, 10),
-        'scale_pos_weight': (1, 5)
+    # Random Forest hyperparameters
+    rf_grid = {
+            'n_estimators': (100, 500),
+            'criterion': ['entropy'],
+            'max_depth': (10, 25),
+            'min_samples_leaf': (1, 4),
+            'bootstrap': [True],
+            'class_weight': [None, 'balanced'],
+            'ccp_alpha': (0.0, 0.1),
     }
 
     # CV setup
@@ -103,9 +83,9 @@ for state in kreitzer_boehmke_2016['state'].unique():
 
         # Fit BayesSearchCV
         grid_search = BayesSearchCV(
-            estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
-            search_spaces = xgb_grid,
-            n_iter = 150,
+            estimator = RandomForestClassifier(random_state = 1337),
+            search_spaces = rf_grid,
+            n_iter = 80,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
@@ -125,19 +105,19 @@ for state in kreitzer_boehmke_2016['state'].unique():
         ap_score = average_precision_score(y_test, y_scores)
 
         # Append to list
-        ap_xgb.append(ap_score)
+        ap_rf.append(ap_score)
 
     # Average AP over repeats
-    ap_score = np.mean(ap_xgb)
+    ap_score = np.mean(ap_rf)
 
     # Save to results
-    results["xgb"]["ap_score"].append(ap_score)
+    results["rf"]["ap_score"].append(ap_score)
 
 # Convert to dataframe
 results_df = pd.DataFrame({
     'state': results['state']['state'],
-    'xgb_ap_score': results['xgb']['ap_score']
+    'rf_ap_score': results['rf']['ap_score'],
 })
 
 # Save to CSV
-results_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_state_results_xgb.csv', index = False)
+results_df.to_csv('figures/mallinson2019/mallinson_state_results_rf_45.csv', index = False)

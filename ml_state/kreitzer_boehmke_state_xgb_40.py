@@ -15,13 +15,14 @@ import os
 random.seed(1337)
 
 # Data
-boushey_2016_full = pd.read_stata(r"data/boushey2016.dta")
+kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
 
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_2016 = boushey_2016_full[["state", "dvadopt"] + covariates].dropna()
+covariates = [
+    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
+    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
+    "time2", "webster", "policy_num"
+]
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state", "year"] + covariates].dropna()
 
 # Initialize storage for results
 results = {
@@ -31,16 +32,16 @@ results = {
 
 os.chdir("ml_state")
 
-for state in boushey_2016['state'].unique():
+for state in kreitzer_boehmke_2016['state'].unique()[35:40]:
     # Create datasets
-    train_data = boushey_2016[boushey_2016['state'] != state]
-    test_data = boushey_2016[boushey_2016['state'] == state]
+    train_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['state'] != state]
+    test_data = kreitzer_boehmke_2016[kreitzer_boehmke_2016['state'] == state]
     
     # Define X and y for the current state
     X_train = train_data[covariates].copy()
-    y_train = train_data['dvadopt']
+    y_train = train_data['adopt_policy']
     X_test = test_data[covariates].copy()
-    y_test = test_data['dvadopt']
+    y_test = test_data['adopt_policy']
 
     # Create groups for CV
     groups = train_data['state']
@@ -50,6 +51,17 @@ for state in boushey_2016['state'].unique():
 
     # Grab unique groups
     unique_groups = np.unique(groups)
+
+    # Create dummies for train set
+    X_train = pd.get_dummies(X_train, columns = ['policy_num'], drop_first = True)
+    
+    # Create dummies for test set
+    X_test = pd.get_dummies(X_test, columns = ['policy_num'], drop_first = True)
+    
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
 
     # Scale features
     scaler = StandardScaler()
@@ -62,18 +74,19 @@ for state in boushey_2016['state'].unique():
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 300),
-        'max_depth': (3, 6, 20),
-        'max_bin': (32, 128, 256),
+        'n_estimators': (100, 500),
+        'max_depth': (6, 10, 20),
+        'max_bin': (16, 64, 256),
         'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1),
+        'learning_rate': (0.01, 0.1, 0.3),
         'subsample': (0.5, 1.0),
-        'reg_lambda': (1, 2),
-        'max_leaves': (16, 32),
+        'reg_alpha': (0, 2),
+        'min_child_weight': (1, 10),
+        'scale_pos_weight': (1, 5)
     }
 
     # CV setup
@@ -127,4 +140,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv('figures/boushey2016/boushey_state_results_xgb.csv', index = False)
+results_df.to_csv('figures/kreitzer_boehmke2016/kreitzer_state_results_xgb_40.csv', index = False)
