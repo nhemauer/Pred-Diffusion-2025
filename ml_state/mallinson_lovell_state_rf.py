@@ -22,10 +22,9 @@ covariates = ["republican","legprof_squire","exp_pupil10000_adj","mathscore4th",
               "time"]
 mallinson_lovell2022 = mallinson_lovell2022_full[["adopt", "state"] + covariates].dropna()
 
-# Initialize storage for results
+# Initialize storage for results - store all predictions and labels
 results = {
-    'state': {'state': []},
-    'rf': {'ap_score': []},
+    'rf': {'all_predictions': [], 'all_true_labels': []},
 }
 
 os.chdir("ml_state")
@@ -43,7 +42,7 @@ for state in mallinson_lovell2022['state'].unique():
 
     # Create groups for CV
     groups = train_data['state']
-    
+
     # Remove current state from groups for CV
     groups = groups[groups != state]
 
@@ -56,8 +55,6 @@ for state in mallinson_lovell2022['state'].unique():
     X_test_scaled = scaler.transform(X_test)
     
     print(f"Processing State: {state}")
-    
-    results['state']['state'].append(state)
 
     # Random Forest hyperparameters
     rf_grid = {
@@ -75,6 +72,9 @@ for state in mallinson_lovell2022['state'].unique():
     n_repeats = 3
 
     ap_logit, ap_rf, ap_xgb = [], [], []
+
+    # Store predictions for this state across repeats
+    state_logit_preds, state_rf_preds, state_xgb_preds = [], [], []
 
     for rep in range(n_repeats): # 3 CV repeats
         shuffled = unique_groups.copy() # Shuffle to ensure group randomness
@@ -101,24 +101,25 @@ for state in mallinson_lovell2022['state'].unique():
         
         # Get predicted probabilities for the positive class
         y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+        state_rf_preds.append(y_scores)
 
-        # Compute average precision (AUC PR)
-        ap_score = average_precision_score(y_test, y_scores)
+    # Average predictions across repeats for this state
+    avg_rf_preds = np.mean(state_rf_preds, axis = 0)
+    results['rf']['all_predictions'].extend(avg_rf_preds)
+    results['rf']['all_true_labels'].extend(y_test)
 
-        # Append to list
-        ap_rf.append(ap_score)
-
-    # Average AP over repeats
-    ap_score = np.mean(ap_rf)
-
-    # Save to results
-    results["rf"]["ap_score"].append(ap_score)
-
-# Convert to dataframe
-results_df = pd.DataFrame({
-    'state': results['state']['state'],
-    'rf_ap_score': results['rf']['ap_score'],
-})
+# Calculate overall AUCPR scores
+overall_ap_scores = {}
+for model in ['rf']:
+    overall_ap_scores[model] = average_precision_score(
+        results[model]['all_true_labels'], 
+        results[model]['all_predictions']
+    )
 
 # Save to CSV
+results_df = pd.DataFrame({
+    'model': ['rf'],
+    'overall_ap_score': [overall_ap_scores[model] for model in ['rf']]
+})
+
 results_df.to_csv('figures/mallinson_lovell2022/mallinson_lovell_state_results_rf.csv', index = False)

@@ -22,13 +22,12 @@ covariates = ["republican","legprof_squire","exp_pupil10000_adj","mathscore4th",
               "time"]
 mallinson_lovell2022 = mallinson_lovell2022_full[["adopt", "state"] + covariates].dropna()
 
-# Initialize storage for results
+# Initialize storage for results - store all predictions and labels
 results = {
-    'state': {'state': []},
-    'original': {'ap_score': []},
-    'logit': {'ap_score': []},
-    'rf': {'ap_score': []},
-    'xgb': {'ap_score': []}
+    'original': {'all_predictions': [], 'all_true_labels': []},
+    'logit': {'all_predictions': [], 'all_true_labels': []},
+    'rf': {'all_predictions': [], 'all_true_labels': []},
+    'xgb': {'all_predictions': [], 'all_true_labels': []}
 }
 
 os.chdir("ml_state")
@@ -46,7 +45,7 @@ for state in mallinson_lovell2022['state'].unique():
 
     # Create groups for CV
     groups = train_data['state']
-    
+
     # Remove current state from groups for CV
     groups = groups[groups != state]
 
@@ -67,8 +66,9 @@ for state in mallinson_lovell2022['state'].unique():
     original_pred = original_model.predict(X_test_scaled)
     original_scores = original_model.predict_proba(X_test_scaled)[:, 1]
     
-    results['state']['state'].append(state)
-    results['original']['ap_score'].append(average_precision_score(y_test, original_scores))
+    # Store predictions and true labels for overall calculation
+    results['original']['all_predictions'].extend(original_scores)
+    results['original']['all_true_labels'].extend(y_test)
 
     # Logistic Regression hyperparameters
     common_params = {
@@ -91,7 +91,7 @@ for state in mallinson_lovell2022['state'].unique():
         # newton-cholesky: no penalty
         {**common_params, "solver": ["newton-cholesky"], "penalty": [None]},
 
-        # liblinear: l1 / l2 (no “none” allowed)
+        # liblinear: l1 / l2 (no "none" allowed)
         {**common_params, **C_params, "solver": ["liblinear"], "penalty": ["l1", "l2"]},
 
         # saga: l1 / l2 with C
@@ -141,6 +141,9 @@ for state in mallinson_lovell2022['state'].unique():
 
     ap_logit, ap_rf, ap_xgb = [], [], []
 
+    # Store predictions for this state across repeats
+    state_logit_preds, state_rf_preds, state_xgb_preds = [], [], []
+
     for rep in range(n_repeats): # 3 CV repeats
         shuffled = unique_groups.copy() # Shuffle to ensure group randomness
         np.random.shuffle(shuffled)
@@ -164,18 +167,12 @@ for state in mallinson_lovell2022['state'].unique():
         
         # Get predicted probabilities for the positive class
         y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+        state_logit_preds.append(y_scores)
 
-        # Compute average precision (AUC PR)
-        ap_score = average_precision_score(y_test, y_scores)
-
-        # Append to list
-        ap_logit.append(ap_score)
-
-    # Average AP over repeats
-    ap_score = np.mean(ap_logit)
-
-    # Save to results
-    results["logit"]["ap_score"].append(ap_score)
+    # Average predictions across repeats for this state
+    avg_logit_preds = np.mean(state_logit_preds, axis = 0)
+    results['logit']['all_predictions'].extend(avg_logit_preds)
+    results['logit']['all_true_labels'].extend(y_test)
 
     for rep in range(n_repeats): # 3 CV repeats
         shuffled = unique_groups.copy() # Shuffle to ensure group randomness
@@ -202,18 +199,12 @@ for state in mallinson_lovell2022['state'].unique():
         
         # Get predicted probabilities for the positive class
         y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+        state_rf_preds.append(y_scores)
 
-        # Compute average precision (AUC PR)
-        ap_score = average_precision_score(y_test, y_scores)
-
-        # Append to list
-        ap_rf.append(ap_score)
-
-    # Average AP over repeats
-    ap_score = np.mean(ap_rf)
-
-    # Save to results
-    results["rf"]["ap_score"].append(ap_score)
+    # Average predictions across repeats for this state
+    avg_rf_preds = np.mean(state_rf_preds, axis = 0)
+    results['rf']['all_predictions'].extend(avg_rf_preds)
+    results['rf']['all_true_labels'].extend(y_test)
 
     for rep in range(n_repeats): # 3 CV repeats
         shuffled = unique_groups.copy() # Shuffle to ensure group randomness
@@ -225,7 +216,7 @@ for state in mallinson_lovell2022['state'].unique():
         grid_search = BayesSearchCV(
             estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
             search_spaces = xgb_grid,
-            n_iter = 150,
+            n_iter = 100,
             cv = GroupKFold(n_splits = n_splits),
             n_jobs = -1,
             verbose = 0,
@@ -240,27 +231,25 @@ for state in mallinson_lovell2022['state'].unique():
         
         # Get predicted probabilities for the positive class
         y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+        state_xgb_preds.append(y_scores)
 
-        # Compute average precision (AUC PR)
-        ap_score = average_precision_score(y_test, y_scores)
+    # Average predictions across repeats for this state
+    avg_xgb_preds = np.mean(state_xgb_preds, axis = 0)
+    results['xgb']['all_predictions'].extend(avg_xgb_preds)
+    results['xgb']['all_true_labels'].extend(y_test)
 
-        # Append to list
-        ap_xgb.append(ap_score)
-
-    # Average AP over repeats
-    ap_score = np.mean(ap_xgb)
-
-    # Save to results
-    results["xgb"]["ap_score"].append(ap_score)
-
-# Convert to dataframe
-results_df = pd.DataFrame({
-    'state': results['state']['state'],
-    'original_ap_score': results['original']['ap_score'],
-    'logit_ap_score': results['logit']['ap_score'],
-    'rf_ap_score': results['rf']['ap_score'],
-    'xgb_ap_score': results['xgb']['ap_score']
-})
+# Calculate overall AUCPR scores
+overall_ap_scores = {}
+for model in ['original', 'logit', 'rf', 'xgb']:
+    overall_ap_scores[model] = average_precision_score(
+        results[model]['all_true_labels'], 
+        results[model]['all_predictions']
+    )
 
 # Save to CSV
+results_df = pd.DataFrame({
+    'model': ['original', 'logit', 'rf', 'xgb'],
+    'overall_ap_score': [overall_ap_scores[model] for model in ['original', 'logit', 'rf', 'xgb']]
+})
+
 results_df.to_csv('figures/mallinson_lovell2022/mallinson_lovell_state_results.csv', index = False)
