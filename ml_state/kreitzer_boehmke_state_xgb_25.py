@@ -74,15 +74,13 @@ for state in kreitzer_boehmke_2016['state'].unique()[20:25]:
 
     # XGBoost hyperparameters
     xgb_grid = {
-        'n_estimators': (100, 500),
-        'max_depth': (6, 10, 20),
-        'max_bin': (16, 64, 256),
+        'max_depth': (6, 10),
         'booster': ['dart'],
         'objective': ['binary:logistic'],
         'eval_metric': ['aucpr'],
         'tree_method': ['auto'],
         'grow_policy': ['depthwise'],
-        'learning_rate': (0.01, 0.1, 0.3),
+        'learning_rate': (0.01, 0.1),
         'subsample': (0.5, 1.0),
         'reg_alpha': (0, 2),
         'min_child_weight': (1, 10),
