@@ -71,12 +71,11 @@ simulate_neha_discrete2 <- function(x,node,time,beta,gamma,a=-8){
     for(n in nodes_at_risk){
       
       idx <- which((x[, time] == t) & (x[, node] == n))
-      if (length(idx) == 0) {
+      if (length(idx) == 0) { # If a state doesnt start at the same year as other states
         message("Skipping missing ", n, "-", t)
         next
       }
-      if (length(idx) > 1) {
-        # Just take the first one (or handle aggregation here)
+      if (length(idx) > 1) { # If duplicates exist
         idx <- idx[1]
       }
       xlp_nt <- x_linear_predictor[which((x[,time]==t) & (x[,node]==n))]
