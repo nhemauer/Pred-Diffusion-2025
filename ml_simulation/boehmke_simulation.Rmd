@@ -19,8 +19,7 @@ library(neha)
 library(tidyverse)
 library(haven)
 
-boehmke2017_full <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred-Diffusion-2025/data/boehmke2017.dta")
-# boehmke2017_full <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/boehmke2017.dta")
+boehmke2017_full <- read_dta("data/boehmke2017.dta")
 
 ```
 

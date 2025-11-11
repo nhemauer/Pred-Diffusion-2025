@@ -19,7 +19,7 @@ library(neha)
 library(tidyverse)
 library(haven)
 
-boushey2016_full <- read_dta("C:/Users/ndhem/Documents/vscode_projects/Pred_Diffusion_2025/data/boushey2016.dta")
+boushey2016_full <- read_dta("data/boushey2016.dta")
 
 ```
 
@@ -147,38 +147,5 @@ for (bill in unique(boushey2016$billnum)){
   sim_results <- bind_rows(sim_results, sim_data)
   
 }
-
-```
-
-```{r}
-
-# # Select one bill
-# bill = 4
-# 
-# # Covariates
-# covariates <- c("policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-#                 "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-#                 "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-#                 "violentthousand", "pctwhite", "stateincpercap", "logpop",
-#                 "counter", "counter2", "counter3")
-# 
-# boushey2016 <- boushey2016_full %>%
-#   select(state, year, billnum, dvadopt, all_of(covariates)) %>%
-#   na.omit()
-#   
-# # Filter data per bill
-# policy_data <- boushey2016 %>% filter(billnum == bill)
-# policy_data <- as.data.frame(policy_data)
-# # Check unique state-year combination
-# # d <- policy_data %>% count(state, year) %>% filter(n > 1)
-# # unique(policy_data$state)
-# 
-# # Create fake gamma
-# tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
-# tie_values <- c(0.8, 0.5, 0.3)
-# gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
-# 
-# # Run simulation
-# sim_data <- simulate_neha_discrete2(policy_data, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
 
 ```
