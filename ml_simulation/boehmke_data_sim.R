@@ -1,10 +1,3 @@
----
-title: "R Notebook"
-output: html_notebook
----
-
-```{r}
-
 set.seed(1337)
 
 if (!requireNamespace("neha", quietly = TRUE)){
@@ -19,44 +12,37 @@ library(neha)
 library(tidyverse)
 library(haven)
 
-boushey2016_full <- read_dta("data/boushey2016.dta")
-
-```
-
-```{r}
+boehmke2017_full <- read_dta("data/boehmke2017.dta")
 
 # Covariates
-covariates <- c("policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop",
-                "counter","counter2","counter3")
+covariates = c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube")
 
 # Subset and drop missing
-boushey2016 <- boushey2016_full %>%
-  select(state, year, billnum, dvadopt, all_of(covariates)) %>%
+boehmke2017 <- boehmke2017_full %>%
+  select(state, year, policy, adopt, all_of(covariates)) %>%
   na.omit()
 
 # Define formula
 formula <- as.formula(
-  paste("dvadopt ~", paste(covariates, collapse = " + "))
+  paste("adopt ~", paste(covariates, collapse = " + "))
 )
 
 # Fit logistic regression model
-logistic <- glm(formula, data = boushey2016, family = binomial(link = "logit"))
+logistic <- glm(formula, data = boehmke2017, family = binomial(link = "logit"))
 
 # Extract coefficients
 coef_vec <- coef(logistic)
 
 # Get design matrix X
-X <- model.matrix(formula, data = boushey2016)
+X <- model.matrix(formula, data = boehmke2017)
 
 # Drop intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 
-```
-
-```{r}
+# Problems arise when not all states have the same starting year
+# This is an error with the original datasets; some authors do not have perfect data
+# This is an edited NEHA function to skip over missing state-year combinations
 
 simulate_neha_discrete2 <- function(x,node,time,beta,gamma,a=-8){
   times <- sort(unique(x[,time]))
@@ -104,30 +90,20 @@ simulate_neha_discrete2 <- function(x,node,time,beta,gamma,a=-8){
   data.frame(na.omit(x),stringsAsFactors=F)
 }
 
-```
-
-```{r}
-
-# Problems arise when not all states have the same starting year
-# This is an error with the original datasets; some authors do not have perfect data
-
 sim_results <- data.frame()
 
-for (bill in unique(boushey2016$billnum)){
+for (bill in unique(boehmke2017$policy)){
   # Covariates
-  covariates <- c("policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-                "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-                "violentthousand", "pctwhite", "stateincpercap", "logpop",
-                "counter", "counter2", "counter3")
+  covariates = c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+                  "citi6010","unif_rep","unif_dem","time","time_sq","time_cube")
   
   # Subset and drop missing
-  boushey2016 <- boushey2016_full %>%
-    select(state, year, billnum, dvadopt, all_of(covariates)) %>%
+  boehmke2017 <- boehmke2017_full %>%
+    select(state, year, policy, adopt, all_of(covariates)) %>%
     na.omit()
   
   # Filter data per bill
-  policy_data <- boushey2016 %>% filter(billnum == bill)
+  policy_data <- boehmke2017 %>% filter(policy == bill)
   policy_data <- as.data.frame(policy_data)
   
   # Select relevant data
@@ -148,4 +124,4 @@ for (bill in unique(boushey2016$billnum)){
   
 }
 
-```
+write.csv(sim_results, "ml_simulation/figures/boehmke2017/boehmke_sim_data.csv", row.names = FALSE)
