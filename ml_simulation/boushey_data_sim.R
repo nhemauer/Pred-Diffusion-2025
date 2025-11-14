@@ -36,62 +36,7 @@ logistic <- glm(formula, data = boushey2016, family = binomial(link = "logit"))
 
 # Extract coefficients
 coef_vec <- coef(logistic)
-
-# Get design matrix X
-X <- model.matrix(formula, data = boushey2016)
-
-# Drop intercept
-coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
-
-# Problems arise when not all states have the same starting year
-# This is an error with the original datasets; some authors do not have perfect data
-# This is an edited NEHA function to skip over missing state-year combinations
-
-simulate_neha_discrete2 <- function(x,node,time,beta,gamma,a=-8){
-  times <- sort(unique(x[,time]))
-  nodes <- sort(unique(x[,node]))
-  x_linear_predictor <- as.matrix(x[,row.names(beta)])%*%beta
-  event_times <- rep(NA,length(nodes))
-  source <- do.call('rbind',strsplit(rownames(gamma),"_"))[,1]
-  follower <- do.call('rbind',strsplit(rownames(gamma),"_"))[,2]
-  event <- rep(NA,nrow(x))
-  for(t in times){
-    nodes_at_risk <- nodes[is.na(event_times)]
-    for(n in nodes_at_risk){
-      
-      idx <- which((x[, time] == t) & (x[, node] == n))
-      if (length(idx) == 0) { # If a state doesnt start at the same year as other states
-        message("Skipping missing ", n, "-", t)
-        next
-      }
-      if (length(idx) > 1) { # If duplicates exist
-        idx <- idx[1]
-      }
-      xlp_nt <- x_linear_predictor[which((x[,time]==t) & (x[,node]==n))]
-      n_sources <- source[which(follower==n)]
-      source_effects <- gamma[which(follower==n),1]
-      source_times <- event_times[match(n_sources,nodes)]
-      # a = .25
-      # plot(0:20,exp(a*-(0:20)),ylim=c(0,1))
-      time_effects <- source_effects*exp(-exp(a)*(t-source_times))
-      time_effects <- time_effects[which(!is.na(time_effects))]
-      linear_predictor <- xlp_nt
-      if(length(time_effects)>0){
-        linear_predictor <- linear_predictor + sum(time_effects)
-      }
-      pr_nt <- 1/(1+exp(-linear_predictor))
-      event_nt <- 1*(pr_nt > runif(1))
-      event[which((x[,time]==t) & (x[,node]==n))] <- 0
-      if(event_nt==1){
-        event_times[which(nodes==n)] <- t
-        event[which((x[,time]==t) & (x[,node]==n))] <- 1
-      }
-    }
-
-  }
-  x <- data.frame(x,event,stringsAsFactors=F)
-  data.frame(na.omit(x),stringsAsFactors=F)
-}
+coef_matrix <- as.matrix(coef_vec)
 
 sim_results <- data.frame()
 
@@ -114,13 +59,33 @@ for (bill in unique(boushey2016$billnum)){
   
   # Select relevant data
   policy_data <- policy_data %>% select(state, year, all_of(covariates))
+
+  oldest_year <- min(boushey2016$year)
+  newest_year <- max(boushey2016$year)
+
+  # Create complete panel data with all states and all years
+  all_states <- unique(policy_data$state)
+  all_years <- oldest_year:newest_year
+  
+  complete_panel <- expand.grid(
+    state = all_states,
+    year = all_years,
+    stringsAsFactors = FALSE
+  )
+  
+  # Merge with existing data
+  policy_data_complete <- complete_panel %>%
+    left_join(policy_data, by = c("state", "year"))
+
+
+
   
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
   tie_values <- c(0.8, 0.5, 0.3)
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
-  sim_data <- simulate_neha_discrete2(policy_data, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
+  sim_data <- simulate_neha_discrete(policy_data, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
   
   # Add bill name column
   sim_data$billnum <- bill
