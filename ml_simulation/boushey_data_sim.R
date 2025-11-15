@@ -5,7 +5,6 @@ if (!requireNamespace("neha", quietly = TRUE)){
     install.packages("devtools")
   }
   devtools::install_github("desmarais-lab/neha")
-  library(neha)
 }
 
 library(neha)
@@ -36,22 +35,24 @@ logistic <- glm(formula, data = boushey2016, family = binomial(link = "logit"))
 
 # Extract coefficients
 coef_vec <- coef(logistic)
-coef_matrix <- as.matrix(coef_vec)
+
+# Drop intercept
+coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 
 sim_results <- data.frame()
 
 for (bill in unique(boushey2016$billnum)){
-  # Covariates
-  covariates <- c("policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-                "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-                "violentthousand", "pctwhite", "stateincpercap", "logpop",
-                "counter", "counter2", "counter3")
+  # # Covariates
+  # covariates <- c("policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
+  #               "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
+  #               "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
+  #               "violentthousand", "pctwhite", "stateincpercap", "logpop",
+  #               "counter", "counter2", "counter3")
   
-  # Subset and drop missing
-  boushey2016 <- boushey2016_full %>%
-    select(state, year, billnum, dvadopt, all_of(covariates)) %>%
-    na.omit()
+  # # Subset and drop missing
+  # boushey2016 <- boushey2016_full %>%
+  #   select(state, year, billnum, dvadopt, all_of(covariates)) %>%
+  #   na.omit()
   
   # Filter data per bill
   policy_data <- boushey2016 %>% filter(billnum == bill)
@@ -60,8 +61,8 @@ for (bill in unique(boushey2016$billnum)){
   # Select relevant data
   policy_data <- policy_data %>% select(state, year, all_of(covariates))
 
-  oldest_year <- min(boushey2016$year)
-  newest_year <- max(boushey2016$year)
+  oldest_year <- min(policy_data$year)
+  newest_year <- max(policy_data$year)
 
   # Create complete panel data with all states and all years
   all_states <- unique(policy_data$state)
@@ -77,8 +78,18 @@ for (bill in unique(boushey2016$billnum)){
   policy_data_complete <- complete_panel %>%
     left_join(policy_data, by = c("state", "year"))
 
-
-
+  # Fill missing covariate values by randomly sampling from each state's available data
+  policy_data_complete <- policy_data_complete %>%
+    group_by(state) %>%
+    mutate(across(all_of(covariates), ~ {
+      available_values <- .x[!is.na(.x)]
+      ifelse(is.na(.x), 
+            sample(available_values, length(.x), replace = TRUE)[is.na(.x)], 
+            .x)
+    })) %>%
+    ungroup()
+  
+  policy_data_complete <- as.data.frame(policy_data_complete)
   
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")

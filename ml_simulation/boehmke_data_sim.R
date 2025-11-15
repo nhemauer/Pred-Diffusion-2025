@@ -5,12 +5,12 @@ if (!requireNamespace("neha", quietly = TRUE)){
     install.packages("devtools")
   }
   devtools::install_github("desmarais-lab/neha")
-  library(neha)
 }
 
 library(neha)
 library(tidyverse)
 library(haven)
+library(fastDummies)
 
 boehmke2017_full <- read_dta("data/boehmke2017.dta")
 
@@ -21,11 +21,18 @@ covariates = c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
 # Subset and drop missing
 boehmke2017 <- boehmke2017_full %>%
   select(state, year, policy, adopt, all_of(covariates)) %>%
+  fastDummies::dummy_cols(
+    select_columns = "state",
+    remove_first_dummy = TRUE,
+    remove_selected_columns = FALSE
+  ) %>%
   na.omit()
+
+state_dummies <- grep("^state_", names(boehmke2017), value = TRUE)
 
 # Define formula
 formula <- as.formula(
-  paste("adopt ~", paste(covariates, collapse = " + "))
+  paste("adopt ~", paste(c(covariates, state_dummies), collapse = " + "))
 )
 
 # Fit logistic regression model
@@ -34,73 +41,23 @@ logistic <- glm(formula, data = boehmke2017, family = binomial(link = "logit"))
 # Extract coefficients
 coef_vec <- coef(logistic)
 
-# Get design matrix X
-X <- model.matrix(formula, data = boehmke2017)
-
 # Drop intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 
-# Problems arise when not all states have the same starting year
-# This is an error with the original datasets; some authors do not have perfect data
-# This is an edited NEHA function to skip over missing state-year combinations
-
-simulate_neha_discrete2 <- function(x,node,time,beta,gamma,a=-8){
-  times <- sort(unique(x[,time]))
-  nodes <- sort(unique(x[,node]))
-  x_linear_predictor <- as.matrix(x[,row.names(beta)])%*%beta
-  event_times <- rep(NA,length(nodes))
-  source <- do.call('rbind',strsplit(rownames(gamma),"_"))[,1]
-  follower <- do.call('rbind',strsplit(rownames(gamma),"_"))[,2]
-  event <- rep(NA,nrow(x))
-  for(t in times){
-    nodes_at_risk <- nodes[is.na(event_times)]
-    for(n in nodes_at_risk){
-      
-      idx <- which((x[, time] == t) & (x[, node] == n))
-      if (length(idx) == 0) { # If a state doesnt start at the same year as other states
-        message("Skipping missing ", n, "-", t)
-        next
-      }
-      if (length(idx) > 1) { # If duplicates exist
-        idx <- idx[1]
-      }
-      xlp_nt <- x_linear_predictor[which((x[,time]==t) & (x[,node]==n))]
-      n_sources <- source[which(follower==n)]
-      source_effects <- gamma[which(follower==n),1]
-      source_times <- event_times[match(n_sources,nodes)]
-      # a = .25
-      # plot(0:20,exp(a*-(0:20)),ylim=c(0,1))
-      time_effects <- source_effects*exp(-exp(a)*(t-source_times))
-      time_effects <- time_effects[which(!is.na(time_effects))]
-      linear_predictor <- xlp_nt
-      if(length(time_effects)>0){
-        linear_predictor <- linear_predictor + sum(time_effects)
-      }
-      pr_nt <- 1/(1+exp(-linear_predictor))
-      event_nt <- 1*(pr_nt > runif(1))
-      event[which((x[,time]==t) & (x[,node]==n))] <- 0
-      if(event_nt==1){
-        event_times[which(nodes==n)] <- t
-        event[which((x[,time]==t) & (x[,node]==n))] <- 1
-      }
-    }
-
-  }
-  x <- data.frame(x,event,stringsAsFactors=F)
-  data.frame(na.omit(x),stringsAsFactors=F)
-}
+# Drop missing coef
+# coef_matrix <- coef_matrix[setdiff(rownames(coef_matrix), "state_NE"), , drop = FALSE]
 
 sim_results <- data.frame()
 
 for (bill in unique(boehmke2017$policy)){
-  # Covariates
-  covariates = c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                  "citi6010","unif_rep","unif_dem","time","time_sq","time_cube")
+  # # Covariates
+  # covariates = c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
+  #                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube")
   
-  # Subset and drop missing
-  boehmke2017 <- boehmke2017_full %>%
-    select(state, year, policy, adopt, all_of(covariates)) %>%
-    na.omit()
+  # # Subset and drop missing
+  # boehmke2017 <- boehmke2017_full %>%
+  #   select(state, year, policy, adopt, all_of(covariates)) %>%
+  #   na.omit()
   
   # Filter data per bill
   policy_data <- boehmke2017 %>% filter(policy == bill)
@@ -108,13 +65,55 @@ for (bill in unique(boehmke2017$policy)){
   
   # Select relevant data
   policy_data <- policy_data %>% select(state, year, all_of(covariates))
+
+  oldest_year <- min(policy_data$year)
+  newest_year <- max(policy_data$year)
+
+  # Create complete panel data with all states and all years
+  all_states <- unique(policy_data$state)
+  all_years <- oldest_year:newest_year
   
+  complete_panel <- expand.grid(
+    state = all_states,
+    year = all_years,
+    stringsAsFactors = FALSE
+  )
+  
+  # Merge with existing data
+  policy_data_complete <- complete_panel %>%
+    left_join(policy_data, by = c("state", "year"))
+
+  # Fill missing covariate values by randomly sampling from each state's available data
+  policy_data_complete <- policy_data_complete %>%
+    group_by(state) %>%
+    mutate(across(all_of(covariates), ~ {
+      available_values <- .x[!is.na(.x)]
+      ifelse(is.na(.x), 
+            sample(available_values, length(.x), replace = TRUE)[is.na(.x)], 
+            .x)
+    })) %>%
+    ungroup()
+
+  # Recreate dummies
+  policy_data_complete <- policy_data_complete %>%
+    fastDummies::dummy_cols(
+    select_columns = "state",
+    remove_first_dummy = TRUE,
+    remove_selected_columns = FALSE
+  )
+  
+  policy_data_complete <- as.data.frame(policy_data_complete)
+
+  beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
+  beta_sim <- coef_matrix[beta_names, , drop = FALSE]
+
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
   tie_values <- c(0.8, 0.5, 0.3)
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
-  sim_data <- simulate_neha_discrete2(policy_data, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
+  sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = beta_sim, gamma = gamma, a = 0)
+  print(bill)
   
   # Add bill name column
   sim_data$billnum <- bill
@@ -124,4 +123,6 @@ for (bill in unique(boehmke2017$policy)){
   
 }
 
-write.csv(sim_results, "ml_simulation/figures/boehmke2017/boehmke_sim_data.csv", row.names = FALSE)
+# write.csv(sim_results, "ml_simulation/figures/boehmke2017/boehmke_sim_data.csv", row.names = FALSE)
+
+# Issue is that coef_matrix estimate doesn't always align with the dummy columns in policy_data_complete
