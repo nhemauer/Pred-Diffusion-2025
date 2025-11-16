@@ -43,7 +43,7 @@ logistic <- glm(formula, data = boushey2016, family = binomial(link = "logit"))
 
 # Extract coefficients
 coef_vec <- coef(logistic)
-# coef_matrix <- as.matrix(coef_vec)
+
 # Drop intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 

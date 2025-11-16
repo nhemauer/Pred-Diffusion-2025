@@ -44,21 +44,9 @@ coef_vec <- coef(logistic)
 # Drop intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 
-# Drop missing coef
-# coef_matrix <- coef_matrix[setdiff(rownames(coef_matrix), "state_NE"), , drop = FALSE]
-
 sim_results <- data.frame()
 
 for (bill in unique(boehmke2017$policy)){
-  # # Covariates
-  # covariates = c("srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-  #                 "citi6010","unif_rep","unif_dem","time","time_sq","time_cube")
-  
-  # # Subset and drop missing
-  # boehmke2017 <- boehmke2017_full %>%
-  #   select(state, year, policy, adopt, all_of(covariates)) %>%
-  #   na.omit()
-  
   # Filter data per bill
   policy_data <- boehmke2017 %>% filter(policy == bill)
   policy_data <- as.data.frame(policy_data)
@@ -95,7 +83,7 @@ for (bill in unique(boehmke2017$policy)){
     ungroup()
 
   # Recreate dummies
-  policy_data_complete <- policy_data_complete %>%
+  policy_data_complete <- policy_data_complete %>%   
     fastDummies::dummy_cols(
     select_columns = "state",
     remove_first_dummy = TRUE,
@@ -113,7 +101,6 @@ for (bill in unique(boehmke2017$policy)){
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
   sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = beta_sim, gamma = gamma, a = 0)
-  print(bill)
   
   # Add bill name column
   sim_data$billnum <- bill
@@ -123,6 +110,8 @@ for (bill in unique(boehmke2017$policy)){
   
 }
 
-# write.csv(sim_results, "ml_simulation/figures/boehmke2017/boehmke_sim_data.csv", row.names = FALSE)
+# Will show missing values for dummies if those states arn't in the specific policy data, this fixes that
+sim_results <- sim_results %>%
+  mutate(across(where(is.numeric), ~ replace_na(.x, 0)))
 
-# Issue is that coef_matrix estimate doesn't always align with the dummy columns in policy_data_complete
+write.csv(sim_results, "ml_simulation/figures/boehmke2017/boehmke_sim_data.csv", row.names = FALSE)
