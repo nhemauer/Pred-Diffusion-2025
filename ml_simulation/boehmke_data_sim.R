@@ -110,7 +110,7 @@ for (bill in unique(boehmke2017$policy)){
   
 }
 
-# Will show missing values for dummies if those states arn't in the specific policy data, this fixes that
+# Will show missing values for dummies if those states arn't in the unique policy data, this fixes that
 sim_results <- sim_results %>%
   mutate(across(where(is.numeric), ~ replace_na(.x, 0)))
 

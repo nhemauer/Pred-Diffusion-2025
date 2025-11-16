@@ -42,18 +42,6 @@ coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 sim_results <- data.frame()
 
 for (bill in unique(boushey2016$billnum)){
-  # # Covariates
-  # covariates <- c("policycongruent", "gub_election", "elect2", "hvd_4yr", "fedcrime",
-  #               "leg_dem_per_2pty", "dem_governor", "insession", "propneighpol",
-  #               "citidist", "squire_prof86", "citi6008", "crimespendpc", "crimespendpcsq",
-  #               "violentthousand", "pctwhite", "stateincpercap", "logpop",
-  #               "counter", "counter2", "counter3")
-  
-  # # Subset and drop missing
-  # boushey2016 <- boushey2016_full %>%
-  #   select(state, year, billnum, dvadopt, all_of(covariates)) %>%
-  #   na.omit()
-  
   # Filter data per bill
   policy_data <- boushey2016 %>% filter(billnum == bill)
   policy_data <- as.data.frame(policy_data)
@@ -96,7 +84,7 @@ for (bill in unique(boushey2016$billnum)){
   tie_values <- c(0.8, 0.5, 0.3)
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
-  sim_data <- simulate_neha_discrete(policy_data, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
+  sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
   
   # Add bill name column
   sim_data$billnum <- bill
