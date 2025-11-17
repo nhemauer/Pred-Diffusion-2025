@@ -141,8 +141,25 @@ plt.show()
 # Save output
 importance_df.to_csv('figures/boushey2016/boushey_feature_importance.csv', index = False)
 
-# Create RF PDP with top 9 features
-top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+# Create RF PDP with the same features as the original feature importance
+custom_rf_features = [
+    "Neighbors",
+    "Ideological Distance",
+    "Per Capita Income",
+    "Logged Population",
+    "Political Ideology",
+    "Crime Spending per Capita",
+    "Crime Spending (Squared)",
+    "Time Cubed",
+    "Electoral Competition",
+]
+
+top_features_rf = (
+    importance_df.set_index('feature')
+    .reindex(custom_rf_features)
+    .dropna(subset=['rf_importance'])
+    .index.tolist()
+)
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -166,8 +183,25 @@ plt.tight_layout()
 plt.savefig('figures/boushey2016/boushey_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-# Create XGBoost PDP with top 9 features
-top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+# Create RF PDP with the same features as the original feature importance
+custom_xgb_features = [
+    "Neighbors",
+    "Legislative Session",
+    "Time",
+    "Ideological Distance",
+    "Policy Congruence",
+    "Per Capita Income",
+    "Logged Population",
+    "National Crime Salience",
+    "Pct. Population White",
+]
+
+top_features_xgb = (
+    importance_df.set_index('feature')
+    .reindex(custom_xgb_features)
+    .dropna(subset=['xgb_importance'])
+    .index.tolist()
+)
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
