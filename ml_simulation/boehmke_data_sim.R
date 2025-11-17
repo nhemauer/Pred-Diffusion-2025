@@ -41,8 +41,10 @@ logistic <- glm(formula, data = boehmke2017, family = binomial(link = "logit"))
 # Extract coefficients
 coef_vec <- coef(logistic)
 
-# Drop intercept
+# Fix intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
+intercept <- coef(logistic)[1]
+coef_matrix <- rbind(coef_matrix, intercept)
 
 sim_results <- data.frame()
 
@@ -91,6 +93,10 @@ for (bill in unique(boehmke2017$policy)){
   )
   
   policy_data_complete <- as.data.frame(policy_data_complete)
+
+  # Add intercept
+  policy_data_complete$intercept = 1
+  policy_data_complete$year <- policy_data_complete$year - 1
 
   beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
   beta_sim <- coef_matrix[beta_names, , drop = FALSE]

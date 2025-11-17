@@ -157,7 +157,7 @@ custom_rf_features = [
 top_features_rf = (
     importance_df.set_index('feature')
     .reindex(custom_rf_features)
-    .dropna(subset=['rf_importance'])
+    .dropna(subset = ['rf_importance'])
     .index.tolist()
 )
 
@@ -183,7 +183,7 @@ plt.tight_layout()
 plt.savefig('figures/boushey2016/boushey_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-# Create RF PDP with the same features as the original feature importance
+# Create XGB PDP with the same features as the original feature importance
 custom_xgb_features = [
     "Neighbors",
     "Legislative Session",
@@ -199,7 +199,7 @@ custom_xgb_features = [
 top_features_xgb = (
     importance_df.set_index('feature')
     .reindex(custom_xgb_features)
-    .dropna(subset=['xgb_importance'])
+    .dropna(subset = ['xgb_importance'])
     .index.tolist()
 )
 

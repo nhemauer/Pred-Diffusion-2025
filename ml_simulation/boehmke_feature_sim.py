@@ -134,9 +134,25 @@ plt.show()
 # Save output
 importance_df.to_csv('figures/boehmke2017/boehmke_feature_importance.csv', index = False)
 
-# Create RF PDP with top 9 features
-top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
-top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
+# Create RF PDP with the same features as the original feature importance
+custom_rf_features = [
+    "Lag Source Adoptions",
+    "Personal Income",
+    "Total Population",
+    "State Citizen Ideology",
+    "Legislative Professionalism",
+    "Lag Neighbor Adoptions",
+    "Time Squared",
+    "Time Cubed",
+    "Time",
+]
+
+top_features_rf = (
+    importance_df.set_index('feature')
+    .reindex(custom_rf_features)
+    .dropna(subset = ['rf_importance'])
+    .index.tolist()
+)
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -160,9 +176,25 @@ plt.tight_layout()
 plt.savefig('figures/boehmke2017/boehmke_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-# Create XGBoost PDP with top 9 features
-top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
-top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
+# Create XGB PDP with the same features as the original feature importance
+custom_xgb_features = [
+    "Lag Source Adoptions",
+    "Lag Neighbor Adoptions",
+    "Personal Income",
+    "Time",
+    "Time Squared",
+    "Total Population",
+    "Legislative Professionalism",
+    "Unified Republican Control",
+    "State Citizen Ideology",
+]
+
+top_features_xgb = (
+    importance_df.set_index('feature')
+    .reindex(custom_xgb_features)
+    .dropna(subset = ['xgb_importance'])
+    .index.tolist()
+)
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
