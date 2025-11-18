@@ -32,7 +32,7 @@ year_dummies <- grep("^year_", names(lacombe_boehmke2021), value = TRUE)
 
 # Define formula
 formula <- as.formula(
-  paste("adoption ~", paste(c(covariates, state_dummies), collapse = " + "))
+  paste("adoption ~", paste(c(covariates, year_dummies), collapse = " + "))
 )
 
 # Fit logistic regression model
@@ -84,6 +84,12 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
     })) %>%
     ungroup()
 
+  # # Remove any duplicates
+  # policy_data_complete <- policy_data_complete %>%
+  #   group_by(state, year) %>%
+  #   slice_sample(n = 1) %>%
+  #   ungroup()
+
   # Recreate dummies
   policy_data_complete <- policy_data_complete %>%   
     fastDummies::dummy_cols(
@@ -97,14 +103,17 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
   # Add intercept
   policy_data_complete$intercept = 1
   policy_data_complete$year <- policy_data_complete$year - 1
+
+  beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
+  beta_sim <- coef_matrix[beta_names, , drop = FALSE]
   
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
   tie_values <- c(0.8, 0.5, 0.3)
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
-  sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
-  
+  sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = beta_sim, gamma = gamma, a = 0)
+  print(bill)
   # Add bill name column
   sim_data$billnum <- bill
   
@@ -113,7 +122,7 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
   
 }
 
-# Will show missing values for dummies if those states arn't in the unique policy data, this fixes that
+# Will show missing values for dummies if those years arn't in the unique policy data, this fixes that
 sim_results <- sim_results %>%
   mutate(across(where(is.numeric), ~ replace_na(.x, 0)))
 
