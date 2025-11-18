@@ -21,7 +21,7 @@ bricker_lacombe_2021_full = pd.read_csv(r"figures/bricker_lacombe2021/bricker_la
 covariates = ["std_score","initiative","init_sigs","std_population",
                 "std_citideology","unified","std_income","std_legp_squire",
                 "duration","durationsq","durationcb"]
-bricker_lacombe_2021 = bricker_lacombe_2021_full[["state", "year", "billnum", "event"] + covariates].dropna()
+bricker_lacombe_2021 = bricker_lacombe_2021_full.dropna()
 
 # Rename columns
 variable_names = {
@@ -44,8 +44,8 @@ bricker_lacombe_2021 = bricker_lacombe_2021.rename(columns = variable_names)
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = bricker_lacombe_2021[['year'] + covariates_renamed].copy()
-X = pd.get_dummies(X, columns = ['year'], drop_first = True)
+year_columns = [col for col in bricker_lacombe_2021.columns if col.startswith('year_')]
+X = bricker_lacombe_2021[covariates_renamed + year_columns].copy()
 y = bricker_lacombe_2021['event']
 
 # Split into train and test sets

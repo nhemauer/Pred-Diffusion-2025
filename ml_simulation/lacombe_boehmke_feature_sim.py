@@ -15,37 +15,44 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-boehmke_2017_full = pd.read_csv(r"figures/boehmke2017/boehmke_sim_data.csv")
+lacombe_boehmke2021_full = pd.read_csv(r"figures/lacombe_boehmke2021/lacombe_boehmke_sim_data.csv")
 
-# Covariates
-covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_2017 = boehmke_2017_full.dropna()
+covariates = [
+    "initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
+    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
+    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change"
+]
+lacombe_boehmke2021 = lacombe_boehmke2021_full.dropna()
 
 # Rename columns
 variable_names = {
-    "srcs_decay": "Lag Source Adoptions",
-    "nbrs_lag": "Lag Neighbor Adoptions", 
-    "rpcpinc": "Personal Income",
-    "totpop": "Total Population",
-    "legp_squire": "Legislative Professionalism",
-    "citi6010": "State Citizen Ideology",
-    "unif_rep": "Unified Republican Control",
-    "unif_dem": "Unified Democratic Control",
-    "time": "Time",
-    "time_sq": "Time Squared",
-    "time_cube": "Time Cubed"
+    "initiative": "Initiative Process",
+    "init_sigs": "Signatures",
+    "std_latnt_decay": "Latent Decay",
+    "std_nbrs_lag": "Contiguity",
+    "std_population": "Population",
+    "std_masssociallib_est": "Public Liberalism",
+    "unified": "Unified Control",
+    "duration": "Duration",
+    "durationsq": "Duration Squared",
+    "durationcb": "Duration Cubed",
+    "std_income": "Income per Capita",
+    "std_bowen_1": "Legislative Prof. Dim. 1",
+    "std_bowen_2": "Legislative Prof. Dim. 2",
+    "change_pop": "Change Population",
+    "change_inc": "Change Income",
+    "party_change": "Change in Party"
 }
 
-boehmke_2017 = boehmke_2017.rename(columns = variable_names)
+lacombe_boehmke2021 = lacombe_boehmke2021.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-state_columns = [col for col in boehmke_2017.columns if col.startswith('state_')]
-X = boehmke_2017[covariates_renamed + state_columns].copy()
-y = boehmke_2017['event']
+year_columns = [col for col in lacombe_boehmke2021.columns if col.startswith('year_')]
+X = lacombe_boehmke2021[covariates_renamed + year_columns].copy()
+y = lacombe_boehmke2021['event']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -58,12 +65,11 @@ X_test_scaled = scaler.transform(X_test)
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 0.0,
+    ccp_alpha = 1.4673493976469224e-05,
     class_weight = None,
     criterion = 'entropy',
-    max_depth = 25,
-    min_samples_leaf = 4,
-    min_samples_split = 8,
+    max_depth = 50,
+    min_samples_leaf = 2,
     n_estimators = 500,
     random_state = 1337
 )
@@ -77,20 +83,18 @@ rf_feature_importance = rf_model.feature_importances_
 
 # Use best hyperparameters from the random-split experiment
 xgb_model = XGBClassifier(
-    booster = 'gbtree',
-    colsample_bytree = 0.7639498961822481,
+    booster = 'dart',
+    colsample_bytree = 0.5,
     eval_metric = 'aucpr',
-    gamma = 2,
     grow_policy = 'depthwise',
-    learning_rate = 0.027136817935642106,
-    max_bin = 128,
+    learning_rate = 0.1,
+    max_bin = 64,
     max_depth = 6,
-    max_leaves = 31,
-    min_child_weight = 10,
-    n_estimators = 187,
+    max_leaves = 32,
+    min_child_weight = 5,
+    n_estimators = 300,
     objective = 'binary:logistic',
-    scale_pos_weight = 4,
-    subsample = 0.6526184572569168,
+    subsample = 0.9091013322130326,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -116,7 +120,7 @@ ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
 ax1.invert_yaxis()
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/boehmke_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/lacombe_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Create XGBoost feature importance plot
@@ -128,31 +132,15 @@ ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
 ax2.invert_yaxis()
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/boehmke_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/lacombe_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/boehmke2017/boehmke_feature_importance.csv', index = False)
+importance_df.to_csv('figures/lacombe_boehmke2021/lacombe_feature_importance.csv', index = False)
 
-# Create RF PDP with the same features as the original feature importance
-custom_rf_features = [
-    "Lag Source Adoptions",
-    "Personal Income",
-    "Total Population",
-    "State Citizen Ideology",
-    "Legislative Professionalism",
-    "Lag Neighbor Adoptions",
-    "Time Squared",
-    "Time Cubed",
-    "Time",
-]
-
-top_features_rf = (
-    importance_df.set_index('feature')
-    .reindex(custom_rf_features)
-    .dropna(subset = ['rf_importance'])
-    .index.tolist()
-)
+# Create RF PDP with top 9 features
+top_features_rf_all = importance_df.sort_values(by = 'rf_importance', ascending = False)
+top_features_rf = top_features_rf_all[top_features_rf_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -173,28 +161,12 @@ for i, feature in enumerate(top_features_rf):
     display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/boehmke_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/lacombe_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-# Create XGB PDP with the same features as the original feature importance
-custom_xgb_features = [
-    "Lag Source Adoptions",
-    "Lag Neighbor Adoptions",
-    "Personal Income",
-    "Time",
-    "Time Squared",
-    "Total Population",
-    "Legislative Professionalism",
-    "Unified Republican Control",
-    "State Citizen Ideology",
-]
-
-top_features_xgb = (
-    importance_df.set_index('feature')
-    .reindex(custom_xgb_features)
-    .dropna(subset = ['xgb_importance'])
-    .index.tolist()
-)
+# Create XGBoost PDP with top 9 features
+top_features_xgb_all = importance_df.sort_values(by = 'xgb_importance', ascending = False)
+top_features_xgb = top_features_xgb_all[top_features_xgb_all['feature'].isin(covariates_renamed)].head(9)['feature'].tolist()
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -215,5 +187,5 @@ for i, feature in enumerate(top_features_xgb):
     display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/boehmke_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/lacombe_boehmke2021/lacombe_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
