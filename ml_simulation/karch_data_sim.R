@@ -42,8 +42,10 @@ logistic <- glm(formula, data = karch_2016, family = binomial(link = "logit"))
 # Extract coefficients
 coef_vec <- coef(logistic)
 
-# Drop intercept
+# Fix intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
+intercept <- coef(logistic)[1]
+coef_matrix <- rbind(coef_matrix, intercept)
 
 sim_results <- data.frame()
 
@@ -90,6 +92,10 @@ for (bill in unique(karch_2016$compnum)){
     ungroup()
   
   policy_data_complete <- as.data.frame(policy_data_complete)
+
+  # Add intercept
+  policy_data_complete$intercept = 1
+  policy_data_complete$year <- policy_data_complete$year - 1
 
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
