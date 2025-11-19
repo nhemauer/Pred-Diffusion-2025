@@ -47,23 +47,18 @@ intercept <- coef(logistic)[1]
 coef_matrix <- rbind(coef_matrix, intercept)
 
 # Convert policies
-
-
-
-
-
-
-
-
-
-
-
+policy_lookup <- data.frame(
+  original_name = unique(lacombe_boehmke2021$policyno),
+  policy_number = seq_along(unique(lacombe_boehmke2021$policyno))
+)
+lacombe_boehmke2021$policyno <- as.numeric(as.factor(lacombe_boehmke2021$policyno))
 
 sim_results <- data.frame()
 
 for (bill in unique(lacombe_boehmke2021$policyno)){
   # Filter data per bill
-  print(bill)
+  original_policy_name <- policy_lookup$original_name[policy_lookup$policy_number == bill]
+  print(paste("Bill", bill, ":", original_policy_name))
   policy_data <- lacombe_boehmke2021 %>% filter(policyno == bill)
   policy_data <- as.data.frame(policy_data)
   
