@@ -15,7 +15,7 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
+mallinson_2019_full = pd.read_csv(r"figures/mallinson2019/mallinson_sim_data.csv")
 
 covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
               "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
