@@ -19,7 +19,7 @@ mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")
 
 covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
               "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
-mallinson_2019 = mallinson_2019_full[["adopt", "policy"] + covariates].dropna()
+mallinson_2019 = mallinson_2019_full[["event"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
@@ -43,8 +43,8 @@ variable_names = {
 mallinson_2019 = mallinson_2019.rename(columns = variable_names)
 
 # Define X and y
-X = mallinson_2019.drop(columns = ['adopt', 'policy']).copy()
-y = mallinson_2019['adopt']
+X = mallinson_2019.drop(columns = ['event']).copy()
+y = mallinson_2019['event']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -129,8 +129,25 @@ plt.show()
 # Save output
 importance_df.to_csv('figures/mallinson2019/mallinson_feature_importance.csv', index = False)
 
-# Create RF PDP with top 9 features
-top_features_rf = importance_df.sort_values(by = 'rf_importance', ascending = False).head(9)['feature'].tolist()
+# Create RF PDP with the same features as the original feature importance
+custom_rf_features = [
+    "Ideological Distance",
+    "Time",
+    "Per Capita Income",
+    "Population",
+    "Legislative Professionalism",
+    "Neighbor Adoptions",
+    "Congressional Hearings",
+    "New York Times",
+    "Year",
+]
+
+top_features_rf = (
+    importance_df.set_index('feature')
+    .reindex(custom_rf_features)
+    .dropna(subset = ['rf_importance'])
+    .index.tolist()
+)
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
@@ -154,8 +171,25 @@ plt.tight_layout()
 plt.savefig('figures/mallinson2019/mallinson_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
-# Create XGBoost PDP with top 9 features
-top_features_xgb = importance_df.sort_values(by = 'xgb_importance', ascending = False).head(9)['feature'].tolist()
+# Create XGB PDP with the same features as the original feature importance
+custom_xgb_features = [
+    "Neighbor Adoptions",
+    "Time",
+    "Year",
+    "Complex Policy",
+    "Congressional Hearings",
+    "Most Important Problem",
+    "New York Times",
+    "Iniatiative Qual. Difficulty",
+    "Per Capita Income",
+]
+
+top_features_xgb = (
+    importance_df.set_index('feature')
+    .reindex(custom_xgb_features)
+    .dropna(subset = ['xgb_importance'])
+    .index.tolist()
+)
 
 # Create partial dependence plot
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
