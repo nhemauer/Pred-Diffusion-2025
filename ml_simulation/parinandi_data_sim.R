@@ -11,32 +11,27 @@ library(neha)
 library(tidyverse)
 library(haven)
 
-lacombe_boehmke2021_full <- read_dta("data/lacombe_boehmke2021.dta")
+parinandi2020_full <- read_dta("data/parinandi2020.dta")
 
 # Covariates
-covariates = c("initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
-    "std_masssociallib_est", "unified", "duration", "durationsq", "durationcb", "std_income",
-    "std_bowen_1", "std_bowen_2", "change_pop", "change_inc", "party_change")
+covariates = c(
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+)
 
 # Subset and drop missing
-lacombe_boehmke2021 <- lacombe_boehmke2021_full %>%
-  select(state, year, policyno, adoption, all_of(covariates)) %>%
-    fastDummies::dummy_cols(
-    select_columns = "year",
-    remove_first_dummy = TRUE,
-    remove_selected_columns = FALSE
-  ) %>%
+parinandi2020 <- parinandi2020_full %>%
+  select(state, year, featurenumber, oneemulation, all_of(covariates)) %>%
   na.omit()
-
-year_dummies <- grep("^year_", names(lacombe_boehmke2021), value = TRUE)
 
 # Define formula
 formula <- as.formula(
-  paste("adoption ~", paste(c(covariates, year_dummies), collapse = " + "))
+  paste("oneemulation ~", paste(covariates, collapse = " + "))
 )
 
 # Fit logistic regression model
-logistic <- glm(formula, data = lacombe_boehmke2021, family = binomial(link = "logit"))
+logistic <- glm(formula, data = parinandi2020, family = binomial(link = "logit"))
 
 # Extract coefficients
 coef_vec <- coef(logistic)
@@ -46,25 +41,11 @@ coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 intercept <- coef(logistic)[1]
 coef_matrix <- rbind(coef_matrix, intercept)
 
-# Convert policies
-
-
-
-
-
-
-
-
-
-
-
-
 sim_results <- data.frame()
 
-for (bill in unique(lacombe_boehmke2021$policyno)){
+for (bill in unique(parinandi2020$featurenumber)){
   # Filter data per bill
-  print(bill)
-  policy_data <- lacombe_boehmke2021 %>% filter(policyno == bill)
+  policy_data <- parinandi2020 %>% filter(featurenumber == bill)
   policy_data <- as.data.frame(policy_data)
   
   # Select relevant data
@@ -97,37 +78,20 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
             .x)
     })) %>%
     ungroup()
-
-  # # Remove any duplicates
-  # policy_data_complete <- policy_data_complete %>%
-  #   group_by(state, year) %>%
-  #   slice_sample(n = 1) %>%
-  #   ungroup()
-
-  # Recreate dummies
-  policy_data_complete <- policy_data_complete %>%   
-    fastDummies::dummy_cols(
-    select_columns = "year",
-    remove_first_dummy = TRUE,
-    remove_selected_columns = FALSE
-  )
   
   policy_data_complete <- as.data.frame(policy_data_complete)
 
   # Add intercept
   policy_data_complete$intercept = 1
   policy_data_complete$year <- policy_data_complete$year - 1
-
-  beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
-  beta_sim <- coef_matrix[beta_names, , drop = FALSE]
   
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
   tie_values <- c(0.8, 0.5, 0.3)
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
-  sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = beta_sim, gamma = gamma, a = 0)
- 
+  sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
+  
   # Add bill name column
   sim_data$billnum <- bill
   
@@ -136,8 +100,4 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
   
 }
 
-# Will show missing values for dummies if those years arn't in the unique policy data, this fixes that
-sim_results <- sim_results %>%
-  mutate(across(where(is.numeric), ~ replace_na(.x, 0)))
-
-write.csv(sim_results, "ml_simulation/figures/lacombe_boehmke2021/lacombe_boehmke_sim_data.csv", row.names = FALSE)
+write.csv(sim_results, "ml_simulation/figures/parinandi2020/parinandi_sim_data.csv", row.names = FALSE)
