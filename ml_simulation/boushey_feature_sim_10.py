@@ -170,20 +170,20 @@ for i, feature in enumerate(custom_rf_features):
     # Plot simulated data
     for seed in range(10):
         x_vals, y_vals = rf_pdp_data[feature][seed]
-        axes[i].plot(x_vals, y_vals, alpha=0.3, linewidth=1, color='lightblue', 
+        axes[i].plot(x_vals, y_vals, alpha=0.5, linewidth=1, color='lightgray', 
                     label='Simulated Data' if seed == 0 and i == 0 else "")
     
     # Plot baseline
     x_baseline, y_baseline = rf_baseline_pdp[feature]
-    axes[i].plot(x_baseline, y_baseline, alpha=1.0, linewidth=2, color='red',
+    axes[i].plot(x_baseline, y_baseline, alpha=1.0, linewidth=2, color='black',
                 label='Real Data' if i == 0 else "")
     
     axes[i].set_title(f'PDP: {feature}')
     axes[i].set_ylabel('Predicted Probability of Adoption')
     axes[i].grid(True, alpha=0.3)
 
-# Add legend to first subplot
-axes[0].legend(bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10)
+# Add legend
+fig.legend(['Simulated Data', 'Real Data'], loc = 'upper center', bbox_to_anchor = (0.5, 0.02), ncol = 2)
 
 plt.tight_layout()
 plt.savefig('figures/boushey2016/boushey_partial_dependence_rf_simulation.png', dpi=300, bbox_inches='tight')
