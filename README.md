@@ -9,8 +9,8 @@ How accurately can state policy diffusion be predicted? While prior research has
 - 'ml_coef_split/': Contains Stata code to replicate the temporal coefficient plots.
 - 'ml_forecast/': Contains Python code to replicate our Forecasting experiment.
 - 'ml_hyperparameter/': Contains Python code to prune large hyperparameter grids into smaller grids for efficient model tuning.
-- 'ml_policy": Contains Python code to replicate our Policy experiment. 
-- 'ml_random": Contains Python code to replicate our Random Split experiment.
+- 'ml_policy/": Contains Python code to replicate our Policy experiment. 
+- 'ml_random/": Contains Python code to replicate our Random Split experiment.
 - 'ml_simulation/': Contains R code to replicate our simulated data, and Python code to replicate our partial dependence plot analyses.
 - 'ml_state/': Contains Python code to replicate our State experiment.
 
