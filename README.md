@@ -19,4 +19,4 @@ Some repositories include a "full_models" folder. These scripts are not meant to
 All repositories include a "figures" folder with generated figures/data from the analyses.
 
 **Note:** <br>
-Most of files cannot be run without a HPC. All scripts were made to be run with 48 cores, 336 GB RAM, and 2 weeks of runtime. 
+Most of the files cannot be run without a HPC. All scripts were made to be run with 48 cores, 336 GB RAM, and 2 weeks of runtime. 
