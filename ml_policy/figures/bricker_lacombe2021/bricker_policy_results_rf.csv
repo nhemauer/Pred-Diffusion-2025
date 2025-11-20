@@ -1,0 +1,245 @@
+billname,rf_ap_score
+abortion_consent_1992_201,0.050773027708658415
+abortion_partial_birt,0.09075134091189847
+admittpriv,0.09276968258961875
+adoption act (1994),0.024763135228251507
+adult guardianship and protective proceedings jurisdiction act,0.2274676017131241
+amber,0.6587554022476035
+anatomical gift act (2006),0.36187675889162735
+antibully,0.18140478495210685
+antishack,0.01407565683532058
+antistalk,0.587848386523338
+anyactnot,0.2407978133183992
+arbitration act (2000),0.08660110808585302
+assignment of rents act,0.059550780853420665
+athlete agents act,0.1495331121527179
+autism,0.09363201263971282
+banfaninc,0.1322594771593718
+bldstds_yearadopted,0.27256620999477493
+breastdensity,0.21869811961883875
+breastfeed,0.46105289942376393
+broadcom,0.1108492130894737
+candlim,0.10334821862811831
+ccreceipt,0.23297105372412474
+certificate of title for vessels act,0.03709811760786274
+certification of questions of law (1995),0.06067020454646157
+chartersch,0.15102988136027948
+child abduction prevention,0.06816833122879319
+child witness testimony by alternative methods act,0.028008135789147515
+civinjaut,0.18310233271226287
+colcanscr,0.1557946272555503
+collaborative law act,0.0782675649131659
+common interest owners bill of rights,0.04865942028985507
+common interest ownership act (1994),0.05220127257597984
+common interest ownership act (2008),0.14362203818725558
+computer information transactions act,0.15943732193732194
+consumer leases act,0.1228956228956229
+continsurance,0.15088066358186178
+contr_eq,0.18772671823530565
+corporateeff_yearadopted,0.09647268255051632
+corporaterenew_yearadopted,0.06828519162403662
+corporlimits,0.7088958859477222
+correction or clarification of defamation,0.01394162377192551
+credfreez,0.3089989131092667
+cyberstalk,0.26829714001022725
+debt-management services (2011),0.061878374538221086
+"debt-management services act, 2005",0.054156265555043354
+deployed parents custody and visitation act,0.37597300847300846
+dev_s2,0.03847390967478246
+dev_s3,0.09533747343786203
+dev_s5,0.03611382667398242
+dev_s6,0.013173870040405837
+dev_s8,0.014838864838864839
+dev_s9,0.04189742673712401
+disclaimer of property interests act,0.024818696559046005
+"discovery of electronically stored information, rules relating to",0.015239601830771119
+discrenot,0.08497665469440037
+dnafelon,0.29088432498049116
+dnaforexon,0.609378437770595
+drugs_medical_marijuan,0.08532477221392022
+drugs_smoking_ban_restaurant,0.2849913372942275
+drugs_smoking_ban_workplace,0.2201400374882326
+elecdereg,0.5165888574428329
+electronic legal material act,0.15549894147161164
+electronic recordation of custodial interrogations,0.028161409491332764
+electronic transactions act,0.3351878839432052
+emcont_avail,0.1170301493955056
+emergency management assistance compact,0.2584425766788313
+emergency medical services personnel licensure interstate compact,0.15873015873015872
+emergency volunteer health practitioners,0.06295900022659741
+"entity transactions act, model (2007) (last amended 2013)",0.030353394588573446
+environment_ca_car_emissions_st,0.23187750883296324
+environment_electronic_wast,0.1547269921090801
+environment_ghg_ca,0.21680046395206723
+environment_publicbenefit_fund,0.27782308926652727
+environmental covenants act,0.13172874418354688
+estate_ta,0.2045412825735308
+ewaste,0.15742812398099817
+faithful presidential electors act,0.024108139190635605
+famcap,0.1460891816103089
+famlim,0.5999011203541403
+fetalheart,0.5267195767195768
+fetalpain,0.2758360634729158
+filmtaxcredit,0.14065395627620547
+foreign-country money judgments recognition act,0.11033808103036379
+gagrule,0.03411958952482763
+gap,0.03266834877553165
+gay_employment_discrim_genderi,0.3142881237444339
+gaymarban,0.20143053896795374
+gayrights_civilunion,0.04562657053540926
+gayrights_hatecrime,0.15925320097962578
+gayrights_marriag,0.03781489903891997
+gdl,0.3115000723279751
+giexorder,0.012823128315124851
+gilaw,0.32205172328683435
+goodsam911,0.09797185331664765
+harass,0.1378873157416392
+health care compact,0.0709992676914148
+health-care decisions act,0.024174448119466733
+higissue,0.5996247356870024
+higrenew,0.6703464209424207
+hiport,0.7581200701739771
+hiprecon,0.7917625680826644
+hostliability,0.07191354362007941
+humantraffic,0.4015384469011831
+idas,0.2595301586812824
+ide,0.3369999857098791
+idtheft,0.5071378975494477
+immigration_instate_tuition_ill,0.2458117015304538
+indgaming,0.15660352152911272
+indlimit,0.6570905026574944
+indorgris,0.08276564959800604
+infanthear,0.1266188569311368
+ins_stateexch,0.2937617501091601
+inst_tu_und,0.481692019215105
+inst_tu_vet,0.04703605687950987
+insurable interest amendment to the uniform trust code,0.19976327386860349
+interreg,0.04360918643236001
+interstate compact on educational opportunity for military children,0.3597974601643686
+interstate compact on industrialized/modular buildings,0.010370363444161706
+interstate compact on licensure of participants in horse racing with pari-mutuel wagering,0.11961452270416639
+interstate depositions and discovery act,0.1438063791988789
+interstate enforcement of domestic violence protection orders act,0.06984391368904234
+interstate family support act (1992)(1996),0.3569753398501378
+interstate family support act (2001),0.1668372043991112
+interstate family support act amendments (2008),0.05656264823708678
+interstate forest fire suppression compact,0.1458994708994709
+interstate insurance product regulation compact,0.1563564911012446
+interstate insurance receivership compact,0.08876768150023963
+"intestacy, wills, and donative transfers act",0.05014609155476029
+kinship,0.158300342799123
+"law on notarial acts, revised",0.14416016760711645
+license_plates,0.016043148705480834
+licenseplate,0.12079028646561274
+limited cooperative association act (2007) (last amended 2013),0.05199899718608758
+limited liability company (1995)(1996),0.055641242645204696
+limited liability company (2006) (last amended 2013),0.032922531793424886
+limited partnership act (2001) (last amended 2013),0.10718478611691735
+manaccess,0.22365420244532963
+management of public employee retirement systems act,0.05769841269841269
+manclin,0.06405523828157862
+mandnot,0.12264909836075172
+medianot,0.2866450984098043
+mediation act,0.028918905143873182
+medicalrest,0.0904088186713982
+meganslaw,0.337943340085761
+meritaid,0.19388259890399748
+meritstateadmin,0.24664040595569459
+methpre,0.10517617547150972
+military and overseas voters act,0.1477704242987419
+money services act,0.01907183530597894
+msas,0.23540295935030076
+multiple-person accounts,0.02398733337270954
+naticurric,0.06668834728956151
+national crime prevention and privacy compact,0.16518369791488183
+national guard mutual assistance counter-drug activities compact,0.05593300338741539
+national popular vote interstate compact,0.0811183706439061
+neartotalban,0.04759934033200627
+neighnot,0.19308472881387506
+netmeter_yearadopted,0.1317548925447234
+newbornheartscreen,0.4424305320791868
+nonprobate transfers on death act,0.03726431362323229
+norealid,0.13119869721098779
+nurse licensure compact,0.06095619844350771
+offwmh,0.03460199924007676
+optinnot,0.01851135272887157
+paperterror,0.2371885108591366
+parentage act,0.05955989166856307
+partition of heirs property act,0.04232654600301659
+partnership act (1997) (last amended 2013),0.12919449614144615
+personaltax_yearadopted,0.07056429271947194
+personaltaxeff_yearadopted,0.04491481479673785
+planned community act,0.10687830687830686
+postdna,0.553228227287303
+power of attorney,0.04084952658041243
+pre20wk,0.16903955030163298
+premarital and marital agreements act,0.6619047619047619
+principal and income act (2000),0.22279661252425886
+principal and income amendments (2008),0.19918381616781322
+probate code amendments (2008),0.29381498036038795
+prudent investor act,0.13935625395184845
+prudent management of institutional funds act,0.45955717068550034
+pubaccess,0.19089092572505015
+pubbenefits_yearadopted,0.361677855308616
+pubbrefeed,0.42735060533948027
+pubemployees,0.008609259520775802
+racialpro,0.13948706526543703
+real property electronic recording act,0.1237496354345642
+real property transfer on death act,0.09788277102318883
+"registered agents act, model (2006) (last amended 2011)",0.15262402995655977
+regulation_bicycle_helmet,0.06419784062704498
+regulation_physician_suicid,0.010496148561976148
+regulation_rfr,0.03413008823834505
+residential mortgage satisfaction act,0.027355394969280022
+restruct,0.4525980499500313
+rps_yearadopted,0.16605702047712448
+salvia,0.08326057049881593
+sdce,0.12622883426652512
+securities act,0.0713132123402594
+sexreginfo,0.08713518535980469
+simultaneous death act,0.025306013150673365
+smokeban,0.4620347285828759
+stalkdef,0.16073304393846147
+stalking,0.37781036595452927
+standground,0.06646256282020152
+statutory form power of attorney act,0.05945075828875612
+statutory trust entity act,0.03160638644509612
+statutory will act (1984),0.02129547471162378
+sundayban,0.18676469245152574
+supp_research,0.04227570380124145
+surplus lines insurance multi-state compliance compact,0.33621777708280903
+termlim,0.05741393072340612
+terrorfund,0.1603986044585428
+threestrikes,0.19026065903124714
+timelim,0.27638941020903296
+tod security registration act,0.22185411208131509
+trust code,0.10773773535371768
+"ucc article 1, general provisions (2001)",0.29362112437725046
+"ucc article 3, negotiable instruments (1990)",0.3621962227080279
+"ucc article 3, negotiable instruments and article 4, bank deposits (2002)",0.08333712341290211
+ucc article 4a amendments (2012),0.4747591500764689
+"ucc article 4a, funds transfers (1989)",0.5105665139064128
+"ucc article 5, letters of credit (1995)",0.4318135415437108
+ucc article 6 (repeal),0.15079365079365079
+ucc article 6 (revise),0.01988563460452218
+"ucc article 6, bulk sales (1989)",0.16326143710213006
+"ucc article 7, documents of title (2003)",0.28240430549774787
+"ucc article 8, investment securities (1994)",0.5440197983268419
+ucc article 9 amendments (2010),0.6521201746994094
+ultrasound,0.05302325767119498
+unclaimed property act,0.03245239737965637
+undoctuit,0.7195662254422159
+unincorporated nonprofit association act (1992)(1996),0.033845242739975724
+unincorporated nonprofit association act (2008) (last amended 2011),0.05671199127228774
+unionlimits,0.7171619567018716
+universalprek,0.027598490349421596
+unsworn foreign declarations act (2008),0.0672681598291998
+"victims of crime act, model",0.026617826617826617
+vouchers,0.052147525676937444
+w_animal_cruelty_felon,0.014895795232995284
+w_ec_access_expan,0.03649103983504023
+w_educ_biblepubli,0.05907666207490995
+w_gayright_publi_accom_genderi,0.31376587610350376
+wmd,0.30720625610271374
+worksitebanstate,0.19927699518862216
+writreq,0.1385918148012802
