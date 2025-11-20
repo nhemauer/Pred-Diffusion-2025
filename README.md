@@ -14,9 +14,10 @@ How accurately can state policy diffusion be predicted? While prior research has
 - 'ml_simulation/': Contains R code to replicate our simulated data, and Python code to replicate our partial dependence plot analyses.
 - 'ml_state/': Contains Python code to replicate our State experiment.
 
-Most repositories include a "bin" folder with a Bash script to run code on a HPC.
-Some repositories include a "full_models" folder. These scripts are not meant to be run, but were used to split code into manageable scripts for the HPC.
-All repositories include a "figures" folder with generated figures/data from the analyses.
+**Folder Structure:**
+- Most repositories include a "bin" folder with a Bash script to run code on a HPC.
+- Some repositories include a "full_models" folder. These scripts are not meant to be run, but were used to split code into manageable scripts for the HPC.
+- All repositories include a "figures" folder with generated figures/data from the analyses.
 
 **Note:** <br>
 Most of the files cannot be run without a HPC. All scripts were made to be run with 48 cores, 336 GB RAM, and 2 weeks of runtime. 
