@@ -181,9 +181,10 @@ for i, feature in enumerate(custom_rf_features):
     axes[i].set_title(f'PDP: {feature}')
     axes[i].set_ylabel('Predicted Probability of Adoption')
     axes[i].grid(True, alpha=0.3)
-
-# Add legend
-fig.legend(['Simulated Data', 'Real Data'], loc = 'upper center', bbox_to_anchor = (0.5, 0.02), ncol = 2)
+    
+    # Add legend only to the first subplot
+    if i == 0:
+        axes[i].legend(loc='upper left')
 
 plt.tight_layout()
 plt.savefig('figures/boushey2016/boushey_partial_dependence_rf_simulation.png', dpi=300, bbox_inches='tight')
