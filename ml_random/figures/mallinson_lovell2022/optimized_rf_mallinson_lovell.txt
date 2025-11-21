@@ -1,0 +1,13 @@
+Best Parameters Found: OrderedDict([('bootstrap', True), ('ccp_alpha', 0.006076491497524607), ('class_weight', None), ('criterion', 'log_loss'), ('max_depth', 12), ('max_samples', 0.5048236241274381), ('n_estimators', 100)])
+F1 Score: 0.0
+Balanced Accuracy Score: 0.5
+Classification Report:
+              precision    recall  f1-score   support
+
+           0       0.98      1.00      0.99       242
+           1       0.00      0.00      0.00         6
+
+    accuracy                           0.98       248
+   macro avg       0.49      0.50      0.49       248
+weighted avg       0.95      0.98      0.96       248
+Model Fit Elapsed Time: 7.17 Minutes

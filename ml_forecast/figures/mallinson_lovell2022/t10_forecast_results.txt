@@ -1,0 +1,16 @@
+
+ORIGINAL Results:
+Average AP Score (per year): 0.0967 (±0.1107)
+Overall AP Score (all predictions): 0.0740
+
+LOGIT Results:
+Average AP Score (per year): 0.1005 (±0.1155)
+Overall AP Score (all predictions): 0.0620
+
+RF Results:
+Average AP Score (per year): 0.1226 (±0.1518)
+Overall AP Score (all predictions): 0.0815
+
+XGB Results:
+Average AP Score (per year): 0.1011 (±0.1246)
+Overall AP Score (all predictions): 0.0722
