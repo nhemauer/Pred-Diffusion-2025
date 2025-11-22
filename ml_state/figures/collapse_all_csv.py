@@ -7,10 +7,7 @@ def full_join_csvs_in_folder(folder_path):
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
     
     if not csv_files:
-        print(f"No CSV files found in {folder_path}")
         return None
-    
-    print(f"Found {len(csv_files)} CSV files")
     
     # Start with first dataframe
     result_df = pd.read_csv(csv_files[0])
@@ -18,25 +15,19 @@ def full_join_csvs_in_folder(folder_path):
     # Full join with each subsequent dataframe
     for csv_file in csv_files[1:]:
         df = pd.read_csv(csv_file)
-        
-        # This is the pandas equivalent of R's full_join()
-        result_df = pd.merge(result_df, df, on='state', how='outer')
+        result_df = pd.merge(result_df, df, on = 'state', how = 'outer')
 
     return result_df
 
 def handle_messy_folders(folder_path):
-    """Handle kreitzer_boehmke2016, lacombe_boehmke2021, and mallinson2019 folders"""
-    folder_name = folder_path.name
-    print(f"Special processing for {folder_name}")
     
     # Get all CSV files in the folder
     csv_files = glob.glob(os.path.join(folder_path, '*.csv'))
     
     if not csv_files:
-        print(f"No CSV files found in {folder_path}")
         return None
     
-    # First, group files by base model name (e.g., "xgb_5" and "xgb_10" both go to "xgb")
+    # Group files by base model name
     model_groups = {}
     
     for csv_file in csv_files:
@@ -60,20 +51,19 @@ def handle_messy_folders(folder_path):
     
     for model_name, files in model_groups.items():
         if len(files) > 1:
-            print(f"Combining {len(files)} files for model: {model_name}")
             
-            # Read all dataframes and concatenate them (rbind equivalent)
+            # Read all dataframes and concatenate them
             dfs_to_combine = []
             for csv_file in files:
                 df = pd.read_csv(csv_file)
                 dfs_to_combine.append(df)
             
-            # Concatenate all dataframes vertically (equivalent to R's rbind)
-            result_df = pd.concat(dfs_to_combine, ignore_index=True)
+            # Concatenate all dataframes vertically
+            result_df = pd.concat(dfs_to_combine, ignore_index = True)
             
             # Save the pre-combined file temporarily
             temp_file = folder_path / f'{model_name}_precombined.csv'
-            result_df.to_csv(temp_file, index=False)
+            result_df.to_csv(temp_file, index = False)
             pre_combined_files[model_name] = str(temp_file)
         else:
             # Single file, use as-is
@@ -103,7 +93,6 @@ def handle_messy_folders(folder_path):
     combined_results = {}
     
     for group_name, files in file_groups.items():
-        print(f"Processing group: {group_name} with {len(files)} files")
         
         if not files:
             continue
@@ -114,7 +103,7 @@ def handle_messy_folders(folder_path):
         # Full join with each subsequent dataframe in the group
         for csv_file in files[1:]:
             df = pd.read_csv(csv_file)
-            result_df = pd.merge(result_df, df, on='state', how='outer')
+            result_df = pd.merge(result_df, df, on = 'state', how = 'outer')
         
         combined_results[group_name] = result_df
     
@@ -127,14 +116,14 @@ def handle_messy_folders(folder_path):
             if final_result_df is None:
                 final_result_df = df
             else:
-                final_result_df = pd.merge(final_result_df, df, on='state', how='outer')
+                final_result_df = pd.merge(final_result_df, df, on = 'state', how = 'outer')
         
         # Sort by last column
         if final_result_df is not None:
             last_column = final_result_df.columns[-1]
-            final_result_df = final_result_df.sort_values(by=last_column, ascending=False)
+            final_result_df = final_result_df.sort_values(by = last_column, ascending = False)
     
-    # Clean up temporary pre-combined files
+    # Delete temporary pre-combined files
     for model_name, file_path in pre_combined_files.items():
         if '_precombined.csv' in file_path:
             try:
@@ -161,32 +150,26 @@ else:
     for folder in figures_dir.iterdir():
         if folder.is_dir():
             if folder.name in messy_folders:
-                print(f"\n=== Special processing for {folder.name} ===")
                 combined_df = handle_messy_folders(folder)
-                # Add any special saving logic here if needed
             elif folder.name in clean_folders:
-                print(f"\n=== Processing {folder.name} ===")
                 continue
             else:
-                print(f"\n=== Processing {folder.name} ===")
                 combined_df = full_join_csvs_in_folder(folder)
                 
             if combined_df is not None:
-                # Calculate averages for all numeric columns
-                averages = combined_df.select_dtypes(include='number').mean()
-                print(f"Average scores by model for {folder.name}:")
+                # Calculate model averages over all states
+                averages = combined_df.select_dtypes(include = 'number').mean()
                 print(averages)
                 
                 # # Save combined result
                 # last_column = combined_df.columns[-1]
-                # combined_df = combined_df.sort_values(by=last_column, ascending=False)
+                # combined_df = combined_df.sort_values(by = last_column, ascending = False)
                 # output_file = folder / f'{folder.name}_combined.csv'
-                # combined_df.to_csv(output_file, index=False)
+                # combined_df.to_csv(output_file, index = False)
                 # print(f"Saved to: {output_file}")
                 
-                # Save averages to separate file
+                # Save averages
                 averages_df = pd.DataFrame({'model': averages.index, 'average_score': averages.values})
-                averages_df = averages_df.sort_values('average_score', ascending=False)
+                averages_df = averages_df.sort_values('average_score', ascending = False)
                 avg_output_file = folder / f'{folder.name}_averages.csv'
-                averages_df.to_csv(avg_output_file, index=False)
-                print(f"Model averages saved to: {avg_output_file}")
+                averages_df.to_csv(avg_output_file, index = False)
