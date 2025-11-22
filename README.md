@@ -18,6 +18,7 @@ How accurately can state policy diffusion be predicted? While prior research has
 - Most repositories include a "bin" folder with a Bash script to run code on a HPC.
 - Some repositories include a "full_models" folder. These scripts are not meant to be run, but were used to split code into manageable scripts for the HPC.
 - All repositories include a "figures" folder with generated figures/data from the analyses.
+- 'ml_state' and 'ml_policy' have a "collapse_all_csv.py" script and a "aggregate_policy.py" script in the figures folder to combine results. These should be run after the main py files are run.
 
 **Note:** <br>
 Most of the files cannot be run without a HPC. All scripts were made to be run with 48 cores, 336 GB RAM, and 2 weeks of runtime. 
