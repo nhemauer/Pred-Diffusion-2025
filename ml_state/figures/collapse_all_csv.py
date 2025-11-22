@@ -133,11 +133,6 @@ def handle_messy_folders(folder_path):
         if final_result_df is not None:
             last_column = final_result_df.columns[-1]
             final_result_df = final_result_df.sort_values(by=last_column, ascending=False)
-            
-            # Save the final combined result
-            output_file = folder_path / f'{folder_name}_combined.csv'
-            final_result_df.to_csv(output_file, index=False)
-            print(f"Saved final combined result to: {output_file}")
     
     # Clean up temporary pre-combined files
     for model_name, file_path in pre_combined_files.items():
@@ -176,10 +171,22 @@ else:
                 print(f"\n=== Processing {folder.name} ===")
                 combined_df = full_join_csvs_in_folder(folder)
                 
-                if combined_df is not None:
-                    # Save combined result
-                    last_column = combined_df.columns[-1]
-                    combined_df = combined_df.sort_values(by=last_column, ascending=False)
-                    output_file = folder / f'{folder.name}_combined.csv'
-                    combined_df.to_csv(output_file, index=False)
-                    print(f"Saved to: {output_file}")
+            if combined_df is not None:
+                # Calculate averages for all numeric columns
+                averages = combined_df.select_dtypes(include='number').mean()
+                print(f"Average scores by model for {folder.name}:")
+                print(averages)
+                
+                # # Save combined result
+                # last_column = combined_df.columns[-1]
+                # combined_df = combined_df.sort_values(by=last_column, ascending=False)
+                # output_file = folder / f'{folder.name}_combined.csv'
+                # combined_df.to_csv(output_file, index=False)
+                # print(f"Saved to: {output_file}")
+                
+                # Save averages to separate file
+                averages_df = pd.DataFrame({'model': averages.index, 'average_score': averages.values})
+                averages_df = averages_df.sort_values('average_score', ascending=False)
+                avg_output_file = folder / f'{folder.name}_averages.csv'
+                averages_df.to_csv(avg_output_file, index=False)
+                print(f"Model averages saved to: {avg_output_file}")
