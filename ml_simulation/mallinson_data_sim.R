@@ -11,6 +11,7 @@ library(neha)
 library(tidyverse)
 library(haven)
 
+# Data
 mallinson2019_full <- read_csv("data/mallinson2019.csv")
 
 # Covariates

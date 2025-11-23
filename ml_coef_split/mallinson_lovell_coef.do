@@ -50,7 +50,7 @@ estimates store last50
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
     drop(_cons *.year) nolabel xline(0) ///
-    rename(republican = "Republican" legprof_squire = "Legislative Professionalism" exp_pupil10000_adj = "Net Expenditures Per Pupil" readscore4th = "Reading" mathscore4th = "Math") ///
+    rename(republican = "Republican" legprof_squire = "Legislative Professionalism" exp_pupil10000_adj = "Net Expenditures Per Pupil" readscore4th = "Reading" mathscore4th = "Math", time = "Time") ///
     xtitle("Logit Coefficients")
 
 graph export "ml_coefficient_split/figures/mallinson_lovell2022/mallinson_lovell_coefplot_split.png", replace width(2000)

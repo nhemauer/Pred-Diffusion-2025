@@ -15,39 +15,30 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-mallinson_2019_full = pd.read_csv(r"figures/mallinson2019/mallinson_sim_data.csv")
+mallinson_lovell2022_full = pd.read_csv(r"figures/mallinson_lovell2022/mallinson_lovell_sim_data.csv")
 
-covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
-              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
-mallinson_2019 = mallinson_2019_full[["event"] + covariates].dropna()
+covariates = ["republican","legprof_squire","exp_pupil10000_adj","mathscore4th","readscore4th",
+              "time"]
+mallinson_lovell2022 = mallinson_lovell2022_full[["event"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
-    "neighbor_prop": "Neighbor Adoptions",
-    "ideology_relative_hm": "Ideological Distance",
-    "congress_majortopic": "Congressional Hearings",
-    "init_avail": "Iniative Available",
-    "init_qual": "Initiative Qual. Difficulty",
-    "divided_gov": "Divided Government",
+    "republican": "Republican",
     "legprof_squire": "Legislative Professionalism",
-    "percap_log": "Per Capita Income",
-    "population_log": "Population",
-    "mip": "Most Important Problem",
-    "complexity_topic": "Complex Policy",
-    "mip_complexity_topic": "MIP x Complex",
-    "nyt": "New York Times",
-    "year_count": "Year",
-    "time_log": "Time"
+    "exp_pupil10000_adj": "Net Expenditures Per Pupil",
+    "readscore4th": "Reading",
+    "mathscore4th": "Math",
+    "time": "Time"
 }
 
-mallinson_2019 = mallinson_2019.rename(columns = variable_names)
+mallinson_lovell2022 = mallinson_lovell2022.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = mallinson_2019[covariates_renamed].copy()
-y = mallinson_2019['event']
+X = mallinson_lovell2022[covariates_renamed].copy()
+y = mallinson_lovell2022['event']
 
 # Split into train and test sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
@@ -60,12 +51,12 @@ X_test_scaled = scaler.transform(X_test)
 # Use best hyperparameters from the random-split experiment
 rf_model = RandomForestClassifier(
     bootstrap = True,
-    ccp_alpha = 1.8209810854730173e-05,
+    ccp_alpha = 0.006076491497524607,
     class_weight = None,
-    criterion = 'entropy',
-    max_depth = 50,
-    min_samples_leaf = 1,
-    n_estimators = 393,
+    criterion = 'log_loss',
+    max_depth = 12,
+    max_samples = 0.5048236241274381,
+    n_estimators = 100,
     random_state = 1337
 )
 
@@ -81,14 +72,14 @@ xgb_model = XGBClassifier(
     booster = 'gbtree',
     eval_metric = 'aucpr',
     grow_policy = 'depthwise',
-    learning_rate = 0.1,
-    max_bin = 256,
-    max_depth = 20,
-    max_leaves = 32,
-    min_child_weight = 5,
-    n_estimators = 300,
+    learning_rate = 0.04787337145112113,
+    max_bin = 128,
+    max_depth = 3,
+    n_estimators = 100,
     objective = 'binary:logistic',
-    subsample = 1.0,
+    reg_alpha = 0,
+    scale_pos_weight = 1,
+    subsample = 0.8012137562136856,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -114,7 +105,7 @@ ax1.set_yticklabels(rf_top_features['feature'])
 ax1.set_xlabel('Feature Importance')
 ax1.invert_yaxis()
 plt.tight_layout()
-plt.savefig('figures/mallinson2019/mallinson_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson_lovell2022/mallinson_lovell_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Create XGBoost feature importance plot
@@ -126,23 +117,20 @@ ax2.set_yticklabels(xgb_top_features['feature'])
 ax2.set_xlabel('Feature Importance')
 ax2.invert_yaxis()
 plt.tight_layout()
-plt.savefig('figures/mallinson2019/mallinson_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson_lovell2022/mallinson_lovell_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Save output
-importance_df.to_csv('figures/mallinson2019/mallinson_feature_importance.csv', index = False)
+importance_df.to_csv('figures/mallinson_lovell2022/mallinson_lovell_feature_importance.csv', index = False)
 
 # Create RF PDP with the same features as the original feature importance
 custom_rf_features = [
-    "Ideological Distance",
-    "Time",
-    "Per Capita Income",
-    "Population",
+    "Republican", 
     "Legislative Professionalism",
-    "Neighbor Adoptions",
-    "Congressional Hearings",
-    "New York Times",
-    "Year",
+    "Net Expenditures Per Pupil",
+    "Math",
+    "Reading",
+    "Time"
 ]
 
 top_features_rf = (
@@ -170,21 +158,22 @@ for i, feature in enumerate(top_features_rf):
     axes[i].set_title(f'PDP: {feature}')
     display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
+# Hide unused subplots
+for j in range(len(top_features_rf), len(axes)):
+    axes[j].set_visible(False)
+
 plt.tight_layout()
-plt.savefig('figures/mallinson2019/mallinson_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson_lovell2022/mallinson_lovell_partial_dependence_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 # Create XGB PDP with the same features as the original feature importance
 custom_xgb_features = [
-    "Neighbor Adoptions",
-    "Time",
-    "Year",
-    "Complex Policy",
-    "Congressional Hearings",
-    "Most Important Problem",
-    "New York Times",
-    "Iniatiative Qual. Difficulty",
-    "Per Capita Income",
+    "Republican", 
+    "Legislative Professionalism",
+    "Net Expenditures Per Pupil",
+    "Math",
+    "Reading",
+    "Time"
 ]
 
 top_features_xgb = (
@@ -212,6 +201,10 @@ for i, feature in enumerate(top_features_xgb):
     axes[i].set_title(f'PDP: {feature}')
     display.axes_[0, 0].set_ylabel('Predicted Probability of Adoption')
 
+# Hide unused subplots
+for j in range(len(top_features_xgb), len(axes)):
+    axes[j].set_visible(False)
+
 plt.tight_layout()
-plt.savefig('figures/mallinson2019/mallinson_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson_lovell2022/mallinson_lovell_partial_dependence_xgb.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

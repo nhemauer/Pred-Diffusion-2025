@@ -37,7 +37,7 @@ berry_berry1990 = berry_berry1990.rename(columns = variable_names)
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = berry_berry1990.drop(columns = ['event', 'state', 'year']).copy()
+X = berry_berry1990[covariates_renamed].copy()
 y = berry_berry1990['event']
 
 # Split into train and test sets
