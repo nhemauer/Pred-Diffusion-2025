@@ -93,11 +93,11 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
     })) %>%
     ungroup()
 
-  # # Remove any duplicates
-  # policy_data_complete <- policy_data_complete %>%
-  #   group_by(state, year) %>%
-  #   slice_sample(n = 1) %>%
-  #   ungroup()
+  # Remove any duplicates
+  policy_data_complete <- policy_data_complete %>%
+    group_by(state, year) %>%
+    slice_sample(n = 1) %>%
+    ungroup()
 
   # Recreate dummies
   policy_data_complete <- policy_data_complete %>%   
@@ -115,7 +115,8 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
 
   beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
   beta_sim <- coef_matrix[beta_names, , drop = FALSE]
-  
+  print(policy_data_complete)
+
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
   tie_values <- c(0.8, 0.5, 0.3)
