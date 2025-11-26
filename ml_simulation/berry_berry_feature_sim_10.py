@@ -16,48 +16,31 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-boushey_sim_full = pd.read_csv(r"figures/boushey2016/boushey_sim_data.csv")
+berry_sim_full = pd.read_csv(r"figures/berry_berry1990/berry_berry_sim_data.csv")
 
 # Covariates
-covariates = ["policycongruent","gub_election","elect2", "hvd_4yr", "fedcrime",
-                "leg_dem_per_2pty","dem_governor","insession","propneighpol",
-                "citidist","squire_prof86","citi6008","crimespendpc","crimespendpcsq",
-                "violentthousand","pctwhite","stateincpercap","logpop","counter","counter2","counter3"]
-boushey_sim = boushey_sim_full[["state", "event"] + covariates].dropna()
+covariates = ["fiscal_1", "party", "elect1", "elect2", "income_1", "nbrpercn", "religion"]
+berry_sim = berry_sim_full[["state", "year", "event"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
-    "policycongruent": "Policy Congruence",
-    "gub_election": "Elect1", 
+    "fiscal_1": "Fiscal",
+    "party": "Party", 
+    "elect1": "Elect1",
     "elect2": "Elect2",
-    "hvd_4yr": "Electoral Competition",
-    "fedcrime": "National Crime Salience",
-    "leg_dem_per_2pty": "Democratic Party Strength",
-    "dem_governor": "Democratic Governor",
-    "insession": "Legislative Session",
-    "propneighpol": "Neighbors",
-    "citidist": "Ideological Distance",
-    "squire_prof86": "Legislative Professionalism",
-    "citi6008": "Political Ideology",
-    "crimespendpc": "Crime Spending per Capita",
-    "crimespendpcsq": "Crime Spending (Squared)",
-    "violentthousand": "Violent Crime Rate",
-    "pctwhite": "Pct. Population White",
-    "stateincpercap": "Per Capita Income",
-    "logpop": "Logged Population",
-    "counter": "Time",
-    "counter2": "Time Squared",
-    "counter3": "Time Cubed"
+    "income_1": "Income",
+    "nbrpercn": "Neighbors",
+    "religion": "Religion"
 }
 
-boushey_sim = boushey_sim.rename(columns = variable_names)
+berry_sim = berry_sim.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = boushey_sim[covariates_renamed].copy()
-y = boushey_sim['event']
+X = berry_sim[covariates_renamed].copy()
+y = berry_sim['event']
 
 # Define custom features
 custom_rf_features = [
@@ -89,25 +72,29 @@ for seed in range(10):
     feature_names = X_train.columns.tolist()
 
     # Use best hyperparameters from the random-split experiment
-    rf_model = RandomForestClassifier(
-        bootstrap = True,
-        ccp_alpha = 0.0,
-        class_weight = None,
-        criterion = 'gini',
-        max_depth = 10,
-        min_samples_leaf = 3,
+    xgb_model = XGBClassifier(
+        booster = 'gbtree',
+        eval_metric = 'aucpr',
+        grow_policy = 'depthwise',
+        learning_rate = 0.0885607150747851,
+        max_bin = 64,
+        max_depth = 20,
+        max_leaves = 16,
+        min_child_weight = 5,
         n_estimators = 500,
+        objective = 'binary:logistic',
+        tree_method = 'auto',
         random_state = 1337
     )
 
     # Fit rf model
-    rf_model.fit(X_train_scaled, y_train)
+    xgb_model.fit(X_train_scaled, y_train)
 
     # Collect RF PDP data
     for feature in custom_rf_features:
         feature_idx = feature_names.index(feature)
         pd_result = partial_dependence(
-            rf_model, 
+            xgb_model, 
             X_train_scaled, 
             features = [feature_idx],
             response_method = 'predict_proba',
@@ -117,13 +104,15 @@ for seed in range(10):
 
 # Load real data for baseline
 os.chdir("..")
-boushey_real_full = pd.read_stata(r"data/boushey2016.dta")
-boushey_real = boushey_real_full[["state", "styear", "dvadopt"] + covariates].dropna()
-boushey_real = boushey_real.rename(columns = variable_names)
+berry_real_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
+berry_real_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
+berry_real_full = berry_real_full[berry_real_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
+berry_real = berry_real_full[["adopt"] + covariates].dropna()
+berry_real = berry_real.rename(columns = variable_names)
 
 # Define baseline X and y
-X_real = boushey_real[covariates_renamed].copy()
-y_real = boushey_real['dvadopt']
+X_real = berry_real[covariates_renamed].copy()
+y_real = berry_real['adopt']
 
 # Split baseline data
 X_train_real, X_test_real, y_train_real, y_test_real = train_test_split(X_real, y_real, test_size = 0.2, random_state = 1337, stratify = y_real)
@@ -134,17 +123,21 @@ X_train_real_scaled = scaler_real.fit_transform(X_train_real)
 X_test_real_scaled = scaler_real.transform(X_test_real)
 
 # Fit baseline RF model
-rf_model_real = RandomForestClassifier(
-    bootstrap = True,
-    ccp_alpha = 0.0,
-    class_weight = None,
-    criterion = 'gini',
-    max_depth = 10,
-    min_samples_leaf = 3,
+xgb_model_real = XGBClassifier(
+    booster = 'gbtree',
+    eval_metric = 'aucpr',
+    grow_policy = 'depthwise',
+    learning_rate = 0.0885607150747851,
+    max_bin = 64,
+    max_depth = 20,
+    max_leaves = 16,
+    min_child_weight = 5,
     n_estimators = 500,
+    objective = 'binary:logistic',
+    tree_method = 'auto',
     random_state = 1337
 )
-rf_model_real.fit(X_train_real_scaled, y_train_real)
+xgb_model_real.fit(X_train_real_scaled, y_train_real)
 
 # Get baseline PDP data
 feature_names_real = X_train_real.columns.tolist()
@@ -152,7 +145,7 @@ rf_baseline_pdp = {}
 for feature in custom_rf_features:
     feature_idx = feature_names_real.index(feature)
     pd_result = partial_dependence(
-        rf_model_real, 
+        xgb_model_real, 
         X_train_real_scaled, 
         features = [feature_idx],
         response_method = 'predict_proba',
@@ -187,5 +180,5 @@ for i, feature in enumerate(custom_rf_features):
         axes[i].legend(loc = 'upper left')
 
 plt.tight_layout()
-plt.savefig('figures/boushey2016/boushey_partial_dependence_rf_simulation.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/berry_berry1990/berry_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
