@@ -45,14 +45,12 @@ y = berry_sim['event']
 # Define custom features
 custom_xgb_features = [
     "Neighbors",
-    "Ideological Distance",
-    "Per Capita Income",
-    "Logged Population",
-    "Political Ideology",
-    "Crime Spending per Capita",
-    "Crime Spending (Squared)",
-    "Time Cubed",
-    "Electoral Competition",
+    "Religion",
+    "Party",
+    "Income",
+    "Elect1",
+    "Fiscal",
+    "Elect2",
 ]
 
 # Store PDP data for all models
