@@ -16,43 +16,56 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-berry_sim_full = pd.read_csv(r"figures/berry_berry1990/berry_berry_sim_data.csv")
+parinandi_sim_full = pd.read_csv(r"figures/parinandi2020/parinandi_sim_data.csv")
 
-# Covariates
-covariates = ["fiscal_1", "party", "elect1", "elect2", "income_1", "nbrpercn", "religion"]
-berry_sim = berry_sim_full[["state", "year", "event"] + covariates].dropna()
+covariates = [
+    "adagovideology", "citizenideology", "medianivoteshare", "partydecline", "squirescore",
+    "incunemp", "pctpercapincome", "percenturban", "ugovd", "percentfossilprod", "renergyprice11",
+    "deregulated", "geoneighborlag", "ideoneighborlag", "premulation1", "year", "featureyear"
+]
+parinandi_sim = parinandi_sim_full[["event"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
-    "fiscal_1": "Fiscal",
-    "party": "Party", 
-    "elect1": "Elect1",
-    "elect2": "Elect2",
-    "income_1": "Income",
-    "nbrpercn": "Neighbors",
-    "religion": "Religion"
+    "adagovideology": "Legislative Ideology",
+    "citizenideology": "Citizen Ideology", 
+    "medianivoteshare": "Median Incumbent Vote Share",
+    "partydecline": "Party Decline",
+    "squirescore": "Legislative Professionalism",
+    "incunemp": "Change in Unemployment",
+    "pctpercapincome": "Per Capita Income",
+    "percenturban": "Urban Percentage",
+    "ugovd": "Unified Dem. Government",
+    "percentfossilprod": "Fossil Fuel Production",
+    "renergyprice11": "Real Energy Price",
+    "deregulated": "Deregulated",
+    "geoneighborlag": "Lagged Geographic Neighbor",
+    "ideoneighborlag": "Lagged Ideological Neighbor",
+    "premulation1": "Prior Borrowing",
+    "year": "Year",
+    "featureyear": "Provision Year"
 }
 
-berry_sim = berry_sim.rename(columns = variable_names)
+parinandi_sim = parinandi_sim.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = berry_sim[covariates_renamed].copy()
-y = berry_sim['event']
+X = parinandi_sim.drop(columns = ['event']).copy()
+y = parinandi_sim['event']
 
 # Define custom features
 custom_xgb_features = [
-    "Neighbors",
-    "Ideological Distance",
-    "Per Capita Income",
-    "Logged Population",
-    "Political Ideology",
-    "Crime Spending per Capita",
-    "Crime Spending (Squared)",
-    "Time Cubed",
-    "Electoral Competition",
+    "Prior Borrowing",
+    "Citizen Ideology",
+    "Lagged Geographic Neighbor",
+    "Fossil Fuel Production",
+    "Median Incumbent Vote Share",
+    "Real Energy Price",
+    "Legislative Ideology",
+    "Provision Year",
+    "Deregulated",
 ]
 
 # Store PDP data for all models
@@ -75,14 +88,18 @@ for seed in range(10):
     xgb_model = XGBClassifier(
         booster = 'gbtree',
         eval_metric = 'aucpr',
+        gamma = 0,
         grow_policy = 'depthwise',
-        learning_rate = 0.0885607150747851,
-        max_bin = 64,
-        max_depth = 20,
-        max_leaves = 16,
+        learning_rate = 0.1,
+        max_bin = 256,
+        max_depth = 3,
         min_child_weight = 5,
         n_estimators = 500,
         objective = 'binary:logistic',
+        reg_alpha = 0,
+        reg_lambda = 1,
+        scale_pos_weight = 1,
+        subsample = 0.5,
         tree_method = 'auto',
         random_state = 1337
     )
@@ -104,15 +121,13 @@ for seed in range(10):
 
 # Load real data for baseline
 os.chdir("..")
-berry_real_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_real_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
-berry_real_full = berry_real_full[berry_real_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
-berry_real = berry_real_full[["adopt"] + covariates].dropna()
-berry_real = berry_real.rename(columns = variable_names)
+parinandi_real_full = pd.read_stata(r"data/parinandi2020.dta")
+parinandi_real = parinandi_real_full[["oneemulation"] + covariates].dropna()
+parinandi_real = parinandi_real.rename(columns = variable_names)
 
-# Define baseline X and y
-X_real = berry_real[covariates_renamed].copy()
-y_real = berry_real['adopt']
+# Define X and y
+X_real = parinandi_real[covariates_renamed].copy()
+y_real = parinandi_real['oneemulation']
 
 # Split baseline data
 X_train_real, X_test_real, y_train_real, y_test_real = train_test_split(X_real, y_real, test_size = 0.2, random_state = 1337, stratify = y_real)
@@ -126,14 +141,18 @@ X_test_real_scaled = scaler_real.transform(X_test_real)
 xgb_model_real = XGBClassifier(
     booster = 'gbtree',
     eval_metric = 'aucpr',
+    gamma = 0,
     grow_policy = 'depthwise',
-    learning_rate = 0.0885607150747851,
-    max_bin = 64,
-    max_depth = 20,
-    max_leaves = 16,
+    learning_rate = 0.1,
+    max_bin = 256,
+    max_depth = 3,
     min_child_weight = 5,
     n_estimators = 500,
     objective = 'binary:logistic',
+    reg_alpha = 0,
+    reg_lambda = 1,
+    scale_pos_weight = 1,
+    subsample = 0.5,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -179,10 +198,6 @@ for i, feature in enumerate(custom_xgb_features):
     if i == 0:
         axes[i].legend(loc = 'upper left')
 
-    # Hide unused subplots
-    for j in range(len(custom_xgb_features), len(axes)):
-        axes[j].set_visible(False)
-
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/berry_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/parinandi2020/parinandi_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

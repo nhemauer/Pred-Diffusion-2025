@@ -16,43 +16,50 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-berry_sim_full = pd.read_csv(r"figures/berry_berry1990/berry_berry_sim_data.csv")
+bricker_lacombe_sim_full = pd.read_csv(r"figures/bricker_lacombe2021/bricker_lacombe_sim_data.csv")
 
 # Covariates
-covariates = ["fiscal_1", "party", "elect1", "elect2", "income_1", "nbrpercn", "religion"]
-berry_sim = berry_sim_full[["state", "year", "event"] + covariates].dropna()
+covariates = ["std_score","initiative","init_sigs","std_population",
+                "std_citideology","unified","std_income","std_legp_squire",
+                "duration","durationsq","durationcb"]
+bricker_lacombe_sim = bricker_lacombe_sim_full.dropna()
 
 # Rename columns
 variable_names = {
-    "fiscal_1": "Fiscal",
-    "party": "Party", 
-    "elect1": "Elect1",
-    "elect2": "Elect2",
-    "income_1": "Income",
-    "nbrpercn": "Neighbors",
-    "religion": "Religion"
+    "std_score": "Similarity",
+    "initiative": "Initiative Process",
+    "init_sigs": "Average Signatures",
+    "std_population": "Population",
+    "std_citideology": "Citizen Ideology",
+    "unified": "Unified Control",
+    "std_income": "Income",
+    "std_legp_squire": "Legislative Professionalism",
+    "duration": "Duration",
+    "durationsq": "Duration Squared",
+    "durationcb": "Duration Cubed"
 }
 
-berry_sim = berry_sim.rename(columns = variable_names)
+bricker_lacombe_sim = bricker_lacombe_sim.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = berry_sim[covariates_renamed].copy()
-y = berry_sim['event']
+year_columns = [col for col in bricker_lacombe_sim.columns if col.startswith('year_')]
+X = bricker_lacombe_sim[covariates_renamed + year_columns].copy()
+y = bricker_lacombe_sim['event']
 
 # Define custom features
 custom_xgb_features = [
-    "Neighbors",
-    "Ideological Distance",
-    "Per Capita Income",
-    "Logged Population",
-    "Political Ideology",
-    "Crime Spending per Capita",
-    "Crime Spending (Squared)",
-    "Time Cubed",
-    "Electoral Competition",
+    "Similarity",
+    "Duration",
+    "Population",
+    "Legislative Professionalism",
+    "Income",
+    "Citizen Ideology",
+    "Average Signatures",
+    "Initiative Process",
+    "Unified Control",
 ]
 
 # Store PDP data for all models
@@ -75,14 +82,16 @@ for seed in range(10):
     xgb_model = XGBClassifier(
         booster = 'gbtree',
         eval_metric = 'aucpr',
+        gamma = 2,
         grow_policy = 'depthwise',
-        learning_rate = 0.0885607150747851,
+        learning_rate = 0.033245479413080606,
         max_bin = 64,
-        max_depth = 20,
-        max_leaves = 16,
+        max_depth = 6,
         min_child_weight = 5,
-        n_estimators = 500,
+        n_estimators = 465,
         objective = 'binary:logistic',
+        scale_pos_weight = 4,
+        subsample = 0.8753024969914462,
         tree_method = 'auto',
         random_state = 1337
     )
@@ -104,15 +113,14 @@ for seed in range(10):
 
 # Load real data for baseline
 os.chdir("..")
-berry_real_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_real_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
-berry_real_full = berry_real_full[berry_real_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
-berry_real = berry_real_full[["adopt"] + covariates].dropna()
-berry_real = berry_real.rename(columns = variable_names)
+bricker_lacombe_real_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
+bricker_lacombe_real = bricker_lacombe_real_full[["year", "adoption"] + covariates].dropna()
+bricker_lacombe_real = bricker_lacombe_real.rename(columns = variable_names)
 
-# Define baseline X and y
-X_real = berry_real[covariates_renamed].copy()
-y_real = berry_real['adopt']
+# Define X and y
+year_columns = [col for col in bricker_lacombe_real.columns if col.startswith('year_')]
+X_real = bricker_lacombe_real[covariates_renamed + year_columns].copy()
+y_real = bricker_lacombe_real['adoption']
 
 # Split baseline data
 X_train_real, X_test_real, y_train_real, y_test_real = train_test_split(X_real, y_real, test_size = 0.2, random_state = 1337, stratify = y_real)
@@ -126,14 +134,16 @@ X_test_real_scaled = scaler_real.transform(X_test_real)
 xgb_model_real = XGBClassifier(
     booster = 'gbtree',
     eval_metric = 'aucpr',
+    gamma = 2,
     grow_policy = 'depthwise',
-    learning_rate = 0.0885607150747851,
+    learning_rate = 0.033245479413080606,
     max_bin = 64,
-    max_depth = 20,
-    max_leaves = 16,
+    max_depth = 6,
     min_child_weight = 5,
-    n_estimators = 500,
+    n_estimators = 465,
     objective = 'binary:logistic',
+    scale_pos_weight = 4,
+    subsample = 0.8753024969914462,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -179,10 +189,6 @@ for i, feature in enumerate(custom_xgb_features):
     if i == 0:
         axes[i].legend(loc = 'upper left')
 
-    # Hide unused subplots
-    for j in range(len(custom_xgb_features), len(axes)):
-        axes[j].set_visible(False)
-
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/berry_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/bricker_lacombe_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

@@ -16,47 +16,55 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-berry_sim_full = pd.read_csv(r"figures/berry_berry1990/berry_berry_sim_data.csv")
+mallinson_sim_full = pd.read_csv(r"figures/mallinson2019/mallinson_sim_data.csv")
 
-# Covariates
-covariates = ["fiscal_1", "party", "elect1", "elect2", "income_1", "nbrpercn", "religion"]
-berry_sim = berry_sim_full[["state", "year", "event"] + covariates].dropna()
+covariates = ["neighbor_prop", "ideology_relative_hm", "congress_majortopic", "init_avail", "init_qual", "divided_gov",
+              "legprof_squire", "percap_log", "population_log", "mip", "complexity_topic", "mip_complexity_topic", "nyt", "year_count", "time_log"]
+mallinson_sim = mallinson_sim_full[["event"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
-    "fiscal_1": "Fiscal",
-    "party": "Party", 
-    "elect1": "Elect1",
-    "elect2": "Elect2",
-    "income_1": "Income",
-    "nbrpercn": "Neighbors",
-    "religion": "Religion"
+    "neighbor_prop": "Neighbor Adoptions",
+    "ideology_relative_hm": "Ideological Distance",
+    "congress_majortopic": "Congressional Hearings",
+    "init_avail": "Iniative Available",
+    "init_qual": "Initiative Qual. Difficulty",
+    "divided_gov": "Divided Government",
+    "legprof_squire": "Legislative Professionalism",
+    "percap_log": "Per Capita Income",
+    "population_log": "Population",
+    "mip": "Most Important Problem",
+    "complexity_topic": "Complex Policy",
+    "mip_complexity_topic": "MIP x Complex",
+    "nyt": "New York Times",
+    "year_count": "Year",
+    "time_log": "Time"
 }
 
-berry_sim = berry_sim.rename(columns = variable_names)
+mallinson_sim = mallinson_sim.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = berry_sim[covariates_renamed].copy()
-y = berry_sim['event']
+X = mallinson_sim[covariates_renamed].copy()
+y = mallinson_sim['event']
 
 # Define custom features
-custom_xgb_features = [
-    "Neighbors",
+custom_rf_features = [
     "Ideological Distance",
+    "Time",
     "Per Capita Income",
-    "Logged Population",
-    "Political Ideology",
-    "Crime Spending per Capita",
-    "Crime Spending (Squared)",
-    "Time Cubed",
-    "Electoral Competition",
+    "Population",
+    "Legislative Professionalism",
+    "Neighbor Adoptions",
+    "Congressional Hearings",
+    "New York Times",
+    "Year",
 ]
 
 # Store PDP data for all models
-xgb_pdp_data = {feature: [] for feature in custom_xgb_features}
+rf_pdp_data = {feature: [] for feature in custom_rf_features}
 
 for seed in range(10):
     random.seed(1337 + seed)
@@ -72,47 +80,41 @@ for seed in range(10):
     feature_names = X_train.columns.tolist()
 
     # Use best hyperparameters from the random-split experiment
-    xgb_model = XGBClassifier(
-        booster = 'gbtree',
-        eval_metric = 'aucpr',
-        grow_policy = 'depthwise',
-        learning_rate = 0.0885607150747851,
-        max_bin = 64,
-        max_depth = 20,
-        max_leaves = 16,
-        min_child_weight = 5,
-        n_estimators = 500,
-        objective = 'binary:logistic',
-        tree_method = 'auto',
+    rf_model = RandomForestClassifier(
+        bootstrap = True,
+        ccp_alpha = 1.8209810854730173e-05,
+        class_weight = None,
+        criterion = 'entropy',
+        max_depth = 50,
+        min_samples_leaf = 1,
+        n_estimators = 393,
         random_state = 1337
     )
 
-    # Fit xgb model
-    xgb_model.fit(X_train_scaled, y_train)
+    # Fit rf model
+    rf_model.fit(X_train_scaled, y_train)
 
-    # Collect xgb PDP data
-    for feature in custom_xgb_features:
+    # Collect RF PDP data
+    for feature in custom_rf_features:
         feature_idx = feature_names.index(feature)
         pd_result = partial_dependence(
-            xgb_model, 
+            rf_model, 
             X_train_scaled, 
             features = [feature_idx],
             response_method = 'predict_proba',
             kind = 'average'
         )
-        xgb_pdp_data[feature].append((pd_result['values'][0], pd_result['average'][0]))
+        rf_pdp_data[feature].append((pd_result['values'][0], pd_result['average'][0]))
 
 # Load real data for baseline
 os.chdir("..")
-berry_real_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_real_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
-berry_real_full = berry_real_full[berry_real_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
-berry_real = berry_real_full[["adopt"] + covariates].dropna()
-berry_real = berry_real.rename(columns = variable_names)
+mallinson_real_full = pd.read_csv(r"data/mallinson2019.csv")
+mallinson_real = mallinson_real_full[["adopt"] + covariates].dropna()
+mallinson_real = mallinson_real.rename(columns = variable_names)
 
 # Define baseline X and y
-X_real = berry_real[covariates_renamed].copy()
-y_real = berry_real['adopt']
+X_real = mallinson_real[covariates_renamed].copy()
+y_real = mallinson_real['adopt']
 
 # Split baseline data
 X_train_real, X_test_real, y_train_real, y_test_real = train_test_split(X_real, y_real, test_size = 0.2, random_state = 1337, stratify = y_real)
@@ -122,36 +124,32 @@ scaler_real = StandardScaler()
 X_train_real_scaled = scaler_real.fit_transform(X_train_real)
 X_test_real_scaled = scaler_real.transform(X_test_real)
 
-# Fit baseline xgb model
-xgb_model_real = XGBClassifier(
-    booster = 'gbtree',
-    eval_metric = 'aucpr',
-    grow_policy = 'depthwise',
-    learning_rate = 0.0885607150747851,
-    max_bin = 64,
-    max_depth = 20,
-    max_leaves = 16,
-    min_child_weight = 5,
-    n_estimators = 500,
-    objective = 'binary:logistic',
-    tree_method = 'auto',
+# Fit baseline RF model
+rf_model_real = RandomForestClassifier(
+    bootstrap = True,
+    ccp_alpha = 1.8209810854730173e-05,
+    class_weight = None,
+    criterion = 'entropy',
+    max_depth = 50,
+    min_samples_leaf = 1,
+    n_estimators = 393,
     random_state = 1337
 )
-xgb_model_real.fit(X_train_real_scaled, y_train_real)
+rf_model_real.fit(X_train_real_scaled, y_train_real)
 
 # Get baseline PDP data
 feature_names_real = X_train_real.columns.tolist()
-xgb_baseline_pdp = {}
-for feature in custom_xgb_features:
+rf_baseline_pdp = {}
+for feature in custom_rf_features:
     feature_idx = feature_names_real.index(feature)
     pd_result = partial_dependence(
-        xgb_model_real, 
+        rf_model_real, 
         X_train_real_scaled, 
         features = [feature_idx],
         response_method = 'predict_proba',
         kind = 'average'
     )
-    xgb_baseline_pdp[feature] = (pd_result['values'][0], pd_result['average'][0])
+    rf_baseline_pdp[feature] = (pd_result['values'][0], pd_result['average'][0])
 
 os.chdir("ml_simulation")
 
@@ -159,15 +157,15 @@ os.chdir("ml_simulation")
 fig, axes = plt.subplots(3, 3, figsize = (15, 15))
 axes = axes.ravel()
 
-for i, feature in enumerate(custom_xgb_features):
+for i, feature in enumerate(custom_rf_features):
     # Plot simulated data
     for seed in range(10):
-        x_vals, y_vals = xgb_pdp_data[feature][seed]
+        x_vals, y_vals = rf_pdp_data[feature][seed]
         axes[i].plot(x_vals, y_vals, alpha = 0.5, linewidth = 1, color = 'lightgray', 
                     label='Simulated Data' if seed == 0 and i == 0 else "")
     
     # Plot baseline
-    x_baseline, y_baseline = xgb_baseline_pdp[feature]
+    x_baseline, y_baseline = rf_baseline_pdp[feature]
     axes[i].plot(x_baseline, y_baseline, alpha = 1.0, linewidth = 2, color = 'black',
                 label='Real Data' if i == 0 else "")
     
@@ -179,10 +177,6 @@ for i, feature in enumerate(custom_xgb_features):
     if i == 0:
         axes[i].legend(loc = 'upper left')
 
-    # Hide unused subplots
-    for j in range(len(custom_xgb_features), len(axes)):
-        axes[j].set_visible(False)
-
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/berry_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson2019/mallinson_partial_dependence_rf_simulation.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

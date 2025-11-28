@@ -16,43 +16,39 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-berry_sim_full = pd.read_csv(r"figures/berry_berry1990/berry_berry_sim_data.csv")
+mallinson_lovell_sim_full = pd.read_csv(r"figures/mallinson_lovell2022/mallinson_lovell_sim_data.csv")
 
-# Covariates
-covariates = ["fiscal_1", "party", "elect1", "elect2", "income_1", "nbrpercn", "religion"]
-berry_sim = berry_sim_full[["state", "year", "event"] + covariates].dropna()
+covariates = ["republican","legprof_squire","exp_pupil10000_adj","mathscore4th","readscore4th",
+              "time"]
+mallinson_lovell2022 = mallinson_lovell_sim_full[["event"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
-    "fiscal_1": "Fiscal",
-    "party": "Party", 
-    "elect1": "Elect1",
-    "elect2": "Elect2",
-    "income_1": "Income",
-    "nbrpercn": "Neighbors",
-    "religion": "Religion"
+    "republican": "Republican",
+    "legprof_squire": "Legislative Professionalism",
+    "exp_pupil10000_adj": "Net Expenditures Per Pupil",
+    "readscore4th": "Reading",
+    "mathscore4th": "Math",
+    "time": "Time"
 }
 
-berry_sim = berry_sim.rename(columns = variable_names)
+mallinson_lovell2022 = mallinson_lovell2022.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-X = berry_sim[covariates_renamed].copy()
-y = berry_sim['event']
+X = mallinson_lovell2022[covariates_renamed].copy()
+y = mallinson_lovell2022['event']
 
 # Define custom features
 custom_xgb_features = [
-    "Neighbors",
-    "Ideological Distance",
-    "Per Capita Income",
-    "Logged Population",
-    "Political Ideology",
-    "Crime Spending per Capita",
-    "Crime Spending (Squared)",
-    "Time Cubed",
-    "Electoral Competition",
+    "Republican", 
+    "Legislative Professionalism",
+    "Net Expenditures Per Pupil",
+    "Math",
+    "Reading",
+    "Time"
 ]
 
 # Store PDP data for all models
@@ -76,13 +72,14 @@ for seed in range(10):
         booster = 'gbtree',
         eval_metric = 'aucpr',
         grow_policy = 'depthwise',
-        learning_rate = 0.0885607150747851,
-        max_bin = 64,
-        max_depth = 20,
-        max_leaves = 16,
-        min_child_weight = 5,
-        n_estimators = 500,
+        learning_rate = 0.04787337145112113,
+        max_bin = 128,
+        max_depth = 3,
+        n_estimators = 100,
         objective = 'binary:logistic',
+        reg_alpha = 0,
+        scale_pos_weight = 1,
+        subsample = 0.8012137562136856,
         tree_method = 'auto',
         random_state = 1337
     )
@@ -104,15 +101,13 @@ for seed in range(10):
 
 # Load real data for baseline
 os.chdir("..")
-berry_real_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
-berry_real_full.columns = ["state", "year", "adopt", "fiscal_1", "party", "elect1", "elect2", "income_1", "neighbor", "nbrpercn", "religion"]
-berry_real_full = berry_real_full[berry_real_full['party'] != 9].copy() # 9 is the NA (For MN and NE)
-berry_real = berry_real_full[["adopt"] + covariates].dropna()
-berry_real = berry_real.rename(columns = variable_names)
+mallinson_lovell_real_full = pd.read_csv(r"data/mallinson_lovell2022.csv")
+mallinson_lovell_real = mallinson_lovell_real_full[["adopt"] + covariates].dropna()
+mallinson_lovell_real = mallinson_lovell_real.rename(columns = variable_names)
 
 # Define baseline X and y
-X_real = berry_real[covariates_renamed].copy()
-y_real = berry_real['adopt']
+X_real = mallinson_lovell_real[covariates_renamed].copy()
+y_real = mallinson_lovell_real['adopt']
 
 # Split baseline data
 X_train_real, X_test_real, y_train_real, y_test_real = train_test_split(X_real, y_real, test_size = 0.2, random_state = 1337, stratify = y_real)
@@ -127,13 +122,14 @@ xgb_model_real = XGBClassifier(
     booster = 'gbtree',
     eval_metric = 'aucpr',
     grow_policy = 'depthwise',
-    learning_rate = 0.0885607150747851,
-    max_bin = 64,
-    max_depth = 20,
-    max_leaves = 16,
-    min_child_weight = 5,
-    n_estimators = 500,
+    learning_rate = 0.04787337145112113,
+    max_bin = 128,
+    max_depth = 3,
+    n_estimators = 100,
     objective = 'binary:logistic',
+    reg_alpha = 0,
+    scale_pos_weight = 1,
+    subsample = 0.8012137562136856,
     tree_method = 'auto',
     random_state = 1337
 )
@@ -184,5 +180,5 @@ for i, feature in enumerate(custom_xgb_features):
         axes[j].set_visible(False)
 
 plt.tight_layout()
-plt.savefig('figures/berry_berry1990/berry_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/mallinson_lovell2022/mallinson_lovell_partial_dependence_xgb_simulation.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
