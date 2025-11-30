@@ -16,49 +16,52 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-boehmke_sim_full = pd.read_csv(r"figures/boehmke2017/boehmke_sim_data.csv")
+kreitzer_sim_full = pd.read_stata(r"figures/boushey2016/kreitzer_boehmke_sim_data.csv")
 
-# Covariates
-covariates = ["srcs_decay","nbrs_lag","rpcpinc","totpop","legp_squire",
-                "citi6010","unif_rep","unif_dem","time","time_sq","time_cube"]
-boehmke_sim = boehmke_sim_full.dropna()
+covariates = [
+    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
+    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
+    "time2", "webster"
+]
+kreitzer_sim = kreitzer_sim_full[["event", "billnum"] + covariates].dropna()
 
 # Rename columns
 variable_names = {
-    "srcs_decay": "Lag Source Adoptions",
-    "nbrs_lag": "Lag Neighbor Adoptions", 
-    "rpcpinc": "Personal Income",
-    "totpop": "Total Population",
-    "legp_squire": "Legislative Professionalism",
-    "citi6010": "State Citizen Ideology",
-    "unif_rep": "Unified Republican Control",
-    "unif_dem": "Unified Democratic Control",
+    "norrander_legality": "Abortion Opinion",
+    "religadhrate": "Religious Adherence",
+    "initdif": "Initiative Difficulty",
+    "dem_gov": "Democratic Governor",
+    "uni_dem_leg": "Unified Dem. Legislature",
+    "fem_dem": "Democratic Women",
+    "nbrspct": "Neighbor Adoption %",
+    "rescaledmedincome": "Median Income",
+    "rescaledpopsize": "Population",
     "time": "Time",
-    "time_sq": "Time Squared",
-    "time_cube": "Time Cubed"
+    "time2": "Time Squared",
+    "webster": "Post-Webster Indicator"
 }
 
-boehmke_sim = boehmke_sim.rename(columns = variable_names)
+kreitzer_sim = kreitzer_sim.rename(columns = variable_names)
 
 # Update covariates list with new names
 covariates_renamed = [variable_names[var] for var in covariates]
 
 # Define X and y
-state_columns = [col for col in boehmke_sim.columns if col.startswith('state_')]
-X = boehmke_sim[covariates_renamed + state_columns].copy()
-y = boehmke_sim['event']
+X = kreitzer_sim[covariates_renamed + ["billnum"]].copy()
+X = pd.get_dummies(X, columns = ['billnum'], drop_first = True)
+y = kreitzer_sim['event']
 
 # Define custom features
 custom_rf_features = [
-    "Lag Source Adoptions",
-    "Personal Income",
-    "Total Population",
-    "State Citizen Ideology",
-    "Legislative Professionalism",
-    "Lag Neighbor Adoptions",
-    "Time Squared",
-    "Time Cubed",
+    "Religious Adherence",
+    "Median Income",
+    "Population",
+    "Democratic Women",
     "Time",
+    "Neighbor Adoption %",
+    "Time Squared",
+    "Abortion Opinion",
+    "Initiative Difficulty",
 ]
 
 # Store PDP data for all models
@@ -83,10 +86,10 @@ for seed in range(10):
         ccp_alpha = 0.0,
         class_weight = None,
         criterion = 'entropy',
-        max_depth = 25,
+        max_depth = None,
         min_samples_leaf = 4,
-        min_samples_split = 8,
-        n_estimators = 500,
+        min_samples_split = 2,
+        n_estimators = 171,
         random_state = 1337
     )
 
@@ -107,17 +110,17 @@ for seed in range(10):
 
 # Load real data for baseline
 os.chdir("..")
-boehmke_real_full = pd.read_stata(r"data/boehmke2017.dta")
-boehmke_real = boehmke_real_full[["state", "adopt"] + covariates].dropna()
-boehmke_real = boehmke_real.rename(columns = variable_names)
+kreitzer_real_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+kreitzer_real = kreitzer_real_full[["adopt_policy"] + covariates].dropna()
+kreitzer_real = kreitzer_real.rename(columns = variable_names)
 
 # Create dummy variables
-boehmke_real = pd.get_dummies(boehmke_real, columns = ['state'], drop_first = True)
+kreitzer_real = pd.get_dummies(kreitzer_real, columns = ['policy_num'], drop_first = True)
 
-# Define X and y
-state_columns = [col for col in boehmke_real.columns if col.startswith('state_')]
-X_real = boehmke_real[covariates_renamed + state_columns].copy()
-y_real = boehmke_real['adopt']
+# Define baseline X and y
+policy_columns = [col for col in kreitzer_real.columns if col.startswith('policy_num_')]
+X_real = kreitzer_real[covariates_renamed + policy_columns].copy()
+y_real = kreitzer_real['adopt_policy']
 
 # Split baseline data
 X_train_real, X_test_real, y_train_real, y_test_real = train_test_split(X_real, y_real, test_size = 0.2, random_state = 1337, stratify = y_real)
@@ -133,10 +136,10 @@ rf_model_real = RandomForestClassifier(
     ccp_alpha = 0.0,
     class_weight = None,
     criterion = 'entropy',
-    max_depth = 25,
+    max_depth = None,
     min_samples_leaf = 4,
-    min_samples_split = 8,
-    n_estimators = 500,
+    min_samples_split = 2,
+    n_estimators = 171,
     random_state = 1337
 )
 rf_model_real.fit(X_train_real_scaled, y_train_real)
@@ -182,5 +185,5 @@ for i, feature in enumerate(custom_rf_features):
         axes[i].legend(loc = 'upper left')
 
 plt.tight_layout()
-plt.savefig('figures/boehmke2017/boehmke_partial_dependence_rf_simulation.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/kreitzer_boehmke2016/kreitzer_boehmke_partial_dependence_rf_simulation.png', dpi = 300, bbox_inches = 'tight')
 plt.show()

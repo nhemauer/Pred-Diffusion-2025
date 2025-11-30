@@ -117,6 +117,9 @@ bricker_lacombe_real_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
 bricker_lacombe_real = bricker_lacombe_real_full[["year", "adoption"] + covariates].dropna()
 bricker_lacombe_real = bricker_lacombe_real.rename(columns = variable_names)
 
+# Create dummy variables
+bricker_lacombe_real = pd.get_dummies(bricker_lacombe_real, columns = ['year'], drop_first = True)
+
 # Define X and y
 year_columns = [col for col in bricker_lacombe_real.columns if col.startswith('year_')]
 X_real = bricker_lacombe_real[covariates_renamed + year_columns].copy()

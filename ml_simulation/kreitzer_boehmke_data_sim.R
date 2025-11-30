@@ -42,8 +42,10 @@ logistic <- glm(formula, data = kreitzer_boehmke2016, family = binomial(link = "
 # Extract coefficients
 coef_vec <- coef(logistic)
 
-# Drop intercept
+# Fix intercept
 coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
+intercept <- coef(logistic)[1]
+coef_matrix <- rbind(coef_matrix, intercept)
 
 sim_results <- data.frame()
 
@@ -87,6 +89,13 @@ for (bill in unique(kreitzer_boehmke2016$policy_num)){
 
   beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
   beta_sim <- coef_matrix[beta_names, , drop = FALSE]
+
+  # Add policy-specific coefficient to intercept (a different way to dummy out the policy column)
+  policy_coef_name <- paste0("policy_num_", bill)
+  if (policy_coef_name %in% names(coef_vec)) {
+    policy_intercept <- intercept + coef_vec[policy_coef_name]
+    beta_sim["intercept", 1] <- policy_intercept
+  }
 
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
