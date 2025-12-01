@@ -84,8 +84,18 @@ for (bill in unique(kreitzer_boehmke2016$policy_num)){
             .x)
     })) %>%
     ungroup()
+
+  # Remove any duplicates
+  # policy_data_complete <- policy_data_complete %>%
+  #   group_by(state, year) %>%
+  #   slice_sample(n = 1) %>%
+  #   ungroup()
   
   policy_data_complete <- as.data.frame(policy_data_complete)
+
+  # Add intercept
+  policy_data_complete$intercept = 1
+  policy_data_complete$year <- policy_data_complete$year - 1
 
   beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
   beta_sim <- coef_matrix[beta_names, , drop = FALSE]
