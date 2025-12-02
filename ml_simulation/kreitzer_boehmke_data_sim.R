@@ -12,7 +12,7 @@ library(tidyverse)
 library(haven)
 library(fastDummies)
 
-kreitzer_boehmke2016_full <- read_dta("data/kreitzer_boehmke2016.dta")
+kreitzer_boehmke2016_full <- read_csv("data/kreitzer_boehmke_2016_processed.csv")
 
 # Covariates
 covariates = c("norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
@@ -51,6 +51,7 @@ sim_results <- data.frame()
 
 for (bill in unique(kreitzer_boehmke2016$policy_num)){
   # Filter data per bill
+  print(bill)
   policy_data <- kreitzer_boehmke2016 %>% filter(policy_num == bill)
   policy_data <- as.data.frame(policy_data)
   

@@ -11,7 +11,7 @@ library(neha)
 library(tidyverse)
 library(haven)
 
-lacombe_boehmke2021_full <- read_dta("data/lacombe_boehmke2021.dta")
+lacombe_boehmke2021_full <- read_csv("data/lacombe_boehmke_2021_processed.csv")
 
 # Covariates
 covariates = c("initiative", "init_sigs", "std_latnt_decay", "std_nbrs_lag", "std_population",
@@ -46,19 +46,10 @@ coef_matrix <- as.matrix(coef_vec[-c(1), drop = FALSE])
 intercept <- coef(logistic)[1]
 coef_matrix <- rbind(coef_matrix, intercept)
 
-# Convert policies
-policy_lookup <- data.frame(
-  original_name = unique(lacombe_boehmke2021$policyno),
-  policy_number = seq_along(unique(lacombe_boehmke2021$policyno))
-)
-lacombe_boehmke2021$policyno <- as.numeric(as.factor(lacombe_boehmke2021$policyno))
-
 sim_results <- data.frame()
 
 for (bill in unique(lacombe_boehmke2021$policyno)){
   # Filter data per bill
-  original_policy_name <- policy_lookup$original_name[policy_lookup$policy_number == bill]
-  print(paste("Bill", bill, ":", original_policy_name))
   policy_data <- lacombe_boehmke2021 %>% filter(policyno == bill)
   policy_data <- as.data.frame(policy_data)
   
@@ -115,7 +106,6 @@ for (bill in unique(lacombe_boehmke2021$policyno)){
 
   beta_names <- intersect(rownames(coef_matrix), names(policy_data_complete))
   beta_sim <- coef_matrix[beta_names, , drop = FALSE]
-  print(policy_data_complete)
 
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
