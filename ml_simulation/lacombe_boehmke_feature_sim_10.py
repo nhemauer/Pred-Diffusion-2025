@@ -16,7 +16,7 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-lacombe_boehmke_sim_full = pd.read_csv(r"figures/lacombe_boehmke2021/lacombe_lacombe_boehmke_sim_data.csv")
+lacombe_boehmke_sim_full = pd.read_csv(r"figures/lacombe_boehmke2021/lacombe_boehmke_sim_data.csv")
 
 # Covariates
 covariates = [
