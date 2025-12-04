@@ -13,7 +13,7 @@ library(haven)
 library(fastDummies)
 
 kreitzer_boehmke2016_full <- read_csv("data/kreitzer_boehmke_2016_processed.csv")
-kreitzer_boehmke2016_full <- kreitzer_boehmke2016_full %>% filter(!policy_num %in% c(28, 29))
+# kreitzer_boehmke2016_full <- kreitzer_boehmke2016_full %>% filter(!policy_num %in% c(28, 29))
 
 # Covariates
 covariates = c("norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
