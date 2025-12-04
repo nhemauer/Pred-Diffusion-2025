@@ -83,11 +83,10 @@ for (bill in unique(parinandi2020$featurenumber)){
 
   # Add intercept
   policy_data_complete$intercept = 1
-  policy_data_complete$year <- policy_data_complete$year - 1
   
   # Create fake gamma
   tie_names <- c("california_montana", "minnesota_wisconsin", "iowa_minnesota")
-  tie_values <- c(0.8, 0.5, 0.3)
+  tie_values <- c(0, 0, 0)
   gamma <- matrix(tie_values, ncol = 1, dimnames = list(tie_names, "value"))
   
   sim_data <- simulate_neha_discrete(policy_data_complete, node = "state", time = "year", beta = coef_matrix, gamma = gamma, a = 0)
