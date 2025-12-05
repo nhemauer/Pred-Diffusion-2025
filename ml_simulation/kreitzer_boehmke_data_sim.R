@@ -12,8 +12,7 @@ library(tidyverse)
 library(haven)
 library(fastDummies)
 
-kreitzer_boehmke2016_full <- read_csv("data/kreitzer_boehmke_2016_processed.csv")
-# kreitzer_boehmke2016_full <- kreitzer_boehmke2016_full %>% filter(!policy_num %in% c(28, 29))
+kreitzer_boehmke2016_full <- read_dta("data/kreitzer_boehmke2016.dta")
 
 # Covariates
 covariates = c("norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
@@ -30,7 +29,9 @@ kreitzer_boehmke2016 <- kreitzer_boehmke2016_full %>%
   ) %>%
   na.omit()
 
-policy_dummies <- grep("^policy_", names(kreitzer_boehmke2016), value = TRUE)
+# edit_data <- kreitzer_boehmke2016 %>% arrange(policy_num, year, state)
+
+policy_dummies <- grep("^policy_num_", names(kreitzer_boehmke2016), value = TRUE)
 
 # Define formula
 formula <- as.formula(
