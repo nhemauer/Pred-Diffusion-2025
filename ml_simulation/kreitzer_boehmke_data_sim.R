@@ -29,8 +29,6 @@ kreitzer_boehmke2016 <- kreitzer_boehmke2016_full %>%
   ) %>%
   na.omit()
 
-# edit_data <- kreitzer_boehmke2016 %>% arrange(policy_num, year, state)
-
 policy_dummies <- grep("^policy_num_", names(kreitzer_boehmke2016), value = TRUE)
 
 # Define formula
@@ -87,12 +85,6 @@ for (bill in unique(kreitzer_boehmke2016$policy_num)){
             .x)
     })) %>%
     ungroup()
-
-  # Remove any duplicates
-  # policy_data_complete <- policy_data_complete %>%
-  #   group_by(state, year) %>%
-  #   slice_sample(n = 1) %>%
-  #   ungroup()
   
   policy_data_complete <- as.data.frame(policy_data_complete)
 
