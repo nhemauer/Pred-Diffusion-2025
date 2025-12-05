@@ -16,7 +16,7 @@ random.seed(1337)
 os.chdir("ml_simulation")
 
 # Data
-kreitzer_sim_full = pd.read_stata(r"figures/boushey2016/kreitzer_boehmke_sim_data.csv")
+kreitzer_sim_full = pd.read_stata(r"figures/kreitzer_boehmke2016/kreitzer_boehmke_sim_data.csv")
 
 covariates = [
     "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
