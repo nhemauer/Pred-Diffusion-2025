@@ -111,7 +111,7 @@ for seed in range(10):
 # Load real data for baseline
 os.chdir("..")
 kreitzer_real_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
-kreitzer_real = kreitzer_real_full[["adopt_policy"] + covariates].dropna()
+kreitzer_real = kreitzer_real_full[["adopt_policy", "policy_num"] + covariates].dropna()
 kreitzer_real = kreitzer_real.rename(columns = variable_names)
 
 # Create dummy variables
