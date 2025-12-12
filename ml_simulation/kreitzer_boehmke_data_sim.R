@@ -51,7 +51,6 @@ sim_results <- data.frame()
 
 for (bill in unique(kreitzer_boehmke2016$policy_num)){
   # Filter data per bill
-  print(bill)
   policy_data <- kreitzer_boehmke2016 %>% filter(policy_num == bill)
   policy_data <- as.data.frame(policy_data)
   
@@ -70,20 +69,23 @@ for (bill in unique(kreitzer_boehmke2016$policy_num)){
     year = all_years,
     stringsAsFactors = FALSE
   )
-  
-  # Merge with existing data
-  policy_data_complete <- complete_panel %>%
-    left_join(policy_data, by = c("state", "year"))
 
   # Fill missing covariate values by randomly sampling from each state's available data
-  policy_data_complete <- policy_data_complete %>%
+  policy_data_complete <- complete_panel %>%
     group_by(state) %>%
-    mutate(across(all_of(covariates), ~ {
-      available_values <- .x[!is.na(.x)]
-      ifelse(is.na(.x), 
-            sample(available_values, length(.x), replace = TRUE)[is.na(.x)], 
-            .x)
-    })) %>%
+    group_modify(~ {
+      df_panel <- .x     
+
+      # Observed rows for state
+      donors <- policy_data %>% filter(state == .y$state)
+
+      # For each covariate, sample independently
+      for (cv in covariates) {
+        df_panel[[cv]] <- sample(donors[[cv]], size = nrow(df_panel), replace = TRUE)
+      }
+
+      df_panel
+    }) %>%
     ungroup()
   
   policy_data_complete <- as.data.frame(policy_data_complete)
