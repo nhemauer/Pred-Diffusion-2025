@@ -49,10 +49,14 @@ estimates store last50
 * Step 4. Create Coefplot
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
-    drop(_cons *.policy_num) nolabel xline(0) ///
+    drop(_cons *.policy_num) nolabel xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(5) xrescale) ///
     rename(norrander_legality = "Abortion Opinion" religadhrate = "Religious Adherence" initdif = "Initiative Difficulty" ///
        dem_gov = "Democratic Governor" uni_dem_leg = "Unified Dem. Legislature" fem_dem = "Democratic Women" nbrspct = "Neighbor Adoption %" ///
        rescaledmedincome = "Median Income" rescaledpopsize = "Population" time = "Time" time2 = "Time Squared" webster = "Post-Webster Indicator") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/kreitzer_boehmke2016/kreitzer_coefplot_split.png", replace width(2000)

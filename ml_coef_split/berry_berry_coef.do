@@ -43,8 +43,12 @@ estimates store last50
 * Step 4. Create Coefplot
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
-    drop(_cons) nolabel xline(0) ///
+    drop(_cons) nolabel xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(3) xrescale) ///
     rename(fiscal_1 = "Fiscal" party = "Party" elect1 = "Elect1" elect2 = "Elect2" income_1 = "Income" nbrpercn = "Neighbors" religion = "Religion") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/berry_berry1990/berry_coefplot_split.png", replace width(2000)

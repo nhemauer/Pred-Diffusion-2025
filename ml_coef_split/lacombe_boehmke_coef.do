@@ -49,11 +49,15 @@ estimates store last50
 * Step 4. Create Coefplot
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
-    drop(_cons *.year) nolabel xline(0) ///
+    drop(_cons *.year) nolabel xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(5) xrescale) ///
     rename(initiative = "Initiative Process" init_sigs = "Signatures" std_latnt_decay = "Latent Decay" std_nbrs_lag = "Contiguity" std_population = "Population" ///
            std_masssociallib_est = "Public Liberalism" unified = "Unified Control" duration = "Duration" durationsq = "Duration Squared" durationcb = "Duration Cubed" ///
            std_income = "Income per Capita" std_bowen_1 = "Legislative Prof. Dim. 1" std_bowen_2 = "Legislative Prof. Dim. 2" change_pop = "Change Population" change_inc = "Change Income" ///
            party_change = "Change in Party") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/lacombe_boehmke2021/lacombe_coefplot_split.png", replace width(2000)

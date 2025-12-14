@@ -63,7 +63,9 @@ estimates store last50
 * Step 5. Create Coefplot
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
-    drop(_cons state_*) nolabel xline(0) ///
+    drop(_cons state_*) nolabel xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(5) xrescale) ///
     rename(policycongruent = "Policy Congruence" gub_election = "Elect1" ///
            elect2 = "Elect2" hvd_4yr = "Electoral Competition" fedcrime = "National Crime Salience" ///
            leg_dem_per_2pty = "Democratic Party Strength" dem_governor = "Democratic Governor" ///
@@ -73,6 +75,8 @@ coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
            crimespendpcsq = "Crime Spending (Squared)" violentthousand = "Violent Crime Rate" ///
            pctwhite = "Pct. Population White" stateincpercap = "Per Capita Income" ///
            logpop = "Logged Population" counter = "Time" counter2 = "Time Squared" counter3 = "Time Cubed") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/boushey2016/boushey_coefplot_split.png", replace width(2000)

@@ -57,7 +57,9 @@ estimates store last50
 * Step 4. Create Coefplot
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
-    drop(_cons *.year) nolabel xline(0) ///
+    drop(_cons *.year) nolabel xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(5) xrescale) ///
     rename(traditional = "Traditional" nborsstd = "Neighbors" prevadoptstd = "Previous Adopters" complexity = "Complexity" igrole = "Interest Group Role" ///
            regov = "Republican Governor" unified = "Unified" perdemstd = "Democratic Legislature" incpcadjstd = "Income per Capita" exppcadjstd = "Expenditures per Capita" ///
            logpopstd = "Population" collegstd = "Pct College Educated" perurbanstd = "Pct Urban" profstd = "Legislative Professionalism" ///
@@ -65,6 +67,8 @@ coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
            traditional_igrole = "Traditional x Interest Group" traditional_regov = "Traditional x Rep. Governor" traditional_unified = "Traditional x Unified" ///
            traditional_perdemstd = "Traditional x Dem. Legislature" traditional_incpcadjstd = "Traditional x Income" traditional_exppcadjstd = "Traditional x Expenditures" ///
            traditional_logpopstd = "Traditional x Population" traditional_collegstd = "Traditional x College" traditional_perurbanstd = "Traditional x Urban" traditional_profstd = "Traditional x Professionalism") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/karch2016/karch_coefplot_split.png", replace width(2000)

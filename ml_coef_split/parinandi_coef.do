@@ -44,11 +44,15 @@ estimates store last30
 * Step 4. Create Coefplot
 ***************************************************************
 coefplot (first70, label("First 70%")) (last30, label("Last 30%")), ///
-    drop(_cons) nolabel xline(0) ///
+    drop(_cons) xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(5) xrescale) ///
     rename(adagovideology = "Legislative Ideology" citizenideology = "Citizen Ideology" medianivoteshare = "Median Incumbent Vote Share" 1.partydecline = "Party Decline" ///
            squirescore = "Legislative Professionalism" incunemp = "Change in Unemplyoment" pctpercapincome = "Per Capita Income" percenturban = "Urban Percentage" 1.ugovd = "Unified Dem. Government" ///
            percentfossilprod = "Fossil Fuel Production" renergyprice11 = "Real Energy Price" 1.deregulated = "Deregulated" geoneighborlag = "Lagged Geographic Neighbor" ///
            ideoneighborlag = "Lagged Ideological Neighbor" premulation1 = "Prior Borrowing" year = "Year" featureyear = "Provision Year") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/parinandi2020/parinandi_coefplot_split.png", replace width(2000)

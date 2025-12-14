@@ -61,9 +61,13 @@ estimates store last50
 * Step 6. Create Coefplot
 ***************************************************************
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
-    drop(_cons state_*) nolabel xline(0) ///
+    drop(_cons state_*) nolabel xline(0, lpattern(dot)) ///
+    bycoefs ///
+    byopts(cols(5) xrescale) ///
     rename(srcs_decay = "Lag Source Adoptions" nbrs_lag = "Lag Neighbor Adoptions" rpcpinc = "Personal Income" totpop = "Total Population" legp_squire = "Legislative Professionalism" ///
            citi6010 = "State Citizen Ideology" unif_rep = "Unified Republican Control" unif_dem = "Unified Democratic Control" time = "Time" time_sq = "Time Squared" time_cube = "Time Cubed") ///
-    xtitle("Logit Coefficients")
+    xtitle("Logit Coefficients") ///
+    ylabel(none) ///
+    legend(pos(6) rows(1))
 
 graph export "ml_coefficient_split/figures/boehmke2017/boehmke_coefplot_split.png", replace width(2000)
