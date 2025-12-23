@@ -59,7 +59,7 @@ custom_rf_features = [
     "Democratic Women",
     "Time",
     "Neighbor Adoption %",
-    "Time Squared",
+    "Time Squared",  
     "Abortion Opinion",
     "Initiative Difficulty",
 ]
