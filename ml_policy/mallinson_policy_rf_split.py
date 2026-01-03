@@ -127,4 +127,4 @@ results_df = pd.DataFrame({
 })
 
 # Save to CSV
-results_df.to_csv(f'figures/mallinson2019/mallinson_policy_results_rf_{policy_idx}.csv', index = False)
+results_df.to_csv(f'figures/mallinson2019/policy_files/mallinson_policy_results_rf_{policy_idx}.csv', index = False)
