@@ -6,6 +6,9 @@ figures_dir = Path("ml_policy/figures")  # Current directory (figures folder)
 # Find all CSV files recursively
 csv_files = list(figures_dir.rglob("*.csv"))
 
+# Exclude files from mallinson2019/policy_files folder
+csv_files = [f for f in csv_files if "mallinson_policy_results_rf_" not in str(f)]
+
 # Create a dictionary to store DataFrames with file names as keys
 dataframes = {}
 
