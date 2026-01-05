@@ -129,7 +129,7 @@ bars2 = ax.barh(x + width/2, half_2_importances, width,
 ax.set_yticks(x)
 ax.set_yticklabels(rf_top_features_1['feature'])
 ax.set_xlabel('Feature Importance')
-ax.set_title('Random Forest Feature Importance Comparison Across Sample Halves')
+ax.set_title('Random Forest Feature Importance Comparison Across Sample Splits')
 ax.legend(loc = 'lower right')
 ax.invert_yaxis()
 
