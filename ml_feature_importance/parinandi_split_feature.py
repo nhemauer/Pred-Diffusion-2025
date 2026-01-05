@@ -121,9 +121,9 @@ width = 0.35
 
 # Create grouped bars
 bars1 = ax.barh(x - width/2, rf_top_features_1['rf_importance'], width, 
-                label=f'Sample Split 1 (Years ≤ {int(split_year)})', color = 'black')
+                label=f'First 70% (Years ≤ {int(split_year)})', color = 'black')
 bars2 = ax.barh(x + width/2, half_2_importances, width, 
-                label=f'Sample Split 2 (Years > {int(split_year)})', color = 'gray')
+                label=f'Last 30% (Years > {int(split_year)})', color = 'gray')
 
 # Customize plot
 ax.set_yticks(x)
