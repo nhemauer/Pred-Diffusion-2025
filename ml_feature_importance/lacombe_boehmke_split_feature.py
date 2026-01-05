@@ -1,7 +1,6 @@
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -106,26 +105,34 @@ for half in sample_halves:
     # Filter to only include covariates (exclude state dummies)
     importance_dfs[half] = importance_df[importance_df['feature'].isin(covariates_renamed)]
 
-# Create combined feature importance plot with two subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
+# Create combined feature importance plot with grouped bars
+fig, ax = plt.subplots(figsize = (12, 10))
 
-# Plot for Sample Half 1
-rf_top_features_1 = importance_dfs[1].sort_values(by = 'rf_importance', ascending = False)
-ax1.barh(range(len(rf_top_features_1)), rf_top_features_1['rf_importance'])
-ax1.set_yticks(range(len(rf_top_features_1)))
-ax1.set_yticklabels(rf_top_features_1['feature'])
-ax1.set_xlabel('Feature Importance')
-ax1.set_title(f'Sample Half 1 (Years ≤ {int(midyear)})')
-ax1.invert_yaxis()
+# Get top features from Sample Half 1 (this determines the order)
+rf_top_features_1 = importance_dfs[1].sort_values(by = 'rf_importance', ascending = False).head(20)
 
-# Plot for Sample Half 2
-rf_top_features_2 = importance_dfs[2].sort_values(by = 'rf_importance', ascending = False)
-ax2.barh(range(len(rf_top_features_2)), rf_top_features_2['rf_importance'])
-ax2.set_yticks(range(len(rf_top_features_2)))
-ax2.set_yticklabels(rf_top_features_2['feature'])
-ax2.set_xlabel('Feature Importance')
-ax2.set_title(f'Sample Half 2 (Years > {int(midyear)})')
-ax2.invert_yaxis()
+# Get corresponding importance values from Sample Half 2
+importance_df_2 = importance_dfs[2].set_index('feature')
+half_2_importances = [importance_df_2.loc[feat, 'rf_importance'] if feat in importance_df_2.index else 0 
+                      for feat in rf_top_features_1['feature']]
+
+# Set up bar positions
+x = np.arange(len(rf_top_features_1))
+width = 0.35
+
+# Create grouped bars
+bars1 = ax.barh(x - width/2, rf_top_features_1['rf_importance'], width, 
+                label=f'Sample Half 1 (Years ≤ {int(midyear)})', color = 'black')
+bars2 = ax.barh(x + width/2, half_2_importances, width, 
+                label=f'Sample Half 2 (Years > {int(midyear)})', color = 'gray')
+
+# Customize plot
+ax.set_yticks(x)
+ax.set_yticklabels(rf_top_features_1['feature'])
+ax.set_xlabel('Feature Importance')
+ax.set_title('Random Forest Feature Importance Comparison Across Sample Halves')
+ax.legend(loc = 'lower right')
+ax.invert_yaxis()
 
 plt.tight_layout()
 plt.savefig('figures/lacombe_boehmke2021/lacombe_split_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')

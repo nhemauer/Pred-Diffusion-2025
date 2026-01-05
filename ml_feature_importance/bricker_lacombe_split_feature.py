@@ -1,7 +1,6 @@
 import warnings
 warnings.filterwarnings("ignore")
 from sklearn.ensemble import RandomForestClassifier
-from xgboost import XGBClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
@@ -72,61 +71,64 @@ for half in sample_halves:
     X_test_scaled = scaler.transform(X_test)
     
     # Use best hyperparameters from the random-split experiment
-    xgb_model = XGBClassifier(
-        booster = 'gbtree',
-        eval_metric = 'aucpr',
-        gamma = 2,
-        grow_policy = 'depthwise',
-        learning_rate = 0.033245479413080606,
-        max_bin = 64,
-        max_depth = 6,
-        min_child_weight = 5,
-        n_estimators = 465,
-        objective = 'binary:logistic',
-        scale_pos_weight = 4,
-        subsample = 0.8753024969914462,
-        tree_method = 'auto',
+    rf_model = RandomForestClassifier(
+        bootstrap = True,
+        ccp_alpha = 9.088623462683024e-05,
+        class_weight = None,
+        criterion = 'entropy',
+        max_depth = 50,
+        min_samples_leaf = 2,
+        min_samples_split = 3,
+        n_estimators = 300,
         random_state = 1337
     )
     
-    # Fit xgb model
-    xgb_model.fit(X_train_scaled, y_train)
-    models[half] = xgb_model
+    # Fit rf model
+    rf_model.fit(X_train_scaled, y_train)
+    models[half] = rf_model
     
-    # xgb feature importance
+    # rf feature importance
     feature_names = X_train.columns.tolist()
-    xgb_feature_importance = xgb_model.feature_importances_
+    rf_feature_importance = rf_model.feature_importances_
     
     # Store importance dataframe
     importance_df = pd.DataFrame({
         'feature': feature_names,
-        'xgb_importance': xgb_feature_importance
+        'rf_importance': rf_feature_importance
     })
     
     # Filter to only include covariates (exclude year dummies)
     importance_dfs[half] = importance_df[importance_df['feature'].isin(covariates_renamed)]
 
-# Create combined feature importance plot with two subplots
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize = (20, 10))
+# Create combined feature importance plot with grouped bars
+fig, ax = plt.subplots(figsize = (12, 10))
 
-# Plot for Sample Half 1
-xgb_top_features_1 = importance_dfs[1].sort_values(by = 'xgb_importance', ascending = False)
-ax1.barh(range(len(xgb_top_features_1)), xgb_top_features_1['xgb_importance'])
-ax1.set_yticks(range(len(xgb_top_features_1)))
-ax1.set_yticklabels(xgb_top_features_1['feature'])
-ax1.set_xlabel('Feature Importance')
-ax1.set_title(f'Sample Half 1 (Years ≤ {int(midyear)})')
-ax1.invert_yaxis()
+# Get top features from Sample Half 1 (this determines the order)
+rf_top_features_1 = importance_dfs[1].sort_values(by = 'rf_importance', ascending = False).head(20)
 
-# Plot for Sample Half 2
-xgb_top_features_2 = importance_dfs[2].sort_values(by = 'xgb_importance', ascending = False)
-ax2.barh(range(len(xgb_top_features_2)), xgb_top_features_2['xgb_importance'])
-ax2.set_yticks(range(len(xgb_top_features_2)))
-ax2.set_yticklabels(xgb_top_features_2['feature'])
-ax2.set_xlabel('Feature Importance')
-ax2.set_title(f'Sample Half 2 (Years > {int(midyear)})')
-ax2.invert_yaxis()
+# Get corresponding importance values from Sample Half 2
+importance_df_2 = importance_dfs[2].set_index('feature')
+half_2_importances = [importance_df_2.loc[feat, 'rf_importance'] if feat in importance_df_2.index else 0 
+                      for feat in rf_top_features_1['feature']]
+
+# Set up bar positions
+x = np.arange(len(rf_top_features_1))
+width = 0.35
+
+# Create grouped bars
+bars1 = ax.barh(x - width/2, rf_top_features_1['rf_importance'], width, 
+                label=f'Sample Half 1 (Years ≤ {int(midyear)})', color = 'black')
+bars2 = ax.barh(x + width/2, half_2_importances, width, 
+                label=f'Sample Half 2 (Years > {int(midyear)})', color = 'gray')
+
+# Customize plot
+ax.set_yticks(x)
+ax.set_yticklabels(rf_top_features_1['feature'])
+ax.set_xlabel('Feature Importance')
+ax.set_title('Random Forest Feature Importance Comparison Across Sample Halves')
+ax.legend()
+ax.invert_yaxis()
 
 plt.tight_layout()
-plt.savefig('figures/bricker_lacombe2021/bricker_split_feature_importance_xgb.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/bricker_lacombe2021/bricker_split_feature_importance_rf.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
