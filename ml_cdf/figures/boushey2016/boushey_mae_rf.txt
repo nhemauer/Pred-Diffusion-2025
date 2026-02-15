@@ -1,2 +1,0 @@
-Number of valid predictions: 46 / 47
-Mean absolute difference: 2.28 years
