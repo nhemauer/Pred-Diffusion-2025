@@ -11,10 +11,10 @@ for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_cdf/*.py; do
 #SBATCH --qos=normal
 #SBATCH --partition=standard
 #SBATCH --nodes=1
-#SBATCH --cpus-per-task=48
+#SBATCH --cpus-per-task=24
 #SBATCH --ntasks=1
-#SBATCH --mem=384gb
-#SBATCH --time=1:00:00
+#SBATCH --mem=192gb
+#SBATCH --time=12:00:00
 #SBATCH --job-name=${name}
 #SBATCH --chdir=/storage/work/ndh5286/Projects/Pred_Diffusion_2025
 #SBATCH --output=ml_cdf/logs/%x_%j.out

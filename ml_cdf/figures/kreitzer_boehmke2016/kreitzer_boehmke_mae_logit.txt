@@ -1,14 +1,14 @@
 5-Fold Cross-Validation Results
 ==================================================
 
-Fold 1 MAE: 12.07 years
-Fold 2 MAE: 9.77 years
-Fold 3 MAE: 8.12 years
-Fold 4 MAE: 9.57 years
-Fold 5 MAE: 6.55 years
+Fold 1 MAE: 11.90 years
+Fold 2 MAE: 9.53 years
+Fold 3 MAE: 8.62 years
+Fold 4 MAE: 9.66 years
+Fold 5 MAE: 7.01 years
 
-Mean MAE across folds: 9.22 years
-Std MAE across folds: 1.84 years
+Mean MAE across folds: 9.34 years
+Std MAE across folds: 1.59 years
 
-Overall: 439 / 672 valid predictions
-Overall MAE: 8.82 years
+Overall: 479 / 672 valid predictions
+Overall MAE: 8.99 years
