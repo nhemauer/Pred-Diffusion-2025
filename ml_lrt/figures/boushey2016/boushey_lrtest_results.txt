@@ -1,0 +1,19 @@
+Likelihood ratio test
+
+Model 1: dvadopt ~ policycongruent + gub_election + elect2 + hvd_4yr + 
+    fedcrime + leg_dem_per_2pty + dem_governor + insession + 
+    propneighpol + citidist + squire_prof86 + citi6008 + crimespendpc + 
+    crimespendpcsq + violentthousand + pctwhite + stateincpercap + 
+    logpop + counter + counter2 + counter3
+Model 2: dvadopt ~ policycongruent * half + gub_election * half + elect2 * 
+    half + hvd_4yr * half + fedcrime * half + leg_dem_per_2pty * 
+    half + dem_governor * half + insession * half + propneighpol * 
+    half + citidist * half + squire_prof86 * half + citi6008 * 
+    half + crimespendpc * half + crimespendpcsq * half + violentthousand * 
+    half + pctwhite * half + stateincpercap * half + logpop * 
+    half + counter * half + counter2 * half + counter3 * half
+  #Df  LogLik Df  Chisq Pr(>Chisq)    
+1  22 -4582.2                         
+2  44 -4531.1 22 102.03  2.845e-12 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

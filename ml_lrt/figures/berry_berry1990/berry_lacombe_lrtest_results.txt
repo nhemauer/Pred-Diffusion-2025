@@ -1,0 +1,9 @@
+Likelihood ratio test
+
+Model 1: adopt ~ fiscal_1 + party + elect1 + elect2 + income_1 + nbrpercn + 
+    religion
+Model 2: adopt ~ fiscal_1 * half + party * half + elect1 * half + elect2 * 
+    half + income_1 * half + nbrpercn * half + religion * half
+  #Df  LogLik Df  Chisq Pr(>Chisq)
+1   8 -92.586                     
+2  16 -88.324  8 8.5251     0.3839

@@ -1,0 +1,18 @@
+Likelihood ratio test
+
+Model 1: oneemulation ~ adagovideology + citizenideology + medianivoteshare + 
+    partydecline + squirescore + incunemp + pctpercapincome + 
+    percenturban + ugovd + percentfossilprod + renergyprice11 + 
+    deregulated + geoneighborlag + ideoneighborlag + premulation1 + 
+    featureyear
+Model 2: oneemulation ~ adagovideology * half + citizenideology * half + 
+    medianivoteshare * half + partydecline * half + squirescore * 
+    half + incunemp * half + pctpercapincome * half + percenturban * 
+    half + ugovd * half + percentfossilprod * half + renergyprice11 * 
+    half + deregulated * half + geoneighborlag * half + ideoneighborlag * 
+    half + premulation1 * half + featureyear * half
+  #Df  LogLik Df  Chisq Pr(>Chisq)    
+1  17 -1830.4                         
+2  34 -1761.3 17 138.28  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

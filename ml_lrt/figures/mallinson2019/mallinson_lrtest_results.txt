@@ -1,0 +1,17 @@
+Likelihood ratio test
+
+Model 1: adopt ~ neighbor_prop + ideology_relative_hm + congress_majortopic + 
+    init_avail + init_qual + divided_gov + legprof_squire + percap_log + 
+    population_log + mip + complexity_topic + mip_complexity_topic + 
+    nyt + year_count + time_log
+Model 2: adopt ~ neighbor_prop * half + ideology_relative_hm * half + 
+    congress_majortopic * half + init_avail * half + init_qual * 
+    half + divided_gov * half + legprof_squire * half + percap_log * 
+    half + population_log * half + mip * half + complexity_topic * 
+    half + mip_complexity_topic * half + nyt * half + year_count * 
+    half + time_log * half
+  #Df LogLik Df  Chisq Pr(>Chisq)    
+1  16 -44544                         
+2  32 -44425 16 238.67  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

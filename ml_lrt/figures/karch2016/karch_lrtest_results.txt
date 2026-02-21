@@ -1,0 +1,26 @@
+Likelihood ratio test
+
+Model 1: adopt ~ traditional + nborsstd + prevadoptstd + complexity + 
+    igrole + regov + unified + perdemstd + incpcadjstd + exppcadjstd + 
+    logpopstd + collegstd + perurbanstd + profstd + traditional_nborsstd + 
+    traditional_prevadoptstd + traditional_complexity + traditional_igrole + 
+    traditional_regov + traditional_unified + traditional_perdemstd + 
+    traditional_incpcadjstd + traditional_exppcadjstd + traditional_logpopstd + 
+    traditional_collegstd + traditional_perurbanstd + traditional_profstd
+Model 2: adopt ~ traditional * half + nborsstd * half + prevadoptstd * 
+    half + complexity * half + igrole * half + regov * half + 
+    unified * half + perdemstd * half + incpcadjstd * half + 
+    exppcadjstd * half + logpopstd * half + collegstd * half + 
+    perurbanstd * half + profstd * half + traditional_nborsstd * 
+    half + traditional_prevadoptstd * half + traditional_complexity * 
+    half + traditional_igrole * half + traditional_regov * half + 
+    traditional_unified * half + traditional_perdemstd * half + 
+    traditional_incpcadjstd * half + traditional_exppcadjstd * 
+    half + traditional_logpopstd * half + traditional_collegstd * 
+    half + traditional_perurbanstd * half + traditional_profstd * 
+    half
+  #Df  LogLik Df  Chisq Pr(>Chisq)    
+1  28 -3418.2                         
+2  56 -3321.2 28 193.95  < 2.2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

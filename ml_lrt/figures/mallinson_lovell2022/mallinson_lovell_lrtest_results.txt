@@ -1,0 +1,12 @@
+Likelihood ratio test
+
+Model 1: adopt ~ republican + legprof_squire + exp_pupil10000_adj + mathscore4th + 
+    readscore4th + time
+Model 2: adopt ~ republican * half + legprof_squire * half + exp_pupil10000_adj * 
+    half + mathscore4th * half + readscore4th * half + time * 
+    half
+  #Df  LogLik Df  Chisq Pr(>Chisq)  
+1   7 -124.06                       
+2  14 -115.98  7 16.169    0.02361 *
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

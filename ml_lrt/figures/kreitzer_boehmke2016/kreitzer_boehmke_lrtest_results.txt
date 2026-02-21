@@ -1,0 +1,14 @@
+Likelihood ratio test
+
+Model 1: adopt_policy ~ norrander_legality + religadhrate + initdif + 
+    dem_gov + uni_dem_leg + fem_dem + nbrspct + rescaledmedincome + 
+    rescaledpopsize + time + time2 + webster + factor(policy_num)
+Model 2: adopt_policy ~ norrander_legality * half + religadhrate * half + 
+    initdif * half + dem_gov * half + uni_dem_leg * half + fem_dem * 
+    half + nbrspct * half + rescaledmedincome * half + rescaledpopsize * 
+    half + time * half + time2 * half + webster * half + factor(policy_num)
+  #Df  LogLik Df  Chisq Pr(>Chisq)    
+1  41 -2822.6                         
+2  53 -2787.7 12 69.823  3.457e-10 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1

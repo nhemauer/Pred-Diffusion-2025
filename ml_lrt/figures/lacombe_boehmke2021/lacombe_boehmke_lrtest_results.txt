@@ -1,0 +1,17 @@
+Likelihood ratio test
+
+Model 1: adoption ~ initiative + init_sigs + std_latnt_decay + std_nbrs_lag + 
+    std_population + std_masssociallib_est + unified + duration + 
+    durationsq + durationcb + std_income + std_bowen_1 + std_bowen_2 + 
+    change_pop + change_inc + party_change + factor(year)
+Model 2: adoption ~ initiative * half + init_sigs * half + std_latnt_decay * 
+    half + std_nbrs_lag * half + std_population * half + std_masssociallib_est * 
+    half + unified * half + duration * half + durationsq * half + 
+    durationcb * half + std_income * half + std_bowen_1 * half + 
+    std_bowen_2 * half + change_pop * half + change_inc * half + 
+    party_change * half + factor(year)
+  #Df LogLik Df  Chisq Pr(>Chisq)    
+1  58 -42889                         
+2  74 -42837 16 103.77   6.79e-15 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
