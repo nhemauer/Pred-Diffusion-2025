@@ -1,9 +1,3 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
 .vscode/
 articles/
-ml_feature_engineer/
-note.txt
 old/

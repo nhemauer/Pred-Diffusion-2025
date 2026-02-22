@@ -63,7 +63,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("optimized_logit_boehmke_threshold.txt", "w") as f:
+with open("figures/boehmke2017/optimized_logit_boehmke_threshold.txt", "w") as f:
     f.write(f"Optimal Threshold: {best_threshold:.2f}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -84,14 +84,14 @@ plt.ylabel('Precision')
 plt.title('Optimized Precision-Recall Curve (Logit)')
 plt.legend()
 plt.grid(True)
-plt.savefig('threshold_optimized_logit_boehmke.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/optimized_logit_boehmke_threshold.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
 ### Reglogit
 
-# Use best hyperparameters from the random-split experiment
+# Use best hyperparameters from the random-split hyperparameter search
 reglogit_model = linear_model.LogisticRegression(
     C = 0.001,
     class_weight = None,
@@ -121,7 +121,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("optimized_reglogit_boehmke_threshold.txt", "w") as f:
+with open("figures/boehmke2017/optimized_reglogit_boehmke_threshold.txt", "w") as f:
     f.write(f"Optimal Threshold: {best_threshold:.2f}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -142,14 +142,14 @@ plt.ylabel('Precision')
 plt.title('Optimized Precision-Recall Curve (Regularized Logit)')
 plt.legend()
 plt.grid(True)
-plt.savefig('threshold_optimized_reglogit_boehmke.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/optimized_reglogit_boehmke_threshold.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
 ### RF
 
-# Use best hyperparameters from the random-split experiment
+# Use best hyperparameters from the random-split hyperparameter search
 rf_model = RandomForestClassifier(
     bootstrap = True,
     ccp_alpha = 0.0,
@@ -181,7 +181,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("optimized_rf_boehmke_threshold.txt", "w") as f:
+with open("figures/boehmke2017/optimized_rf_boehmke_threshold.txt", "w") as f:
     f.write(f"Optimal Threshold: {best_threshold:.2f}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -202,14 +202,14 @@ plt.ylabel('Precision')
 plt.title('Optimized Precision-Recall Curve (Random Forest)')
 plt.legend()
 plt.grid(True)
-plt.savefig('threshold_optimized_rf_boehmke.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/optimized_rf_boehmke_threshold.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
 
 #--------------------------------------------------------------------------------------------------------
 
 ### XGBoost
 
-# Use best hyperparameters from the random-split experiment
+# Use best hyperparameters from the random-split hyperparameter search
 xgb_model = XGBClassifier(
     booster = 'gbtree',
     colsample_bytree = 0.7639498961822481,
@@ -248,7 +248,7 @@ balanced_acc = balanced_accuracy_score(y_test, y_pred)
 report = classification_report(y_test, y_pred)
 
 # Save metrics to file
-with open("optimized_xgb_boehmke_threshold.txt", "w") as f:
+with open("figures/boehmke2017/optimized_xgb_boehmke_threshold.txt", "w") as f:
     f.write(f"Optimal Threshold: {best_threshold:.2f}\n")
     f.write(f"F1 Score: {f1}\n")
     f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
@@ -269,5 +269,5 @@ plt.ylabel('Precision')
 plt.title('Optimized Precision-Recall Curve (XGBoost)')
 plt.legend()
 plt.grid(True)
-plt.savefig('threshold_optimized_xgb_boehmke.png', dpi = 300, bbox_inches = 'tight')
+plt.savefig('figures/boehmke2017/optimized_xgb_boehmke_threshold.png', dpi = 300, bbox_inches = 'tight')
 plt.show()
