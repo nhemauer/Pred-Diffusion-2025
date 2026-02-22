@@ -1,0 +1,428 @@
+### Preprocessing Kreitzer & Boehmke 2016
+import warnings
+warnings.filterwarnings("ignore")
+from sklearn import linear_model
+from sklearn.ensemble import RandomForestClassifier
+from xgboost import XGBClassifier
+from sklearn.model_selection import GridSearchCV, train_test_split
+from skopt import BayesSearchCV
+from sklearn.metrics import f1_score, balanced_accuracy_score, classification_report
+from sklearn.metrics import average_precision_score, precision_recall_curve
+from sklearn.preprocessing import StandardScaler
+import matplotlib.pyplot as plt
+import pandas as pd
+import time
+import random
+import os
+
+random.seed(1337)
+
+# Data
+kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")
+
+covariates = [
+    "norrander_legality", "religadhrate", "initdif", "dem_gov", "uni_dem_leg",
+    "fem_dem", "nbrspct", "rescaledmedincome", "rescaledpopsize", "time", 
+    "time2", "webster", "policy_num"
+]
+
+kreitzer_boehmke_2016 = kreitzer_boehmke_2016_full[["adopt_policy", "state"] + covariates].dropna()
+
+# Define X and y
+X = kreitzer_boehmke_2016.drop(columns = ['adopt_policy', 'state']).copy()
+X = pd.get_dummies(X, columns = ['policy_num'], drop_first = True)
+y = kreitzer_boehmke_2016['adopt_policy']
+
+# Split into train and test sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1337, stratify = y)
+
+# Scale features
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+#--------------------------------------------------------------------------------------------------------
+
+os.chdir("ml_hyperparameter/ml_random_hyperparameters")
+
+### Kreitzer & Boehmke 2016 Logistic (No Optimization)
+
+# Fit
+logistic = linear_model.LogisticRegression(max_iter = 2500, random_state = 1337)
+
+start_time = time.time()
+logistic.fit(X_train_scaled, y_train)
+end_time = time.time()
+
+# Predict
+y_pred = logistic.predict(X_test_scaled)
+
+# Evaluation
+f1 = f1_score(y_test, y_pred, average = "binary")
+balanced_acc = balanced_accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+# Save metrics to file
+with open("figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.txt", "w") as f:
+    f.write(f"F1 Score: {f1}\n")
+    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
+    f.write("Classification Report:\n")
+    f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
+
+# Get predicted probabilities for the positive class
+y_scores = logistic.predict_proba(X_test_scaled)[:, 1]
+
+# Compute average precision (AUC PR)
+ap_score = average_precision_score(y_test, y_scores)
+
+# Compute precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+# Plot the PR curve
+plt.figure(figsize = (7, 5))
+plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Unoptimized Precision-Recall Curve (Logistic)\n(Kreitzer & Boehmke 2016)')
+plt.legend()
+plt.grid(True)
+plt.savefig('figures/kreitzer_boehmke2016/unoptimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+#--------------------------------------------------------------------------------------------------------
+
+### Kreitzer & Boehmke 2016 Regularized Logistic (Optimized)
+
+# Define parameter grid for Logistic Regression
+# Base params common to all
+common_params = {
+    'C': [0.001, 0.01, 0.1],
+    'class_weight': [None, 'balanced'],
+    'fit_intercept': [True]
+}
+
+param_grid = [
+    # lbfgs supports only l2 or none
+    {
+        **common_params,
+        'solver': ['lbfgs'],
+        'penalty': ['l2', None]
+    },
+    # newton-cholesky supports only l2 or none
+    {
+        **common_params,
+        'solver': ['newton-cholesky'],
+        'penalty': ['l2', None]
+    },
+    # liblinear supports l1 and l2 only (no elasticnet or none)
+    {
+        **common_params,
+        'solver': ['liblinear'],
+        'penalty': ['l1', 'l2']
+    },
+    # saga supports l1, l2, elasticnet
+    {
+        **common_params,
+        'solver': ['saga'],
+        'penalty': ['l1', 'l2', 'elasticnet', None],
+        'l1_ratio': [0, 0.5, 1]  # Only used if penalty = 'elasticnet', ignored otherwise
+    }
+]
+
+# Set up GridSearchCV
+grid_search = GridSearchCV(
+    estimator = linear_model.LogisticRegression(max_iter = 2000, random_state = 1337),
+    param_grid = param_grid,
+    scoring = "average_precision", 
+    cv = 5,
+    n_jobs = -1,
+    verbose = 0,
+    refit = True 
+)
+
+# Fit grid search
+start_time = time.time()
+grid_search.fit(X_train_scaled, y_train)
+end_time = time.time()
+
+# Get the best model
+best_model = grid_search.best_estimator_
+
+# Predict with best estimator
+y_pred = best_model.predict(X_test_scaled)
+
+# Evaluation
+f1 = f1_score(y_test, y_pred, average = "binary")
+balanced_acc = balanced_accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+# Save metrics to file
+with open("figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.txt", "w") as f:
+    f.write(f"Best Parameters Found: {grid_search.best_params_}\n")
+    f.write(f"F1 Score: {f1}\n")
+    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
+    f.write("Classification Report:\n")
+    f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
+
+# Get predicted probabilities for the positive class
+y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+
+# Compute average precision (AUC PR)
+ap_score = average_precision_score(y_test, y_scores)
+
+# Compute precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+# Plot the PR curve
+plt.figure(figsize = (7, 5))
+plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Optimized Precision-Recall Curve (Regularized Logistic)\n(Kreitzer & Boehmke 2016)')
+plt.legend()
+plt.grid(True)
+plt.savefig('figures/kreitzer_boehmke2016/optimized_logistic_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+#--------------------------------------------------------------------------------------------------------
+
+### Kreitzer & Boehmke 2016 RF (No Optimization)
+
+# Fit
+random_forest = RandomForestClassifier(random_state = 1337)
+
+start_time = time.time()
+random_forest.fit(X_train_scaled, y_train)
+end_time = time.time()
+
+# Predict
+y_pred = random_forest.predict(X_test_scaled)
+
+# Evaluation
+f1 = f1_score(y_test, y_pred, average = "binary")
+balanced_acc = balanced_accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+# Save metrics to file
+with open("figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.txt", "w") as f:
+    f.write(f"F1 Score: {f1}\n")
+    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
+    f.write("Classification Report:\n")
+    f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
+
+# Get predicted probabilities for the positive class
+y_scores = random_forest.predict_proba(X_test_scaled)[:, 1]
+
+# Compute average precision (AUC PR)
+ap_score = average_precision_score(y_test, y_scores)
+
+# Compute precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+# Plot the PR curve
+plt.figure(figsize = (7, 5))
+plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Unoptimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
+plt.legend()
+plt.grid(True)
+plt.savefig('figures/kreitzer_boehmke2016/unoptimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+#--------------------------------------------------------------------------------------------------------
+
+### Kreitzer & Boehmke 2016 RF (Optimized)
+
+# Define the parameter search space for BayesSearchCV
+param_grid = {
+        'n_estimators': (100, 500),
+        'criterion': ['gini', 'entropy'],
+        'max_depth': (None, 10, 25, 50),
+        'min_samples_split': (2, 10),
+        'min_samples_leaf': (1, 4),
+        'bootstrap': [True],
+        'class_weight': [None, 'balanced'],
+        'ccp_alpha': (0.0, 0.1),
+}
+
+bayes_search = BayesSearchCV(
+    estimator = RandomForestClassifier(random_state = 1337),
+    search_spaces = param_grid,
+    n_iter = 150,
+    cv = 5,
+    n_jobs = -1,
+    verbose = 0,
+    scoring = "average_precision",
+    random_state = 1337
+)
+
+start_time = time.time()
+bayes_search.fit(X_train_scaled, y_train)
+end_time = time.time()
+
+# Get the best model
+best_model = bayes_search.best_estimator_
+
+# Predict
+y_pred = best_model.predict(X_test_scaled)
+
+# Evaluation
+f1 = f1_score(y_test, y_pred, average = "binary")
+balanced_acc = balanced_accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+# Save metrics to file
+with open("figures/kreitzer_boehmke2016/optimized_rf_kreitzer.txt", "w") as f:
+    f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
+    f.write(f"F1 Macro Score: {f1}\n")
+    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
+    f.write("Classification Report:\n")
+    f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
+
+# Get predicted probabilities for the positive class
+y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+
+# Compute average precision (AUC PR)
+ap_score = average_precision_score(y_test, y_scores)
+
+# Compute precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+# Plot the PR curve
+plt.figure(figsize = (7, 5))
+plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Optimized Precision-Recall Curve (Random Forest)\n(Kreitzer & Boehmke 2016)')
+plt.legend()
+plt.grid(True)
+plt.savefig('figures/kreitzer_boehmke2016/optimized_rf_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+#--------------------------------------------------------------------------------------------------------
+
+### Kreitzer & Boehmke 2016 XGBoost (No Optimization)
+
+# Fit
+xgb = XGBClassifier(random_state = 1337, use_label_encoder = False, n_jobs = -1)
+
+start_time = time.time()
+xgb.fit(X_train_scaled, y_train)
+end_time = time.time()
+
+# Predict
+y_pred = xgb.predict(X_test_scaled)
+
+# Evaluation
+f1 = f1_score(y_test, y_pred, average = "binary")
+balanced_acc = balanced_accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+# Save metrics to file
+with open("figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.txt", "w") as f:
+    f.write(f"F1 Score: {f1}\n")
+    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
+    f.write("Classification Report:\n")
+    f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
+
+# Get predicted probabilities for the positive class
+y_scores = xgb.predict_proba(X_test_scaled)[:, 1]
+
+# Compute average precision (AUC PR)
+ap_score = average_precision_score(y_test, y_scores)
+
+# Compute precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+# Plot the PR curve
+plt.figure(figsize = (7, 5))
+plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Unoptimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
+plt.legend()
+plt.grid(True)
+plt.savefig('figures/kreitzer_boehmke2016/unoptimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
+
+#--------------------------------------------------------------------------------------------------------
+
+### Kreitzer & Boehmke 2016 XGBoost (Optimized)
+
+# Define the parameter search space for BayesSearchCV
+param_grid = {
+    'n_estimators': (100, 500),
+    'max_depth': (6, 10, 20),
+    'max_bin': (16, 64, 256),
+    'booster': ['dart'],
+    'objective': ['binary:logistic'],
+    'eval_metric': ['aucpr'],
+    'tree_method': ['auto'],
+    'grow_policy': ['depthwise'],
+    'learning_rate': (0.01, 0.1, 0.3),
+    'subsample': (0.5, 1.0),
+    'reg_alpha': (0, 2),
+    'min_child_weight': (1, 10),
+    'scale_pos_weight': (1, 5)
+}
+
+bayes_search = BayesSearchCV(
+    estimator = XGBClassifier(random_state = 1337, use_label_encoder = False),
+    search_spaces = param_grid,
+    n_iter = 150,
+    cv = 5,
+    n_jobs = -1,
+    verbose = 0,
+    scoring = "average_precision",
+    random_state = 1337
+)
+
+start_time = time.time()
+bayes_search.fit(X_train_scaled, y_train)
+end_time = time.time()
+
+# Get the best model
+best_model = bayes_search.best_estimator_
+
+# Predict
+y_pred = best_model.predict(X_test_scaled)
+
+# Evaluation
+f1 = f1_score(y_test, y_pred, average = "binary")
+balanced_acc = balanced_accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+# Save metrics to file
+with open("figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.txt", "w") as f:
+    f.write(f"Best Parameters Found: {bayes_search.best_params_}\n")
+    f.write(f"F1 Score: {f1}\n")
+    f.write(f"Balanced Accuracy Score: {balanced_acc}\n")
+    f.write("Classification Report:\n")
+    f.write(report)
+    f.write(f"Model Fit Elapsed Time: {(end_time - start_time) / 60:.2f} Minutes")
+
+# Get predicted probabilities for the positive class
+y_scores = best_model.predict_proba(X_test_scaled)[:, 1]
+
+# Compute average precision (AUC PR)
+ap_score = average_precision_score(y_test, y_scores)
+
+# Compute precision-recall curve
+precision, recall, thresholds = precision_recall_curve(y_test, y_scores)
+
+# Plot the PR curve
+plt.figure(figsize = (7, 5))
+plt.plot(recall, precision, label = f'AUC PR = {ap_score:.4f}')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Optimized Precision-Recall Curve (XGBoost)\n(Kreitzer & Boehmke 2016)')
+plt.legend()
+plt.grid(True)
+plt.savefig('figures/kreitzer_boehmke2016/optimized_xgboost_kreitzer.png', dpi = 300, bbox_inches = 'tight')
+plt.show()
