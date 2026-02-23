@@ -1,0 +1,12 @@
+Optimal Threshold: 0.16
+F1 Score: 0.35075885328836426
+Balanced Accuracy Score: 0.6537664839691533
+Classification Report:
+              precision    recall  f1-score   support
+
+         0.0       0.95      0.95      0.95      3822
+         1.0       0.34      0.36      0.35       289
+
+    accuracy                           0.91      4111
+   macro avg       0.65      0.65      0.65      4111
+weighted avg       0.91      0.91      0.91      4111
