@@ -48,7 +48,7 @@ X_test_scaled = scaler.transform(X_test)
 
 #--------------------------------------------------------------------------------------------------------
 
-os.chdir("ml_hyperparameter/ml_random_hyperparameters")
+os.chdir("ml_hyperparameter/ml_best_random_hyperparameters")
 
 ### Karch et al. 2016 Logistic (No Optimization)
 
