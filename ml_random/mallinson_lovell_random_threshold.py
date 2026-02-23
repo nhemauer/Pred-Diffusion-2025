@@ -98,7 +98,6 @@ reglogit_model = linear_model.LogisticRegression(
     l1_ratio = None,
     penalty = 'l2',
     solver = 'saga',
-    max_iter = 2500,
     random_state = 1337
 )
 
