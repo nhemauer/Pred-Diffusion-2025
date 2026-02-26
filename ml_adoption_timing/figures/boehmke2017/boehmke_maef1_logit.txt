@@ -1,0 +1,14 @@
+Fold 1 MAE: 6.06 years
+Fold 2 MAE: 5.54 years
+Fold 3 MAE: 5.70 years
+Fold 4 MAE: 5.92 years
+Fold 5 MAE: 6.47 years
+
+Mean MAE across folds: 5.94 years
+Std MAE across folds: 0.32 years
+Valid predictions: 2050 / 2222
+
+Adoption Prediction Coverage:
+  Precision: 0.5243
+  Recall:    0.9226
+  F1 Score:  0.6686

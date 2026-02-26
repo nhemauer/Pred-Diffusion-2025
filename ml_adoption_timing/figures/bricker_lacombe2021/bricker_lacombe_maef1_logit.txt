@@ -1,6 +1,3 @@
-5-Fold Cross-Validation Results
-==================================================
-
 Fold 1 MAE: 6.74 years
 Fold 2 MAE: 6.43 years
 Fold 3 MAE: 6.54 years
@@ -9,6 +6,9 @@ Fold 5 MAE: 6.70 years
 
 Mean MAE across folds: 6.65 years
 Std MAE across folds: 0.15 years
+Valid predictions: 4837 / 4838
 
-Overall: 4837 / 4838 valid predictions
-Overall MAE: 6.66 years
+Adoption Prediction Coverage:
+  Precision: 0.3995
+  Recall:    0.9998
+  F1 Score:  0.5709
