@@ -13,6 +13,7 @@ import random
 import os
 
 random.seed(1337)
+np.random.seed(1337)
 
 ### Define Survival Analysis Function
 
@@ -214,15 +215,28 @@ valid_predictions = full_predictions.dropna(subset = ['pred_adoption_time'])
 valid_predictions['time_difference'] = valid_predictions['pred_adoption_time'] - valid_predictions['actual_adoption_time']
 overall_mae = valid_predictions['time_difference'].abs().mean()
 
+# Precision / Recall / F1 
+predicted_adoption = results_df['pred_adoption_time'].notna()
+actually_adopted = results_df['actual_adoption_time'].notna()
+
+tp = (predicted_adoption & actually_adopted).sum()
+fp = (predicted_adoption & ~actually_adopted).sum()
+fn = (~predicted_adoption & actually_adopted).sum()
+
+precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
+
 # Save results to a text file
-with open('figures/mallinson2019/mallinson_mae_logit.txt', 'w') as f:
-    f.write("5-Fold Cross-Validation Results\n")
-    f.write("=" * 50 + "\n\n")
+with open('figures/mallinson2019/mallinson_maef1_logit.txt', 'w') as f:
     for i, mae in enumerate(fold_maes):
         f.write(f"Fold {i+1} MAE: {mae:.2f} years\n")
     f.write("\n")
     f.write(f"Mean MAE across folds: {np.mean(fold_maes):.2f} years\n")
     f.write(f"Std MAE across folds: {np.std(fold_maes):.2f} years\n")
+    f.write(f"Valid predictions: {len(valid_predictions)} / {len(full_predictions)}\n")
     f.write("\n")
-    f.write(f"Overall: {len(valid_predictions)} / {len(full_predictions)} valid predictions\n")
-    f.write(f"Overall MAE: {overall_mae:.2f} years\n")
+    f.write("Adoption Prediction Coverage:\n")
+    f.write(f"  Precision: {precision:.4f}\n")
+    f.write(f"  Recall:    {recall:.4f}\n")
+    f.write(f"  F1 Score:  {f1:.4f}\n")
