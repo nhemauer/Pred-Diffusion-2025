@@ -78,6 +78,12 @@ for train_end_year in range(mid_year, max_year - 9):
     
     # Create dummies for test set
     X_test = pd.get_dummies(X_test, columns = ['state'], drop_first = True)
+
+    # Ensure both have the same columns by reindexing
+    all_columns = X_train.columns.union(X_val.columns).union(X_test.columns)
+    X_train = X_train.reindex(columns = all_columns, fill_value = 0)
+    X_val = X_val.reindex(columns = all_columns, fill_value = 0)
+    X_test = X_test.reindex(columns = all_columns, fill_value = 0)
     
     y_train = train_data['adopt']
     y_val = val_data['adopt']
