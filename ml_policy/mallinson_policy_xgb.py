@@ -13,6 +13,7 @@ import random
 import os
 
 random.seed(1337)
+np.random.seed(1337)
 
 # Data
 mallinson_2019_full = pd.read_csv(r"data/mallinson2019.csv")

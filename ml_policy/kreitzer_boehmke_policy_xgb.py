@@ -13,6 +13,7 @@ import random
 import os
 
 random.seed(1337)
+np.random.seed(1337)
 
 # Data
 kreitzer_boehmke_2016_full = pd.read_stata(r"data/kreitzer_boehmke2016.dta")

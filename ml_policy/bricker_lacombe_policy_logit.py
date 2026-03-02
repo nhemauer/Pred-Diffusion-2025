@@ -13,6 +13,7 @@ import random
 import os
 
 random.seed(1337)
+np.random.seed(1337)
 
 # Data
 bricker_lacombe_2021_full = pd.read_stata(r"data/bricker_lacombe2021.dta")
