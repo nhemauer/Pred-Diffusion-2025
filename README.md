@@ -21,6 +21,7 @@ How accurately can state policy diffusion be predicted? While prior research has
 - Some folders include a "full_models" folder. These scripts are not meant to be run, but were used to split code into manageable scripts for the HPC.
 - All folders include a "figures" folder with generated figures/data from the analyses.
 - 'ml_state' and 'ml_policy' have a "collapse_all_csv.py" script and a "aggregate_policy.py" script in the figures folder to combine results. These should be run after the main py files are run.
+- 'ml_state' and 'ml_policy' have "_split.py" scripts that make use of the array function in SBATCH shell scripts. These files have scripts to aggregate the results.
 - The 'processed.csv' files in 'data/' are the same STATA dataframes, but are either altered to be .csv, have a column name change, or have character values converted to numeric.' 
 
 **Note:** <br>
