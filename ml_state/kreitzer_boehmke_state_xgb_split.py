@@ -34,10 +34,10 @@ results = {
 
 os.chdir("ml_state")
 
-# Get all unique policies
+# Get all unique states
 unique_states = kreitzer_boehmke_2016['state'].unique()
 
-# Get the specific policy for the sbatch job
+# Get the specific state for the sbatch job
 state_idx = int(sys.argv[1])
 state = unique_states[state_idx]
 
