@@ -13,6 +13,7 @@ import random
 import os
 
 random.seed(1337)
+np.random.seed(1337)
 
 # Data
 berry_berry1990_full = pd.read_csv("data/berry_berry1990.txt", delim_whitespace = True, header = None)
