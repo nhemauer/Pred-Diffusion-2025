@@ -4,12 +4,12 @@
 
 for script in /storage/work/ndh5286/Projects/Pred_Diffusion_2025/ml_state/*.py; do
     name=$(basename "$script" .py)
-
+    
     # Skip files with "split" in the name
     if [[ "$name" == *split* ]]; then
         continue
     fi
-
+    
     sbatch <<EOF
 #!/bin/bash
 #SBATCH --account=bbd5087_cr_default
