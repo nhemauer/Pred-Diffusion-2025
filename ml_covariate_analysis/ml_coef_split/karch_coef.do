@@ -1,7 +1,3 @@
-***************************************************************
-* Step 1. Load data
-***************************************************************
-
 cap which coefplot
 if _rc {
     ssc install coefplot
@@ -14,13 +10,11 @@ if _rc {
 
 set scheme plotplain
 
+* Change working directory
 cd "/storage/work/ndh5286/Projects/Pred_Diffusion_2025"
 
 use "data/karch2016.dta", clear
 
-***************************************************************
-* Step 2. Sort by year and create split indicator (first 50% vs last 50%)
-***************************************************************
 * Find the midpoint year
 summ year, meanonly
 local midyear = floor((r(min) + r(max)) / 2)
@@ -28,9 +22,6 @@ local midyear = floor((r(min) + r(max)) / 2)
 * Create a variable that splits based on year
 gen sample_half = cond(year <= `midyear', 1, 2)
 
-***************************************************************
-* Step 3. Run logistic regressions for each split
-***************************************************************
 * First half
 logit adopt traditional nborsstd prevadoptstd complexity igrole ///
       regov unified perdemstd incpcadjstd exppcadjstd ///
@@ -53,13 +44,12 @@ logit adopt traditional nborsstd prevadoptstd complexity igrole ///
       if sample_half == 2, vce(cluster stateyear)
 estimates store last50
 
-***************************************************************
-* Step 4. Create Coefplot
-***************************************************************
+* Create coefplot
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
     drop(_cons *.year) nolabel xline(0, lpattern(dot)) ///
     bycoefs ///
     byopts(cols(5) xrescale) ///
+    sort(, descending) ///
     rename(traditional = "Traditional" nborsstd = "Neighbors" prevadoptstd = "Previous Adopters" complexity = "Complexity" igrole = "Interest Group Role" ///
            regov = "Republican Governor" unified = "Unified" perdemstd = "Democratic Legislature" incpcadjstd = "Income per Capita" exppcadjstd = "Expenditures per Capita" ///
            logpopstd = "Population" collegstd = "Pct College Educated" perurbanstd = "Pct Urban" profstd = "Legislative Professionalism" ///

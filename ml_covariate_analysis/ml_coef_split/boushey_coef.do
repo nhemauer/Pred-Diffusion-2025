@@ -1,7 +1,3 @@
-***************************************************************
-* Step 1. Load data
-***************************************************************
-
 cap which coefplot
 if _rc {
     ssc install coefplot
@@ -14,13 +10,12 @@ if _rc {
 
 set scheme plotplain
 
+* Change working directory
 cd "/storage/work/ndh5286/Projects/Pred_Diffusion_2025"
 
 use "data/boushey2016.dta", clear
 
-***************************************************************
-* Step 2. Keep variables of interest and drop missing
-***************************************************************
+* Keep variables of interest and drop missing
 keep state year styear dvadopt policycongruent gub_election elect2 hvd_4yr fedcrime ///
      leg_dem_per_2pty dem_governor insession propneighpol citidist squire_prof86 ///
      citi6008 crimespendpc crimespendpcsq violentthousand pctwhite stateincpercap ///
@@ -30,9 +25,6 @@ drop if missing(dvadopt, policycongruent, gub_election, elect2, hvd_4yr, fedcrim
                 squire_prof86, citi6008, crimespendpc, crimespendpcsq, violentthousand, ///
                 pctwhite, stateincpercap, logpop, counter, counter2, counter3)
 
-***************************************************************
-* Step 3. Sort by year and create split indicator (first 50% vs last 50%)
-***************************************************************
 * Find the midpoint year
 summ year, meanonly
 local midyear = floor((r(min) + r(max)) / 2)
@@ -40,9 +32,6 @@ local midyear = floor((r(min) + r(max)) / 2)
 * Create a variable that splits based on year
 gen sample_half = cond(year <= `midyear', 1, 2)
 
-***************************************************************
-* Step 4. Run logistic regressions for each split
-***************************************************************
 * First half
 logit dvadopt policycongruent gub_election elect2 hvd_4yr fedcrime ///
       leg_dem_per_2pty dem_governor insession propneighpol citidist squire_prof86 ///
@@ -59,13 +48,12 @@ logit dvadopt policycongruent gub_election elect2 hvd_4yr fedcrime ///
       if sample_half == 2, vce(cluster styear)
 estimates store last50
 
-***************************************************************
-* Step 5. Create Coefplot
-***************************************************************
+* Create coefplot
 coefplot (first50, label("First 50%")) (last50, label("Last 50%")), ///
     drop(_cons state_*) nolabel xline(0, lpattern(dot)) ///
     bycoefs ///
     byopts(cols(5) xrescale) ///
+    sort(, descending) ///
     rename(policycongruent = "Policy Congruence" gub_election = "Elect1" ///
            elect2 = "Elect2" hvd_4yr = "Electoral Competition" fedcrime = "National Crime Salience" ///
            leg_dem_per_2pty = "Democratic Party Strength" dem_governor = "Democratic Governor" ///

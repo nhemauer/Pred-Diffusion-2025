@@ -1,7 +1,3 @@
-***************************************************************
-* Step 1. Load data
-***************************************************************
-
 cap which coefplot
 if _rc {
     ssc install coefplot
@@ -14,20 +10,16 @@ if _rc {
 
 set scheme plotplain
 
+* Change working directory
 cd "/storage/work/ndh5286/Projects/Pred_Diffusion_2025"
 
 use "data/parinandi2020.dta", clear
 
-***************************************************************
-* Step 2. Sort by year and create split indicator (first 70% vs last 30%)
-***************************************************************
+* Find the midpoint year
 summ year, meanonly
 local midyear = floor(r(min) + 0.7 * (r(max) - r(min)))
 gen sample_split = cond(year <= `midyear', 1, 2)
 
-***************************************************************
-* Step 3. Run logistic regressions for each split
-***************************************************************
 * First half
 logit oneemulation c.adagovideology c.citizenideology c.medianivoteshare i.partydecline c.squirescore ///
     c.incunemp c.pctpercapincome c.percenturban i.ugovd c.percentfossilprod c.renergyprice11 i.deregulated ///
@@ -40,13 +32,12 @@ logit oneemulation c.adagovideology c.citizenideology c.medianivoteshare i.party
     c.geoneighborlag c.ideoneighborlag c.premulation1 c.year c.featureyear if sample_split == 2, robust cluster(statenumber)
 estimates store last30
 
-***************************************************************
-* Step 4. Create Coefplot
-***************************************************************
+* Create coefplot
 coefplot (first70, label("First 70%")) (last30, label("Last 30%")), ///
     drop(_cons) xline(0, lpattern(dot)) ///
     bycoefs ///
     byopts(cols(5) xrescale) ///
+    sort(, descending) ///
     rename(adagovideology = "Legislative Ideology" citizenideology = "Citizen Ideology" medianivoteshare = "Median Incumbent Vote Share" 1.partydecline = "Party Decline" ///
            squirescore = "Legislative Professionalism" incunemp = "Change in Unemplyoment" pctpercapincome = "Per Capita Income" percenturban = "Urban Percentage" 1.ugovd = "Unified Dem. Government" ///
            percentfossilprod = "Fossil Fuel Production" renergyprice11 = "Real Energy Price" 1.deregulated = "Deregulated" geoneighborlag = "Lagged Geographic Neighbor" ///
