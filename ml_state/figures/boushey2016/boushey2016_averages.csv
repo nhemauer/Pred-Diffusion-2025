@@ -1,5 +1,5 @@
 model,average_score
-rf_ap_score,0.29896905334273316
-xgb_ap_score,0.2837346268046084
+rf_ap_score,0.29883735776737375
+xgb_ap_score,0.2837346268046085
 logit_ap_score,0.2675466331928339
 original_ap_score,0.2666991558585751
