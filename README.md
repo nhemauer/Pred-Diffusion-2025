@@ -62,14 +62,14 @@ The `data/` folder contains the input datasets for all 10 policy diffusion studi
 | `kreitzer_boehmke2016.dta` | Kreitzer & Boehmke (2016) | Stata |
 | `lacombe_boehmke2021.dta` | LaCombe & Boehmke (2021) | Stata |
 | `lacombe_boehmke_2021_processed.csv` | LaCombe & Boehmke (2021) | Processed CSV referenced in lacombe_boehmke_data_sim.R|
-| `mallinson2019.csv` | Mallinson (2019) | CSV |
-| `mallinson2019_processed.csv` | Mallinson (2019) | Processed CSV referenced in mallinson_coef.do |
+| `mallinson2019.csv` | Mallinson (2021) | CSV |
+| `mallinson2019_processed.csv` | Mallinson (2021) | Processed CSV referenced in mallinson_coef.do |
 | `mallinson_lovell2022.csv` | Mallinson & Lovell (2022) | CSV |
 | `parinandi2020.dta` | Parinandi (2020) | Stata |
 
-**Note on processed files:** The `_processed.csv` files are the same datasets as their raw counterparts but have been converted to CSV format, had column names standardized, or had character values converted to numeric.
+Mallinson2019 should be Mallinson2021, but there are too many references to change.
 
-Additionally, Mallinson2019 should be Mallinson2021, but there are too many references to change.
+**Note on processed files:** The `_processed.csv` files are the same datasets as their raw counterparts but have been converted to CSV format, had column names standardized, or had character values converted to numeric.
 
 ## Experiments and Folder Details
 
