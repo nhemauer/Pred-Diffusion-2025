@@ -78,7 +78,7 @@ Mallinson2019 should be Mallinson2021, but there are too many references to chan
 **Run these first, before any main experiments.** Hyperparameter results are consumed by `ml_random/` and inform all model runs.
 
 #### `ml_hyperparameter_prune/`
-Prunes large hyperparameter grids to smaller, computationally feasible grids using `RandomizedSearchCV`.
+Prunes large hyperparameter grids to smaller, computationally feasible grids using F-tests.
 
 - **Scripts:** `*_hyperparameter_prune.py` per dataset
 - **Outputs:** `figures/<dataset>/` — TXT files with RF and XGBoost candidate hyperparameter sets
