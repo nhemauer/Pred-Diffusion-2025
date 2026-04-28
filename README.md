@@ -11,7 +11,7 @@ Three decades of policy diffusion research have advanced our theoretical underst
 
 All scripts were designed for high-performance computing. Running most of the experiment scripts on a personal computer is not possible.
 
-- **Cores:** 48
+- **Cores:** 24-48
 - **RAM:** 192–336 GB (varies by job)
 - **Wall time:** Up to 2 weeks per job
 
