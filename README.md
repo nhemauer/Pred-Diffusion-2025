@@ -21,6 +21,7 @@ All scripts were designed for high-performance computing. Running most of the ex
 
 ```
 pred_diffusion_2025/
+├── dv_summary.ipynb             # Produces the DV class balance percents as displayed in the Table 1 Data Overview
 ├── data/                        # Input datasets (raw and processed)
 ├── ml_adoption_timing/          # Adoption timing experiment
 ├── ml_covariate_analysis/       # Coefficient stability, feature importance, and LRT
